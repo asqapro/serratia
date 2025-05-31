@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 20)
 
 find_package(PcapPlusPlus REQUIRED)
 
+add_subdirectory(tests)
+
 add_executable("${PROJECT_NAME}" main.cpp)
 
 # Link with Pcap++ libraries
