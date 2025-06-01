@@ -29,6 +29,7 @@ TEST_CASE( "DHCP discover" ) {
     base_packet.addLayer(&udp_layer);
 
     serratia::dhcp dhcp(base_packet);
+
     auto dhcp_discover_packet = dhcp.buildDHCPDiscovery();
     auto dhcp_layer = dhcp_discover_packet.getLayerOfType<pcpp::DhcpLayer>();
     auto dhcp_header = dhcp_layer->getDhcpHeader();
