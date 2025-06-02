@@ -7,11 +7,5 @@
 #include <pcapplusplus/DhcpLayer.h>
 
 namespace serratia {
-    class dhcp {
-    public:
-        dhcp(pcpp::Packet base_packet);
-        pcpp::Packet buildDHCPDiscovery();
-    private:
-        pcpp::Packet base_packet_;
-    };
+    void buildDHCPDiscovery(pcpp::Packet* base_packet);
 };

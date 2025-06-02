@@ -5,4 +5,4 @@ add_library(protocols
 )
 
 #find_package(PcapPlusPlus REQUIRED)
-target_link_libraries(protocols PUBLIC -lPcap++)
+target_link_libraries(protocols PUBLIC -lpcap -lPcap++ -lPacket++ -lCommon++)
