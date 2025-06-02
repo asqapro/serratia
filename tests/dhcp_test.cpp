@@ -50,13 +50,14 @@ TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
     }
 
     SECTION( "DHCP offer" ) {
-        //serratia::buildDHCPOffer(&base_packet);
+        pcpp::IPv4Address offered_ip("192.168.0.2");
+        serratia::buildDHCPOffer(&base_packet, offered_ip);
 
         auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
-        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
-        REQUIRE( dhcp_header->yourIpAddress );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
+        REQUIRE( offered_ip == dhcp_header->yourIpAddress );
         REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
     }
 }

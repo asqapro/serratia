@@ -1,3 +1,4 @@
+#include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/EthLayer.h>
@@ -8,4 +9,5 @@
 
 namespace serratia {
     void buildDHCPDiscovery(pcpp::Packet* base_packet);
+    void buildDHCPOffer(pcpp::Packet* base_packet, pcpp::IPv4Address offered_ip);
 };
