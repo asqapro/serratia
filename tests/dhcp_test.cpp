@@ -39,6 +39,12 @@ TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
     pcpp::UdpLayer* udp_layer = new pcpp::UdpLayer(src_port, dst_port);
     base_packet.addLayer(udp_layer, true);
 
+    pcpp::IPv4Address server_ip("192.168.0.1");
+    pcpp::IPv4Address offered_ip("192.168.0.2");
+    std::string server_hostname = "skalrog";
+    std::uint32_t lease_time = 86400;
+    pcpp::IPv4Address server_netmask("255.255.255.0");
+
     SECTION( "DHCP discover" ) {
         serratia::buildDHCPDiscovery(&base_packet);
 
@@ -50,14 +56,32 @@ TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
     }
 
     SECTION( "DHCP offer" ) {
-        pcpp::IPv4Address offered_ip("192.168.0.2");
         serratia::buildDHCPOffer(&base_packet, offered_ip);
 
         auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
-        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
         REQUIRE( offered_ip == dhcp_header->yourIpAddress );
         REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == lease_time );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_NAME_SERVERS).getValueAsIpAddr() == server_ip );
+    }
+
+    SECTION( "DHCP request" ) {
+        //pcpp::IPv4Address offered_ip("192.168.0.2");
+        //serratia::buildDHCPOffer(&base_packet, offered_ip);
+
+        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_header = dhcp_layer->getDhcpHeader();
+        REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
+        REQUIRE( pcpp::DhcpMessageType::DHCP_REQUEST == dhcp_layer->getMessageType() );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == server_hostname );
     }
 }
