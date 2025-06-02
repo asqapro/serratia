@@ -15,8 +15,7 @@
 
 #include "../protocols/dhcp.h"
 
-TEST_CASE( "DHCP discover" ) {
-    pcpp::Packet base_packet;
+TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
 
     pcpp::PcapLiveDevice* dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName("wlan0");
     REQUIRE( nullptr != dev );
@@ -40,11 +39,24 @@ TEST_CASE( "DHCP discover" ) {
     pcpp::UdpLayer* udp_layer = new pcpp::UdpLayer(src_port, dst_port);
     base_packet.addLayer(udp_layer, true);
 
-    serratia::buildDHCPDiscovery(&base_packet);
+    SECTION( "DHCP discover" ) {
+        serratia::buildDHCPDiscovery(&base_packet);
 
-    auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
-    auto dhcp_header = dhcp_layer->getDhcpHeader();
-    REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
-    REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
-    REQUIRE( pcpp::DhcpMessageType::DHCP_DISCOVER == dhcp_layer->getMessageType() );
+        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_header = dhcp_layer->getDhcpHeader();
+        REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
+        REQUIRE( pcpp::DhcpMessageType::DHCP_DISCOVER == dhcp_layer->getMessageType() );
+    }
+
+    SECTION( "DHCP offer" ) {
+        //serratia::buildDHCPOffer(&base_packet);
+
+        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_header = dhcp_layer->getDhcpHeader();
+        REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
+        REQUIRE( dhcp_header->yourIpAddress );
+        REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
+    }
 }
