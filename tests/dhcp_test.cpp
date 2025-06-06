@@ -12,18 +12,20 @@
 
 #include <cstdint>
 #include <cstring>
+#include <arpa/inet.h>
 
 #include "../protocols/dhcp.h"
 
-TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
-
+TEST_CASE( "DHCP" ) {
+    INFO( "Checking if local device can be opened. Try running with sudo or CAP_NET_RAW if this fails" );
     pcpp::PcapLiveDevice* dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName("wlan0");
     REQUIRE( nullptr != dev );
-    INFO( "Checking if local device can be opened. Try running with sudo or CAP_NET_RAW if this fails" );
     REQUIRE ( false != dev->open() );
     INFO( "Successfully opened device" );
     pcpp::MacAddress src_mac = dev->getMacAddress();
     dev->close();
+
+    pcpp::Packet base_packet;
 
     pcpp::MacAddress dst_mac("ff:ff:ff:ff:ff:ff");
     pcpp::EthLayer* eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
@@ -65,21 +67,21 @@ TEST_CASE( "DHCP" ) {pcpp::Packet base_packet;
         REQUIRE( offered_ip == dhcp_header->yourIpAddress );
         REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == lease_time );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_NAME_SERVERS).getValueAsIpAddr() == server_ip );
     }
 
     SECTION( "DHCP request" ) {
-        //pcpp::IPv4Address offered_ip("192.168.0.2");
-        //serratia::buildDHCPOffer(&base_packet, offered_ip);
+        serratia::buildDHCPRequest(&base_packet);
 
         auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
         REQUIRE( pcpp::DhcpMessageType::DHCP_REQUEST == dhcp_layer->getMessageType() );
+        INFO( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsString() );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == server_hostname );

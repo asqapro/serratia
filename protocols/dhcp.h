@@ -10,4 +10,5 @@
 namespace serratia {
     void buildDHCPDiscovery(pcpp::Packet* base_packet);
     void buildDHCPOffer(pcpp::Packet* base_packet, pcpp::IPv4Address offered_ip);
+    void buildDHCPRequest(pcpp::Packet* base_packet);
 };
