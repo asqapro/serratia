@@ -25,21 +25,11 @@ TEST_CASE( "DHCP" ) {
     pcpp::MacAddress src_mac = dev->getMacAddress();
     dev->close();
 
-    pcpp::Packet base_packet;
-
     pcpp::MacAddress dst_mac("ff:ff:ff:ff:ff:ff");
-    pcpp::EthLayer* eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-    base_packet.addLayer(eth_layer, true);
-
-    pcpp::IPv4Address src_ip;
-    pcpp::IPv4Address dst_ip;
-    pcpp::IPv4Layer* ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-    base_packet.addLayer(ip_layer, true);
-
-    std::uint16_t src_port;
-    std::uint16_t dst_port;
-    pcpp::UdpLayer* udp_layer = new pcpp::UdpLayer(src_port, dst_port);
-    base_packet.addLayer(udp_layer, true);
+    pcpp::IPv4Address src_ip("192.168.0.1");
+    pcpp::IPv4Address dst_ip("192.168.0.2");
+    std::uint16_t src_port = 45455;
+    std::uint16_t dst_port = 67;
 
     pcpp::IPv4Address server_ip("192.168.0.1");
     pcpp::IPv4Address offered_ip("192.168.0.2");
