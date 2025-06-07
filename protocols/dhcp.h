@@ -76,6 +76,7 @@ namespace serratia {
     };
 
     struct DHCPOfferConfig {
+    public:
         DHCPOfferConfig(const DHCPCommonConfig& common_config,
                         pcpp::IPv4Address server_ip, 
                         pcpp::IPv4Address offered_ip, 
@@ -88,6 +89,12 @@ namespace serratia {
               netmask_(netmask) {}
         DHCPOfferConfig() = delete;
 
+        pcpp::IPv4Address get_server_ip() const;
+        pcpp::IPv4Address get_offered_ip() const;
+        std::uint32_t get_lease_time() const;
+        pcpp::IPv4Address get_netmask() const;
+        DHCPCommonConfig get_common_config() const;
+    private:
         pcpp::IPv4Address server_ip_;
         pcpp::IPv4Address offered_ip_;
         std::uint32_t lease_time_;

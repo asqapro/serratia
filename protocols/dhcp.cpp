@@ -1,10 +1,4 @@
 #include "dhcp.h"
-#include <cstdint>
-#include <cstring>
-#include <pcapplusplus/EthLayer.h>
-#include <pcapplusplus/IPv4Layer.h>
-#include <pcapplusplus/Packet.h>
-#include <pcapplusplus/UdpLayer.h>
 
 pcpp::MacAddress serratia::MACEndpoints::GetSrcMAC() const { return src_mac_; }
 pcpp::MacAddress serratia::MACEndpoints::GetDstMAC() const { return dst_mac_; }
@@ -21,6 +15,12 @@ pcpp::UdpLayer* serratia::UDPPorts::GetUDPLayer() const { return new pcpp::UdpLa
 serratia::MACEndpoints serratia::DHCPCommonConfig::GetMACEndpoints() const { return mac_endpoints_; }
 serratia::IPEndpoints serratia::DHCPCommonConfig::GetIPEndpoints() const { return ip_endpoints_; }
 serratia::UDPPorts serratia::DHCPCommonConfig::GetUDPPorts() const { return udp_ports_; }
+
+pcpp::IPv4Address serratia::DHCPOfferConfig::get_server_ip() const { return server_ip_; }
+pcpp::IPv4Address serratia::DHCPOfferConfig::get_offered_ip() const { return offered_ip_; }
+std::uint32_t serratia::DHCPOfferConfig::get_lease_time() const { return lease_time_; }
+pcpp::IPv4Address serratia::DHCPOfferConfig::get_netmask() const { return netmask_; }
+serratia::DHCPCommonConfig serratia::DHCPOfferConfig::get_common_config() const { return common_config_; }
 
 void serratia::buildDHCPDiscovery(pcpp::Packet* base_packet) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
@@ -40,14 +40,17 @@ pcpp::Packet serratia::buildDHCPOffer(const serratia::DHCPOfferConfig& config) {
     auto dhcp_header = dhcp_layer->getDhcpHeader();
     dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
 
-    auto src_mac = config.common_config_.GetMACEndpoints().GetSrcMAC();
+    auto common_config = config.get_common_config();
+
+    auto src_mac = common_config.GetMACEndpoints().GetSrcMAC();
     std::memcpy(dhcp_header->clientHardwareAddress, src_mac.getRawData(), 6);
-    dhcp_header->yourIpAddress = config.offered_ip_.toInt();
+    auto offered_ip = config.get_offered_ip();
+    dhcp_header->yourIpAddress = offered_ip.toInt();
     dhcp_layer->setMessageType(pcpp::DHCP_OFFER);
 
-    pcpp::IPv4Address server_ip("192.168.0.1");
-    std::uint32_t lease = 86400;
-    pcpp::IPv4Address netmask("255.255.255.0");
+    pcpp::IPv4Address server_ip = config.get_server_ip();
+    std::uint32_t lease = config.get_lease_time();
+    pcpp::IPv4Address netmask = config.get_netmask();
     pcpp::DhcpOptionBuilder server_id(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_ip);
     pcpp::DhcpOptionBuilder lease_time(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease);
     pcpp::DhcpOptionBuilder subnet_mask(pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, netmask);
@@ -60,9 +63,9 @@ pcpp::Packet serratia::buildDHCPOffer(const serratia::DHCPOfferConfig& config) {
     dhcp_layer->addOption(name_servers);
 
     pcpp::Packet offer_packet;
-    auto eth_layer = config.common_config_.GetMACEndpoints().GetEthLayer();
-    auto ip_layer = config.common_config_.GetIPEndpoints().GetIPLayer();
-    auto udp_layer = config.common_config_.GetUDPPorts().GetUDPLayer();
+    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
+    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
+    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
     offer_packet.addLayer(eth_layer, true);
     offer_packet.addLayer(ip_layer, true);
     offer_packet.addLayer(udp_layer, true);
