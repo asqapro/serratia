@@ -47,10 +47,15 @@ TEST_CASE( "DHCP" ) {
     std::uint32_t lease_time = 86400;
     pcpp::IPv4Address server_netmask("255.255.255.0");
 
-    SECTION( "DHCP discover" ) {
-        serratia::buildDHCPDiscovery(&base_packet);
+    serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+    serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+    serratia::UDPPorts udp_ports(src_port, dst_port);
+    serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
-        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+    SECTION( "DHCP discover" ) {
+        auto packet = serratia::buildDHCPDiscovery(dhcp_common_config);
+
+        auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
@@ -58,10 +63,6 @@ TEST_CASE( "DHCP" ) {
     }
 
     SECTION( "DHCP offer" ) {
-        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::UDPPorts udp_ports(src_port, dst_port);
-        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
         serratia::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
         auto packet = serratia::buildDHCPOffer(dhcp_offer_config);
 

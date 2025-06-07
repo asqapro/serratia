@@ -22,16 +22,26 @@ std::uint32_t serratia::DHCPOfferConfig::get_lease_time() const { return lease_t
 pcpp::IPv4Address serratia::DHCPOfferConfig::get_netmask() const { return netmask_; }
 serratia::DHCPCommonConfig serratia::DHCPOfferConfig::get_common_config() const { return common_config_; }
 
-void serratia::buildDHCPDiscovery(pcpp::Packet* base_packet) {
+pcpp::Packet serratia::buildDHCPDiscovery(const serratia::DHCPCommonConfig& config) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
     dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
 
-    auto src_mac = base_packet->getLayerOfType<pcpp::EthLayer>()->getSourceMac().getRawData();
-    std::memcpy(dhcp_header->clientHardwareAddress, src_mac, 6);
+    auto src_mac = config.GetMACEndpoints().GetSrcMAC();
+    std::memcpy(dhcp_header->clientHardwareAddress, src_mac.getRawData(), 6);
     dhcp_layer->setMessageType(pcpp::DHCP_DISCOVER);
-    base_packet->addLayer(dhcp_layer, true);
+
+    pcpp::Packet discover_packet;
+    auto eth_layer = config.GetMACEndpoints().GetEthLayer();
+    auto ip_layer = config.GetIPEndpoints().GetIPLayer();
+    auto udp_layer = config.GetUDPPorts().GetUDPLayer();
+    discover_packet.addLayer(eth_layer, true);
+    discover_packet.addLayer(ip_layer, true);
+    discover_packet.addLayer(udp_layer, true);
+    discover_packet.addLayer(dhcp_layer, true);
+
+    return discover_packet;
 }
 
 pcpp::Packet serratia::buildDHCPOffer(const serratia::DHCPOfferConfig& config) {

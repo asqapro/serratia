@@ -104,7 +104,7 @@ namespace serratia {
     struct DHCPRequestConfig : DHCPCommonConfig {
 
     };
-    void buildDHCPDiscovery(pcpp::Packet* base_packet);
+    pcpp::Packet buildDHCPDiscovery(const DHCPCommonConfig& config);
     pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
     void buildDHCPRequest(pcpp::Packet* base_packet);
 };
