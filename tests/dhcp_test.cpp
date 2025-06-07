@@ -16,7 +16,7 @@
 
 #include "../protocols/dhcp.h"
 
-TEST_CASE( "DHCP" ) {
+TEST_CASE( "Build DHCP packets" ) {
     std::string dev_name = "wlan0";
     INFO( "Checking if local device can be opened. Try running with sudo or CAP_NET_RAW if this fails" );
     pcpp::PcapLiveDevice* dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName(dev_name);
@@ -33,6 +33,32 @@ TEST_CASE( "DHCP" ) {
 
     std::uint16_t server_port = 67;
     std::uint16_t client_port = 68;
+
+    SECTION( "DHCP Common Config" ) {
+        auto src_mac = client_mac;
+        auto dst_mac = broadcast_mac;
+        pcpp::IPv4Address src_ip("0.0.0.0");
+        auto dst_ip = broadcast_ip;
+        auto src_port = client_port;
+        auto dst_port = server_port;
+
+        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::UDPPorts udp_ports(src_port, dst_port);
+        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+
+        auto eth_layer = dhcp_common_config.GetMACEndpoints().GetEthLayer();
+        REQUIRE( eth_layer->getSourceMac() == src_mac );
+        REQUIRE( eth_layer->getDestMac() == dst_mac );
+
+        auto ip_layer = dhcp_common_config.GetIPEndpoints().GetIPLayer();
+        REQUIRE( ip_layer->getSrcIPAddress() == src_ip );
+        REQUIRE( ip_layer->getDstIPAddress() == dst_ip );
+
+        auto udp_layer = dhcp_common_config.GetUDPPorts().GetUDPLayer();
+        REQUIRE( udp_layer->getSrcPort() == src_port );
+        REQUIRE( udp_layer->getDstPort() == dst_port );
+    }
 
     std::string server_hostname = "skalrog";
     std::uint32_t lease_time = 86400;
