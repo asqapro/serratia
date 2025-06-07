@@ -17,32 +17,39 @@
 #include "../protocols/dhcp.h"
 
 TEST_CASE( "DHCP" ) {
+    std::string dev_name = "wlan0";
     INFO( "Checking if local device can be opened. Try running with sudo or CAP_NET_RAW if this fails" );
-    pcpp::PcapLiveDevice* dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName("wlan0");
+    pcpp::PcapLiveDevice* dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName(dev_name);
     REQUIRE( nullptr != dev );
-    REQUIRE ( false != dev->open() );
-    INFO( "Successfully opened device" );
-    pcpp::MacAddress src_mac = dev->getMacAddress();
-    dev->close();
-
-    pcpp::MacAddress dst_mac("ff:ff:ff:ff:ff:ff");
-    pcpp::IPv4Address src_ip("192.168.0.1");
-    pcpp::IPv4Address dst_ip("192.168.0.2");
-    std::uint16_t src_port = 45455;
-    std::uint16_t dst_port = 67;
+    //REQUIRE ( false != dev->open() );
+    //dev->close();
+    pcpp::MacAddress server_mac = dev->getMacAddress();
+    pcpp::MacAddress client_mac = dev->getMacAddress();
+    pcpp::MacAddress broadcast_mac("ff:ff:ff:ff:ff:ff");
 
     pcpp::IPv4Address server_ip("192.168.0.1");
-    pcpp::IPv4Address offered_ip("192.168.0.2");
+    pcpp::IPv4Address client_ip("192.168.0.2");
+    pcpp::IPv4Address broadcast_ip("255.255.255.255");
+
+    std::uint16_t server_port = 67;
+    std::uint16_t client_port = 68;
+
     std::string server_hostname = "skalrog";
     std::uint32_t lease_time = 86400;
     pcpp::IPv4Address server_netmask("255.255.255.0");
 
-    serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-    serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-    serratia::UDPPorts udp_ports(src_port, dst_port);
-    serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
-
     SECTION( "DHCP discover" ) {
+        auto src_mac = client_mac;
+        auto dst_mac = broadcast_mac;
+        pcpp::IPv4Address src_ip("0.0.0.0");
+        auto dst_ip = broadcast_ip;
+        auto src_port = client_port;
+        auto dst_port = server_port;
+
+        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::UDPPorts udp_ports(src_port, dst_port);
+        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
         auto packet = serratia::buildDHCPDiscovery(dhcp_common_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
@@ -53,6 +60,20 @@ TEST_CASE( "DHCP" ) {
     }
 
     SECTION( "DHCP offer" ) {
+        auto src_mac = server_mac;
+        auto dst_mac = broadcast_mac;
+        pcpp::IPv4Address src_ip = server_ip;
+        auto dst_ip = broadcast_ip;
+        auto src_port = server_port;
+        auto dst_port = client_port;
+
+        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::UDPPorts udp_ports(src_port, dst_port);
+        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+
+        pcpp::IPv4Address offered_ip = client_ip;
+
         serratia::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
         auto packet = serratia::buildDHCPOffer(dhcp_offer_config);
 
@@ -68,8 +89,22 @@ TEST_CASE( "DHCP" ) {
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_NAME_SERVERS).getValueAsIpAddr() == server_ip );
     }
-
+    
     SECTION( "DHCP request" ) {
+        auto src_mac = client_mac;
+        auto dst_mac = broadcast_mac;
+        pcpp::IPv4Address src_ip("0.0.0.0");
+        auto dst_ip = broadcast_ip;
+        auto src_port = client_port;
+        auto dst_port = server_port;
+
+        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::UDPPorts udp_ports(src_port, dst_port);
+        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+
+        pcpp::IPv4Address offered_ip = client_ip;
+
         serratia::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
         auto packet = serratia::buildDHCPRequest(dhcp_request_config);
 
