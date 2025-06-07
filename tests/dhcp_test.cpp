@@ -80,9 +80,10 @@ TEST_CASE( "DHCP" ) {
     }
 
     SECTION( "DHCP request" ) {
-        serratia::buildDHCPRequest(&base_packet);
+        serratia::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
+        auto packet = serratia::buildDHCPRequest(dhcp_request_config);
 
-        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );

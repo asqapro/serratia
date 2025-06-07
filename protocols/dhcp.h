@@ -16,7 +16,7 @@ namespace serratia {
     struct MACEndpoints {
     public:
         MACEndpoints(pcpp::MacAddress src_mac, 
-                    pcpp::MacAddress dst_mac) 
+                     pcpp::MacAddress dst_mac) 
             : src_mac_(src_mac), dst_mac_(dst_mac) {}
         MACEndpoints() = delete;
         pcpp::MacAddress GetSrcMAC() const;
@@ -44,7 +44,7 @@ namespace serratia {
     struct UDPPorts {
     public:
         UDPPorts(std::uint16_t src_port,
-                std::uint16_t dst_port)
+                 std::uint16_t dst_port)
             : src_port_(src_port), dst_port_(dst_port) {}
         UDPPorts() = delete;
         std::uint16_t GetSrcPort() const;
@@ -58,11 +58,11 @@ namespace serratia {
     struct DHCPCommonConfig {
     public:
         DHCPCommonConfig(const MACEndpoints& mac_endpoints,
-                        const IPEndpoints& ip_endpoints,
-                        const UDPPorts& udp_ports) 
+                         const IPEndpoints& ip_endpoints,
+                         const UDPPorts& udp_ports) 
             : mac_endpoints_(std::move(mac_endpoints)), 
-                ip_endpoints_(std::move(ip_endpoints)),
-                udp_ports_(std::move(udp_ports)) {}
+              ip_endpoints_(std::move(ip_endpoints)),
+              udp_ports_(std::move(udp_ports)) {}
         DHCPCommonConfig() = delete;
 
         MACEndpoints GetMACEndpoints() const;
@@ -101,10 +101,29 @@ namespace serratia {
         pcpp::IPv4Address netmask_;
         DHCPCommonConfig common_config_;
     };
-    struct DHCPRequestConfig : DHCPCommonConfig {
+    struct DHCPRequestConfig {
+    public:
+        DHCPRequestConfig(const DHCPCommonConfig& common_config,
+                          pcpp::IPv4Address server_ip,
+                          pcpp::IPv4Address requested_ip,
+                          std::string server_hostname)
+            : common_config_(common_config),
+              server_ip_(server_ip),
+              requested_ip_(requested_ip),
+              server_hostname_(server_hostname) {}
+        DHCPRequestConfig() = delete;
 
+        pcpp::IPv4Address get_server_ip() const;
+        pcpp::IPv4Address get_requested_ip() const;
+        std::string get_server_hostname() const;
+        DHCPCommonConfig get_common_config() const;
+    private:
+        pcpp::IPv4Address server_ip_;
+        pcpp::IPv4Address requested_ip_;
+        std::string server_hostname_;
+        DHCPCommonConfig common_config_;
     };
     pcpp::Packet buildDHCPDiscovery(const DHCPCommonConfig& config);
     pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
-    void buildDHCPRequest(pcpp::Packet* base_packet);
+    pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
 };
