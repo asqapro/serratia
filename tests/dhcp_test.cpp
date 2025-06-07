@@ -58,9 +58,14 @@ TEST_CASE( "DHCP" ) {
     }
 
     SECTION( "DHCP offer" ) {
-        serratia::buildDHCPOffer(&base_packet, offered_ip);
+        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::UDPPorts udp_ports(src_port, dst_port);
+        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        serratia::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
+        auto packet = serratia::buildDHCPOffer(dhcp_offer_config);
 
-        auto dhcp_layer = base_packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
