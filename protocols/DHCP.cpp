@@ -1,4 +1,4 @@
-#include "dhcp.h"
+#include "DHCP.h"
 #include <pcapplusplus/Packet.h>
 
 pcpp::MacAddress serratia::MACEndpoints::GetSrcMAC() const { return src_mac_; }

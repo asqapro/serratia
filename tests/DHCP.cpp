@@ -14,7 +14,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 
-#include "../protocols/dhcp.h"
+#include "../protocols/DHCP.h"
 
 TEST_CASE( "Build DHCP packets" ) {
     std::string dev_name = "wlan0";

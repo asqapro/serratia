@@ -1,5 +1,5 @@
 #include "../IAttack.h"
-#include "../protocols/dhcp.h"
+#include "../protocols/DHCP.h"
 
 #include <pcapplusplus/PcapLiveDeviceList.h>
 #include <pcapplusplus/PcapLiveDevice.h>
