@@ -42,10 +42,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::UDPPorts udp_ports(src_port, dst_port);
-        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         auto eth_layer = dhcp_common_config.GetMACEndpoints().GetEthLayer();
         REQUIRE( eth_layer->getSourceMac() == src_mac );
@@ -72,11 +72,11 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::UDPPorts udp_ports(src_port, dst_port);
-        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
-        auto packet = serratia::buildDHCPDiscovery(dhcp_common_config);
+        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto packet = serratia::protocols::buildDHCPDiscovery(dhcp_common_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -93,15 +93,15 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = server_port;
         auto dst_port = client_port;
 
-        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::UDPPorts udp_ports(src_port, dst_port);
-        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         pcpp::IPv4Address offered_ip = client_ip;
 
-        serratia::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
-        auto packet = serratia::buildDHCPOffer(dhcp_offer_config);
+        serratia::protocols::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
+        auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -124,15 +124,15 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::UDPPorts udp_ports(src_port, dst_port);
-        serratia::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         pcpp::IPv4Address offered_ip = client_ip;
 
-        serratia::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
-        auto packet = serratia::buildDHCPRequest(dhcp_request_config);
+        serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
+        auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();

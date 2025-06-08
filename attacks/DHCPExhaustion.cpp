@@ -4,7 +4,7 @@
 #include <pcapplusplus/EthLayer.h>
 
 void DHCPExhaustion::run() {
-    auto packet = serratia::buildDHCPDiscovery(config_);
+    auto packet = serratia::protocols::buildDHCPDiscovery(config_);
     while(true) {
         auto eth_layer = packet.getLayerOfType<pcpp::EthLayer>();
         eth_layer->setSourceMac(serratia::utils::randomize_mac());

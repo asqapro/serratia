@@ -12,7 +12,7 @@
 #include <pcapplusplus/DhcpLayer.h>
 #include <utility>
 
-namespace serratia {
+namespace serratia::protocols {
     struct MACEndpoints {
     public:
         MACEndpoints(pcpp::MacAddress src_mac, 

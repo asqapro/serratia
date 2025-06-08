@@ -1,34 +1,34 @@
 #include "DHCP.h"
 #include <pcapplusplus/Packet.h>
 
-pcpp::MacAddress serratia::MACEndpoints::GetSrcMAC() const { return src_mac_; }
-pcpp::MacAddress serratia::MACEndpoints::GetDstMAC() const { return dst_mac_; }
-pcpp::EthLayer* serratia::MACEndpoints::GetEthLayer() const { return new pcpp::EthLayer(src_mac_, dst_mac_); }
+pcpp::MacAddress serratia::protocols::MACEndpoints::GetSrcMAC() const { return src_mac_; }
+pcpp::MacAddress serratia::protocols::MACEndpoints::GetDstMAC() const { return dst_mac_; }
+pcpp::EthLayer* serratia::protocols::MACEndpoints::GetEthLayer() const { return new pcpp::EthLayer(src_mac_, dst_mac_); }
 
-pcpp::IPv4Address serratia::IPEndpoints::GetSrcIP() const { return src_ip_; }
-pcpp::IPv4Address serratia::IPEndpoints::GetDstIP() const { return dst_ip_; }
-pcpp::IPv4Layer* serratia::IPEndpoints::GetIPLayer() const { return new pcpp::IPv4Layer(src_ip_, dst_ip_); }
+pcpp::IPv4Address serratia::protocols::IPEndpoints::GetSrcIP() const { return src_ip_; }
+pcpp::IPv4Address serratia::protocols::IPEndpoints::GetDstIP() const { return dst_ip_; }
+pcpp::IPv4Layer* serratia::protocols::IPEndpoints::GetIPLayer() const { return new pcpp::IPv4Layer(src_ip_, dst_ip_); }
 
-std::uint16_t serratia::UDPPorts::GetSrcPort() const { return src_port_; }
-std::uint16_t serratia::UDPPorts::GetDstPort() const { return dst_port_; }
-pcpp::UdpLayer* serratia::UDPPorts::GetUDPLayer() const { return new pcpp::UdpLayer(src_port_, dst_port_); }
+std::uint16_t serratia::protocols::UDPPorts::GetSrcPort() const { return src_port_; }
+std::uint16_t serratia::protocols::UDPPorts::GetDstPort() const { return dst_port_; }
+pcpp::UdpLayer* serratia::protocols::UDPPorts::GetUDPLayer() const { return new pcpp::UdpLayer(src_port_, dst_port_); }
 
-serratia::MACEndpoints serratia::DHCPCommonConfig::GetMACEndpoints() const { return mac_endpoints_; }
-serratia::IPEndpoints serratia::DHCPCommonConfig::GetIPEndpoints() const { return ip_endpoints_; }
-serratia::UDPPorts serratia::DHCPCommonConfig::GetUDPPorts() const { return udp_ports_; }
+serratia::protocols::MACEndpoints serratia::protocols::DHCPCommonConfig::GetMACEndpoints() const { return mac_endpoints_; }
+serratia::protocols::IPEndpoints serratia::protocols::DHCPCommonConfig::GetIPEndpoints() const { return ip_endpoints_; }
+serratia::protocols::UDPPorts serratia::protocols::DHCPCommonConfig::GetUDPPorts() const { return udp_ports_; }
 
-pcpp::IPv4Address serratia::DHCPOfferConfig::get_server_ip() const { return server_ip_; }
-pcpp::IPv4Address serratia::DHCPOfferConfig::get_offered_ip() const { return offered_ip_; }
-std::uint32_t serratia::DHCPOfferConfig::get_lease_time() const { return lease_time_; }
-pcpp::IPv4Address serratia::DHCPOfferConfig::get_netmask() const { return netmask_; }
-serratia::DHCPCommonConfig serratia::DHCPOfferConfig::get_common_config() const { return common_config_; }
+pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_server_ip() const { return server_ip_; }
+pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_offered_ip() const { return offered_ip_; }
+std::uint32_t serratia::protocols::DHCPOfferConfig::get_lease_time() const { return lease_time_; }
+pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_netmask() const { return netmask_; }
+serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPOfferConfig::get_common_config() const { return common_config_; }
 
-pcpp::IPv4Address serratia::DHCPRequestConfig::get_server_ip() const { return server_ip_; }
-pcpp::IPv4Address serratia::DHCPRequestConfig::get_requested_ip() const { return requested_ip_; }
-std::string serratia::DHCPRequestConfig::get_server_hostname() const { return server_hostname_; }
-serratia::DHCPCommonConfig serratia::DHCPRequestConfig::get_common_config() const { return common_config_; }
+pcpp::IPv4Address serratia::protocols::DHCPRequestConfig::get_server_ip() const { return server_ip_; }
+pcpp::IPv4Address serratia::protocols::DHCPRequestConfig::get_requested_ip() const { return requested_ip_; }
+std::string serratia::protocols::DHCPRequestConfig::get_server_hostname() const { return server_hostname_; }
+serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPRequestConfig::get_common_config() const { return common_config_; }
 
-pcpp::Packet serratia::buildDHCPDiscovery(const serratia::DHCPCommonConfig& config) {
+pcpp::Packet serratia::protocols::buildDHCPDiscovery(const serratia::protocols::DHCPCommonConfig& config) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -50,7 +50,7 @@ pcpp::Packet serratia::buildDHCPDiscovery(const serratia::DHCPCommonConfig& conf
     return discover_packet;
 }
 
-pcpp::Packet serratia::buildDHCPOffer(const serratia::DHCPOfferConfig& config) {
+pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCPOfferConfig& config) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -91,7 +91,7 @@ pcpp::Packet serratia::buildDHCPOffer(const serratia::DHCPOfferConfig& config) {
     return offer_packet;
 }
 
-pcpp::Packet serratia::buildDHCPRequest(const serratia::DHCPRequestConfig& config) {
+pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DHCPRequestConfig& config) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
