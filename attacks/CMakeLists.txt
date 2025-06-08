@@ -1,4 +1,3 @@
-# Add all protocol source files here
 add_library(attacks
     DHCPExhaustion.h
     DHCPExhaustion.cpp
