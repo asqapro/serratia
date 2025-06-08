@@ -1,9 +1,10 @@
 #include "../IAttack.h"
 #include "../protocols/dhcp.h"
 
-#include <memory>
 #include <pcapplusplus/PcapLiveDeviceList.h>
 #include <pcapplusplus/PcapLiveDevice.h>
+
+#include <memory>
 
 class DHCPExhaustion : public IAttack {
 public:

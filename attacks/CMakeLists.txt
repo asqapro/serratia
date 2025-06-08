@@ -3,4 +3,4 @@ add_library(attacks
     DHCPExhaustion.cpp
 )
 
-target_include_directories(attacks PRIVATE ../protocols)
+target_include_directories(attacks PRIVATE ../protocols ../utilities)
