@@ -101,6 +101,7 @@ namespace serratia::protocols {
         pcpp::IPv4Address netmask_;
         DHCPCommonConfig common_config_;
     };
+    
     struct DHCPRequestConfig {
     public:
         DHCPRequestConfig(const DHCPCommonConfig& common_config,
@@ -123,6 +124,7 @@ namespace serratia::protocols {
         std::string server_hostname_;
         DHCPCommonConfig common_config_;
     };
+
     pcpp::Packet buildDHCPDiscovery(const DHCPCommonConfig& config);
     pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
     pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);

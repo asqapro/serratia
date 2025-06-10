@@ -139,9 +139,59 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
         REQUIRE( pcpp::DhcpMessageType::DHCP_REQUEST == dhcp_layer->getMessageType() );
-        INFO( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsString() );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == server_hostname );
+    }
+
+    SECTION( "DHCP ACK" ) {
+        auto src_mac = client_mac;
+        auto dst_mac = broadcast_mac;
+        pcpp::IPv4Address src_ip("0.0.0.0");
+        auto dst_ip = broadcast_ip;
+        auto src_port = client_port;
+        auto dst_port = server_port;
+
+        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
+        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
+        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+
+        pcpp::IPv4Address offered_ip = client_ip;
+        std::uint8_t transaction_id = 1; //randomize this for testing
+        std::uint16_t bootp_flags = 0;
+
+        pcpp::IPv4Address dns_server("9.9.9.9"); //Quad9 > Google
+        std::uint32_t renewal_time = 43200; //50%s of lease time
+        std::uint32_t rebind_time = 75600;  //87.5% of lease time
+
+        serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
+        auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
+
+        auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+        auto dhcp_header = dhcp_layer->getDhcpHeader();
+        
+        REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
+        REQUIRE( 1 == dhcp_header->hardwareType );
+        REQUIRE( 6 == dhcp_header->hardwareAddressLength );
+        REQUIRE( 0 == dhcp_header->hops );
+        REQUIRE( transaction_id == dhcp_header->transactionID );
+        REQUIRE( 0 == dhcp_header->secondsElapsed );
+        REQUIRE( bootp_flags == dhcp_header->flags );
+        REQUIRE( offered_ip == dhcp_header->clientIpAddress );
+        REQUIRE( server_ip == dhcp_header->serverIpAddress );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
+        REQUIRE( server_hostname == std::string(reinterpret_cast<const char*>(dhcp_header->serverName), server_hostname.size()) );
+
+        REQUIRE( dhcp_layer->getOptionsCount() == 10 ); //8 options listed below plus message type option & end option (with no data)
+        REQUIRE( pcpp::DhcpMessageType::DHCP_ACK == dhcp_layer->getMessageType() );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS).getValueAs<std::vector<pcpp::IPv4Address>>().at(0) == dns_server );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == renewal_time );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == rebind_time );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );
     }
 }
