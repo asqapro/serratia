@@ -158,10 +158,12 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         pcpp::IPv4Address offered_ip = client_ip;
-        std::uint8_t transaction_id = 1; //randomize this for testing
+        std::uint8_t hops = 0;
+        std::uint32_t transaction_id = 1; //randomize this for testing
+        std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
 
-        pcpp::IPv4Address dns_server("9.9.9.9"); //Quad9 > Google
+        std::vector<pcpp::IPv4Address> dns_servers = {pcpp::IPv4Address("9.9.9.9")}; //Quad9 > Google
         std::uint32_t renewal_time = 43200; //50%s of lease time
         std::uint32_t rebind_time = 75600;  //87.5% of lease time
 
@@ -174,9 +176,9 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
         REQUIRE( 1 == dhcp_header->hardwareType );
         REQUIRE( 6 == dhcp_header->hardwareAddressLength );
-        REQUIRE( 0 == dhcp_header->hops );
+        REQUIRE( hops == dhcp_header->hops );
         REQUIRE( transaction_id == dhcp_header->transactionID );
-        REQUIRE( 0 == dhcp_header->secondsElapsed );
+        REQUIRE( seconds_elapsed == dhcp_header->secondsElapsed );
         REQUIRE( bootp_flags == dhcp_header->flags );
         REQUIRE( offered_ip == dhcp_header->clientIpAddress );
         REQUIRE( server_ip == dhcp_header->serverIpAddress );
@@ -189,7 +191,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS).getValueAs<std::vector<pcpp::IPv4Address>>().at(0) == dns_server );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS).getValueAs<std::vector<pcpp::IPv4Address>>() == dns_servers );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == renewal_time );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == rebind_time );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );

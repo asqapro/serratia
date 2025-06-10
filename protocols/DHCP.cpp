@@ -28,6 +28,16 @@ pcpp::IPv4Address serratia::protocols::DHCPRequestConfig::get_requested_ip() con
 std::string serratia::protocols::DHCPRequestConfig::get_server_hostname() const { return server_hostname_; }
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPRequestConfig::get_common_config() const { return common_config_; }
 
+serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPAckConfig::get_common_config() const { return common_config_; }
+pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_offered_ip() const { return offered_ip_; }
+std::uint8_t serratia::protocols::DHCPAckConfig::get_hops() const { return hops_; }
+std::uint32_t serratia::protocols::DHCPAckConfig::get_transaction_id() const { return transaction_id_; }
+std::uint16_t serratia::protocols::DHCPAckConfig::get_seconds_elapsed() const { return seconds_elapsed_; }
+std::uint16_t serratia::protocols::DHCPAckConfig::get_bootp_flags() const { return bootp_flags_; }
+std::vector<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_dns_servers() const { return dns_servers_; }
+std::uint32_t serratia::protocols::DHCPAckConfig::get_renewal_time() const { return renewal_time_; }
+std::uint32_t serratia::protocols::DHCPAckConfig::get_rebind_time() const { return rebind_time_; }
+
 pcpp::Packet serratia::protocols::buildDHCPDiscovery(const serratia::protocols::DHCPCommonConfig& config) {
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer;
 

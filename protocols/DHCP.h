@@ -125,7 +125,51 @@ namespace serratia::protocols {
         DHCPCommonConfig common_config_;
     };
 
+    struct DHCPAckConfig {
+    public:
+        DHCPAckConfig(const DHCPCommonConfig& common_config,
+                        pcpp::IPv4Address offered_ip,
+                        std::uint8_t hops,
+                        std::uint32_t transaction_id,
+                        std::uint16_t seconds_elapsed,
+                        std::uint16_t bootp_flags,
+                        std::vector<pcpp::IPv4Address> dns_servers,
+                        std::uint32_t renewal_time,
+                        std::uint32_t rebind_time)
+            : common_config_(common_config),
+              offered_ip_(offered_ip),
+              hops_(hops),
+              transaction_id_(transaction_id),
+              seconds_elapsed_(seconds_elapsed),
+              bootp_flags_(bootp_flags),
+              dns_servers_(dns_servers),
+              renewal_time_(renewal_time),
+              rebind_time_(rebind_time) {}
+        DHCPAckConfig() = delete;
+
+        DHCPCommonConfig get_common_config() const;
+        pcpp::IPv4Address get_offered_ip() const;
+        std::uint8_t get_hops() const;
+        std::uint32_t get_transaction_id() const;
+        std::uint16_t get_seconds_elapsed() const;
+        std::uint16_t get_bootp_flags() const;
+        std::vector<pcpp::IPv4Address> get_dns_servers() const;
+        std::uint32_t get_renewal_time() const;
+        std::uint32_t get_rebind_time() const;
+    private:
+        DHCPCommonConfig common_config_;
+        pcpp::IPv4Address offered_ip_;
+        std::uint8_t hops_;
+        std::uint32_t transaction_id_;
+        std::uint16_t seconds_elapsed_;
+        std::uint16_t bootp_flags_;
+        std::vector<pcpp::IPv4Address> dns_servers_;
+        std::uint32_t renewal_time_;
+        std::uint32_t rebind_time_;
+    };
+
     pcpp::Packet buildDHCPDiscovery(const DHCPCommonConfig& config);
     pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
     pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
+    pcpp::Packet buildDHCPAck(const DHCPAckConfig& config);
 };
