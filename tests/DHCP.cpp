@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 
 #include "../protocols/DHCP.h"
+#include "../utilities/DHCPUtils.h"
 
 TEST_CASE( "Build DHCP packets" ) {
     std::string dev_name = "wlan0";
@@ -162,13 +163,19 @@ TEST_CASE( "Build DHCP packets" ) {
         std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
+        std::vector<pcpp::IPv4Address> routers = {server_ip};
+        std::array<std::uint8_t, 64> server_name = {};
+        std::copy_n(server_hostname.begin(), std::min(server_hostname.size(), server_name.size()), server_name.begin());
 
         std::vector<pcpp::IPv4Address> dns_servers = {pcpp::IPv4Address("9.9.9.9")}; //Quad9 > Google
         std::uint32_t renewal_time = 43200; //50%s of lease time
         std::uint32_t rebind_time = 75600;  //87.5% of lease time
 
-        serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, server_ip, offered_ip, server_hostname);
-        auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
+        serratia::protocols::DHCPAckConfig dhcp_ack_config(dhcp_common_config, offered_ip, hops, transaction_id,
+                                                            seconds_elapsed, bootp_flags, server_ip.toInt(), 
+                                                            lease_time, server_netmask, routers,
+                                                            server_name, dns_servers, renewal_time, rebind_time);
+        auto packet = serratia::protocols::buildDHCPAck(dhcp_ack_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -180,20 +187,21 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( transaction_id == dhcp_header->transactionID );
         REQUIRE( seconds_elapsed == dhcp_header->secondsElapsed );
         REQUIRE( bootp_flags == dhcp_header->flags );
-        REQUIRE( offered_ip == dhcp_header->clientIpAddress );
+        REQUIRE( 0 == dhcp_header->clientIpAddress );
+        REQUIRE( offered_ip == dhcp_header->yourIpAddress );
         REQUIRE( server_ip == dhcp_header->serverIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
         REQUIRE( server_hostname == std::string(reinterpret_cast<const char*>(dhcp_header->serverName), server_hostname.size()) );
 
-        REQUIRE( dhcp_layer->getOptionsCount() == 10 ); //8 options listed below plus message type option & end option (with no data)
         REQUIRE( pcpp::DhcpMessageType::DHCP_ACK == dhcp_layer->getMessageType() );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS).getValueAs<std::vector<pcpp::IPv4Address>>() == dns_servers );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == renewal_time );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == rebind_time );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == offered_ip );
+        auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
+        REQUIRE( serratia::utils::parseIPv4Addresses(&dns_option) == dns_servers );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(renewal_time) );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(rebind_time) );
+        REQUIRE( dhcp_layer->getOptionsCount() == 9 ); //7 options listed above plus message type option & end option (with no data)
     }
 }

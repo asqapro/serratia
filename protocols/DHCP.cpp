@@ -1,4 +1,7 @@
 #include "DHCP.h"
+#include <cstdint>
+#include <pcapplusplus/DhcpLayer.h>
+#include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/Packet.h>
 
 pcpp::MacAddress serratia::protocols::MACEndpoints::GetSrcMAC() const { return src_mac_; }
@@ -34,6 +37,11 @@ std::uint8_t serratia::protocols::DHCPAckConfig::get_hops() const { return hops_
 std::uint32_t serratia::protocols::DHCPAckConfig::get_transaction_id() const { return transaction_id_; }
 std::uint16_t serratia::protocols::DHCPAckConfig::get_seconds_elapsed() const { return seconds_elapsed_; }
 std::uint16_t serratia::protocols::DHCPAckConfig::get_bootp_flags() const { return bootp_flags_; }
+pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_server_ip() const { return server_ip_; }
+std::uint32_t serratia::protocols::DHCPAckConfig::get_lease_time() const { return lease_time_; }
+pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_subnet_mask() const { return subnet_mask_; }
+std::vector<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_routers() const { return routers_; }
+std::array<std::uint8_t, 64> serratia::protocols::DHCPAckConfig::get_server_name() const { return server_name_; }
 std::vector<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_dns_servers() const { return dns_servers_; }
 std::uint32_t serratia::protocols::DHCPAckConfig::get_renewal_time() const { return renewal_time_; }
 std::uint32_t serratia::protocols::DHCPAckConfig::get_rebind_time() const { return rebind_time_; }
@@ -131,6 +139,62 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
     request_packet.addLayer(ip_layer, true);
     request_packet.addLayer(udp_layer, true);
     request_packet.addLayer(dhcp_layer, true);
+
+    return request_packet;
+}
+
+pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAckConfig& config) {
+    auto common_config = config.get_common_config();
+    auto dst_mac = common_config.GetMACEndpoints().GetDstMAC();
+    pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
+
+    auto dhcp_header = dhcp_layer->getDhcpHeader();
+    dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
+    dhcp_header->hops = config.get_hops();
+    dhcp_header->transactionID = config.get_transaction_id();
+    dhcp_header->secondsElapsed = config.get_seconds_elapsed();
+    dhcp_header->flags = config.get_bootp_flags();
+    dhcp_header->clientIpAddress = 0;
+    dhcp_header->yourIpAddress = config.get_offered_ip().toInt();
+    dhcp_header->serverIpAddress = config.get_server_ip().toInt();
+    auto server_arr = config.get_server_name();
+    std::copy(server_arr.begin(), server_arr.end(), dhcp_header->serverName);
+
+    pcpp::DhcpOptionBuilder server_ip(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_ip());
+    pcpp::DhcpOptionBuilder lease_time(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, config.get_lease_time());
+    pcpp::DhcpOptionBuilder subnet_mask(pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, config.get_subnet_mask());
+    
+    auto routers_vec = config.get_routers();
+    auto routers_bytes = reinterpret_cast<uint8_t*>(routers_vec.data());
+    std::size_t routers_bytes_size = routers_vec.size() * sizeof(pcpp::IPv4Address);
+    pcpp::DhcpOptionBuilder routers(pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS, routers_bytes, routers_bytes_size);
+
+    auto dns_servers_vec = config.get_dns_servers();
+    auto dns_servers_bytes = reinterpret_cast<uint8_t*>(dns_servers_vec.data());
+    std::size_t dns_servers_bytes_size = dns_servers_vec.size() * sizeof(pcpp::IPv4Address);
+    pcpp::DhcpOptionBuilder dns_servers(pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS, dns_servers_bytes, dns_servers_bytes_size);
+    
+    pcpp::DhcpOptionBuilder renewal_time(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_RENEWAL_TIME, config.get_renewal_time());
+    pcpp::DhcpOptionBuilder rebind_time(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REBINDING_TIME, config.get_rebind_time());
+
+    dhcp_layer->addOption(server_ip);
+    dhcp_layer->addOption(lease_time);
+    dhcp_layer->addOption(subnet_mask);
+    dhcp_layer->addOption(routers);
+    dhcp_layer->addOption(dns_servers);
+    dhcp_layer->addOption(renewal_time);
+    dhcp_layer->addOption(rebind_time);
+
+    pcpp::Packet request_packet;
+    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
+    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
+    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
+    request_packet.addLayer(eth_layer, true);
+    request_packet.addLayer(ip_layer, true);
+    request_packet.addLayer(udp_layer, true);
+    request_packet.addLayer(dhcp_layer, true);
+
+    request_packet.computeCalculateFields();
 
     return request_packet;
 }

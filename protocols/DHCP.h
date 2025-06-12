@@ -133,6 +133,11 @@ namespace serratia::protocols {
                         std::uint32_t transaction_id,
                         std::uint16_t seconds_elapsed,
                         std::uint16_t bootp_flags,
+                        pcpp::IPv4Address server_ip,
+                        std::uint32_t lease_time,
+                        pcpp::IPv4Address subnet_mask,
+                        std::vector<pcpp::IPv4Address> routers,
+                        std::array<std::uint8_t, 64> server_name,
                         std::vector<pcpp::IPv4Address> dns_servers,
                         std::uint32_t renewal_time,
                         std::uint32_t rebind_time)
@@ -142,6 +147,11 @@ namespace serratia::protocols {
               transaction_id_(transaction_id),
               seconds_elapsed_(seconds_elapsed),
               bootp_flags_(bootp_flags),
+              server_ip_(server_ip),
+              lease_time_(lease_time),
+              subnet_mask_(subnet_mask),
+              routers_(routers),
+              server_name_(server_name),
               dns_servers_(dns_servers),
               renewal_time_(renewal_time),
               rebind_time_(rebind_time) {}
@@ -153,6 +163,11 @@ namespace serratia::protocols {
         std::uint32_t get_transaction_id() const;
         std::uint16_t get_seconds_elapsed() const;
         std::uint16_t get_bootp_flags() const;
+        pcpp::IPv4Address get_server_ip() const;
+        std::uint32_t get_lease_time() const;
+        pcpp::IPv4Address get_subnet_mask() const;
+        std::vector<pcpp::IPv4Address> get_routers() const;
+        std::array<std::uint8_t, 64> get_server_name() const;
         std::vector<pcpp::IPv4Address> get_dns_servers() const;
         std::uint32_t get_renewal_time() const;
         std::uint32_t get_rebind_time() const;
@@ -163,6 +178,11 @@ namespace serratia::protocols {
         std::uint32_t transaction_id_;
         std::uint16_t seconds_elapsed_;
         std::uint16_t bootp_flags_;
+        pcpp::IPv4Address server_ip_;
+        std::uint32_t lease_time_;
+        pcpp::IPv4Address subnet_mask_;
+        std::vector<pcpp::IPv4Address> routers_;
+        std::array<std::uint8_t, 64> server_name_;
         std::vector<pcpp::IPv4Address> dns_servers_;
         std::uint32_t renewal_time_;
         std::uint32_t rebind_time_;
