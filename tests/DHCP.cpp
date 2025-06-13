@@ -189,6 +189,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( 0 == memcmp(param_request_option, param_request_list.data(), param_request_list.size()) );
 
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == client_host_name );
+        REQUIRE( dhcp_layer->getOptionsCount() == 7 ); //5 options listed above plus message type option & end option (with no data)
     }
 
     SECTION( "DHCP ACK" ) {
