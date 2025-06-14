@@ -221,10 +221,10 @@ TEST_CASE( "Build DHCP packets" ) {
         std::uint32_t renewal_time = 43200; //50% of lease time
         std::uint32_t rebind_time = 75600;  //87.5% of lease time
 
-        serratia::protocols::DHCPAckConfig dhcp_ack_config(dhcp_common_config, offered_ip, hops, transaction_id,
-                                                            seconds_elapsed, bootp_flags, server_ip, gateway_ip,
-                                                            lease_time, server_netmask, routers, server_name, 
-                                                            boot_file_name, dns_servers, renewal_time, rebind_time);
+        serratia::protocols::DHCPAckConfig dhcp_ack_config(dhcp_common_config, transaction_id, client_ip, 
+                                                           server_ip, lease_time, hops, seconds_elapsed, bootp_flags, server_ip,
+                                                           gateway_ip, server_name, boot_file_name, server_netmask, routers, 
+                                                           dns_servers, renewal_time, rebind_time);
         auto packet = serratia::protocols::buildDHCPAck(dhcp_ack_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
