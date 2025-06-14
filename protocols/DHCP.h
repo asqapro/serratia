@@ -107,52 +107,56 @@ namespace serratia::protocols {
     struct DHCPRequestConfig {
     public:
         DHCPRequestConfig(const DHCPCommonConfig common_config,
-                          std::uint8_t hops,
                           std::uint32_t transaction_id,
-                          std::uint16_t seconds_elapsed,
-                          std::uint16_t bootp_flags,
-                          pcpp::IPv4Address client_ip,
-                          pcpp::IPv4Address gateway_ip,
-                          pcpp::IPv4Address requested_ip,
-                          pcpp::IPv4Address server_ip,
-                          std::vector<std::uint8_t> param_request_list,
-                          std::string client_host_name)
+                          std::optional<std::uint8_t> hops = std::nullopt,
+                          std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                          std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                          std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
+                          std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                          std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+                          std::optional<pcpp::IPv4Address> server_id = std::nullopt,
+                          std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                          std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                          std::optional<std::string> client_host_name = std::nullopt)
             : common_config_(common_config),
               hops_(hops),
               transaction_id_(transaction_id),
               seconds_elapsed_(seconds_elapsed),
               bootp_flags_(bootp_flags),
-              client_ip_(client_ip),
-              gateway_ip_(gateway_ip),
-              requested_ip_(requested_ip),
-              server_ip_(server_ip),
+              client_ip_(std::move(client_ip)),
+              gateway_ip_(std::move(gateway_ip)),
+              requested_ip_(std::move(requested_ip)),
+              server_id_(std::move(server_id)),
+              client_id_(client_id),
               param_request_list_(param_request_list),
               client_host_name_(client_host_name) {}
         DHCPRequestConfig() = delete;
 
         DHCPCommonConfig get_common_config() const;
-        std::uint8_t get_hops() const;
+        std::optional<std::uint8_t> get_hops() const;
         std::uint32_t get_transaction_id() const;
-        std::uint16_t get_seconds_elapsed() const;
-        std::uint16_t get_bootp_flags() const;
-        pcpp::IPv4Address get_client_ip() const;
-        pcpp::IPv4Address get_gateway_ip() const;
-        pcpp::IPv4Address get_requested_ip() const;
-        pcpp::IPv4Address get_server_ip() const;
-        std::vector<std::uint8_t> get_param_request_list() const;
-        std::string get_client_host_name() const;
+        std::optional<std::uint16_t> get_seconds_elapsed() const;
+        std::optional<std::uint16_t> get_bootp_flags() const;
+        std::optional<pcpp::IPv4Address> get_client_ip() const;
+        std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+        std::optional<pcpp::IPv4Address> get_requested_ip() const;
+        std::optional<pcpp::IPv4Address> get_server_id() const;
+        std::optional<std::vector<std::uint8_t>> get_client_id() const;
+        std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
+        std::optional<std::string> get_client_host_name() const;
     private:
         DHCPCommonConfig common_config_;
-        std::uint8_t hops_;
+        std::optional<std::uint8_t> hops_;
         std::uint32_t transaction_id_;
-        std::uint16_t seconds_elapsed_;
-        std::uint16_t bootp_flags_;
-        pcpp::IPv4Address client_ip_;
-        pcpp::IPv4Address gateway_ip_;
-        pcpp::IPv4Address requested_ip_;
-        pcpp::IPv4Address server_ip_;
-        std::vector<std::uint8_t> param_request_list_;
-        std::string client_host_name_;
+        std::optional<std::uint16_t> seconds_elapsed_;
+        std::optional<std::uint16_t> bootp_flags_;
+        std::optional<pcpp::IPv4Address> client_ip_;
+        std::optional<pcpp::IPv4Address> gateway_ip_;
+        std::optional<pcpp::IPv4Address> requested_ip_;
+        std::optional<pcpp::IPv4Address> server_id_;
+        std::optional<std::vector<std::uint8_t>> client_id_;
+        std::optional<std::vector<std::uint8_t>> param_request_list_;
+        std::optional<std::string> client_host_name_;
     };
 
     struct DHCPAckConfig {

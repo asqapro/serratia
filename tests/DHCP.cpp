@@ -145,11 +145,14 @@ TEST_CASE( "Build DHCP packets" ) {
         std::copy_n(server_host_name.begin(), std::min(server_host_name.size(), server_name.size()), server_name.begin());
         std::array<std::uint8_t, 128> boot_file_name = {0};
 
+        std::vector<std::uint8_t> client_id = {0};
         std::vector<std::uint8_t> param_request_list = {1, 3, 6};
 
-        serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, hops, transaction_id, 
+        serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, transaction_id, hops,
                                                                    seconds_elapsed, bootp_flags, client_ip, gateway_ip,
-                                                                   requested_ip, server_ip, param_request_list, client_host_name);
+                                                                   requested_ip, server_ip, client_id, param_request_list,
+                                                                   client_host_name);
+        
         auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
@@ -180,10 +183,8 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == client_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
 
-        std::array<std::uint8_t, 7> client_id_arr = {1};
-        std::memcpy(client_id_arr.data()+1, src_mac.getRawData(), 6);
         auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).getValue();
-        REQUIRE( 0 == memcmp(client_id_option, client_id_arr.data(), client_id_arr.size()) );
+        REQUIRE( 0 == memcmp(client_id_option, client_id.data(), client_id.size()) );
 
         auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).getValue();
         REQUIRE( 0 == memcmp(param_request_option, param_request_list.data(), param_request_list.size()) );
@@ -249,8 +250,13 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
+
+        auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
+        REQUIRE( serratia::utils::parseIPv4Addresses(&router_option) == routers );
+
         auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
         REQUIRE( serratia::utils::parseIPv4Addresses(&dns_option) == dns_servers );
+        
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(renewal_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(rebind_time) );
         REQUIRE( dhcp_layer->getOptionsCount() == 9 ); //7 options listed above plus message type option & end option (with no data)
