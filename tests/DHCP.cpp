@@ -145,7 +145,11 @@ TEST_CASE( "Build DHCP packets" ) {
         std::copy_n(server_host_name.begin(), std::min(server_host_name.size(), server_name.size()), server_name.begin());
         std::array<std::uint8_t, 128> boot_file_name = {0};
 
-        std::vector<std::uint8_t> client_id = {0};
+        std::vector<std::uint8_t> client_id = {1};
+        auto src_mac_bytes = src_mac.toByteArray();
+        for (const auto octet : src_mac_bytes)
+            client_id.push_back(octet);
+
         std::vector<std::uint8_t> param_request_list = {1, 3, 6};
 
         serratia::protocols::DHCPRequestConfig dhcp_request_config(dhcp_common_config, transaction_id, hops,
