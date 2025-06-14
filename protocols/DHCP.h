@@ -111,13 +111,13 @@ namespace serratia::protocols {
                           std::optional<std::uint8_t> hops = std::nullopt,
                           std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
                           std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                          std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
                           std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                          std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
-                          std::optional<pcpp::IPv4Address> server_id = std::nullopt,
                           std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
                           std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
-                          std::optional<std::string> client_host_name = std::nullopt)
+                          std::optional<std::string> client_host_name = std::nullopt,
+                          std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
+                          std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+                          std::optional<pcpp::IPv4Address> server_id = std::nullopt)
             : common_config_(common_config),
               hops_(hops),
               transaction_id_(transaction_id),
