@@ -139,12 +139,6 @@ TEST_CASE( "Build DHCP packets" ) {
         pcpp::IPv4Address gateway_ip = server_ip;
         pcpp::IPv4Address requested_ip = client_ip;
 
-        std::vector<pcpp::IPv4Address> routers = {server_ip};
-        std::array<std::uint8_t, 64> server_name = {0};
-        //Copy server_host_name string into server_name array
-        std::copy_n(server_host_name.begin(), std::min(server_host_name.size(), server_name.size()), server_name.begin());
-        std::array<std::uint8_t, 128> boot_file_name = {0};
-
         std::vector<std::uint8_t> client_id = {1};
         auto src_mac_bytes = src_mac.toByteArray();
         for (const auto octet : src_mac_bytes)
