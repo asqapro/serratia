@@ -77,6 +77,57 @@ namespace serratia::protocols {
         UDPPorts udp_ports_;
     };
 
+    struct DHCPDiscoverConfig {
+    public:
+        DHCPDiscoverConfig(const DHCPCommonConfig common_config,
+                        std::uint32_t transaction_id,
+                        std::optional<std::uint8_t> hops = std::nullopt,
+                        std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                        std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                        std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                        std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                        std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                        std::optional<std::string> client_host_name = std::nullopt,
+                        std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
+                        std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt)
+            : common_config_(common_config),
+              hops_(hops),
+              transaction_id_(transaction_id),
+              seconds_elapsed_(seconds_elapsed),
+              bootp_flags_(bootp_flags),
+              gateway_ip_(std::move(gateway_ip)),
+              client_id_(client_id),
+              param_request_list_(param_request_list),
+              client_host_name_(client_host_name),
+              max_dhcp_message_size_(max_dhcp_message_size),
+              vendor_class_id_(vendor_class_id) {}
+        DHCPDiscoverConfig() = delete;
+
+        DHCPCommonConfig get_common_config() const;
+        std::optional<std::uint8_t> get_hops() const;
+        std::uint32_t get_transaction_id() const;
+        std::optional<std::uint16_t> get_seconds_elapsed() const;
+        std::optional<std::uint16_t> get_bootp_flags() const;
+        std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+        std::optional<std::vector<std::uint8_t>> get_client_id() const;
+        std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
+        std::optional<std::string> get_client_host_name() const;
+        std::optional<std::uint16_t> get_max_dhcp_message_size() const;
+        std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
+    private:
+        DHCPCommonConfig common_config_;
+        std::optional<std::uint8_t> hops_;
+        std::uint32_t transaction_id_;
+        std::optional<std::uint16_t> seconds_elapsed_;
+        std::optional<std::uint16_t> bootp_flags_;
+        std::optional<pcpp::IPv4Address> gateway_ip_;
+        std::optional<std::vector<std::uint8_t>> client_id_;
+        std::optional<std::vector<std::uint8_t>> param_request_list_;
+        std::optional<std::string> client_host_name_;
+        std::optional<std::uint16_t> max_dhcp_message_size_;
+        std::optional<std::vector<std::uint8_t>> vendor_class_id_;
+    };
+
     struct DHCPOfferConfig {
     public:
         DHCPOfferConfig(const DHCPCommonConfig& common_config,
@@ -282,7 +333,7 @@ namespace serratia::protocols {
         std::optional<std::uint32_t> rebind_time_;
     };
 
-    pcpp::Packet buildDHCPDiscovery(const DHCPCommonConfig& config);
+    pcpp::Packet buildDHCPDiscover(const DHCPDiscoverConfig& config);
     pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
     pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
     pcpp::Packet buildDHCPAck(const DHCPAckConfig& config);

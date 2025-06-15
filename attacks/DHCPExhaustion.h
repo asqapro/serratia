@@ -8,11 +8,11 @@
 
 class DHCPExhaustion : public IAttack {
 public:
-    DHCPExhaustion(const serratia::protocols::DHCPCommonConfig& config, 
+    DHCPExhaustion(const serratia::protocols::DHCPDiscoverConfig& config, 
                     std::shared_ptr<pcpp::PcapLiveDevice> send_dev) 
         : config_(config), send_dev_(std::move(send_dev)) {}
     void run() override;
 private:
-    serratia::protocols::DHCPCommonConfig config_;
+    serratia::protocols::DHCPDiscoverConfig config_;
     std::shared_ptr<pcpp::PcapLiveDevice> send_dev_;
 };
