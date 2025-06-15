@@ -64,6 +64,7 @@ TEST_CASE( "Build DHCP packets" ) {
 
     std::string server_host_name = "skalrog";
     std::string client_host_name = "skalrog_client";
+    std::string boot_file_name = "skalrog";
     std::uint32_t lease_time = 86400;
     pcpp::IPv4Address server_netmask("255.255.255.0");
 
@@ -101,22 +102,71 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
-        pcpp::IPv4Address offered_ip = client_ip;
+        std::uint8_t hops = 0;
+        std::uint32_t transaction_id = 1; //randomize this for testing
+        std::uint16_t seconds_elapsed = 0;
+        std::uint16_t bootp_flags = 0;
+        pcpp::IPv4Address your_ip = client_ip;
+        pcpp::IPv4Address gateway_ip = server_ip;
+        std::array<std::uint8_t, 64> server_name = {0};
+        //Copy server_host_name string into server_name array
+        std::copy_n(server_host_name.begin(), std::min(server_host_name.size(), server_name.size()), server_name.begin());
+        std::array<std::uint8_t, 128> boot_name = {0};
+        std::copy_n(boot_file_name.begin(), std::min(boot_file_name.size(), boot_name.size()), boot_name.begin());
 
-        serratia::protocols::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, server_ip, offered_ip, lease_time, server_netmask);
+        pcpp::IPv4Address server_id = server_ip;
+
+        std::vector<pcpp::IPv4Address> routers = {server_ip};
+        std::vector<pcpp::IPv4Address> dns_servers = {pcpp::IPv4Address("9.9.9.9")}; //Quad9 > Google
+        std::uint32_t renewal_time = 43200; //50% of lease time
+        std::uint32_t rebind_time = 75600;  //87.5% of lease time
+
+        serratia::protocols::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, transaction_id, hops,
+                                                               your_ip, server_id, seconds_elapsed, bootp_flags, server_ip, 
+                                                               gateway_ip, server_name, boot_name, lease_time, server_netmask,
+                                                               routers, dns_servers, renewal_time, rebind_time);
         auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
         auto dhcp_header = dhcp_layer->getDhcpHeader();
+
         REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
-        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
-        REQUIRE( offered_ip == dhcp_header->yourIpAddress );
+        REQUIRE( 1 == dhcp_header->hardwareType );
+        REQUIRE( 6 == dhcp_header->hardwareAddressLength );
+        REQUIRE( hops == dhcp_header->hops );
+        REQUIRE( transaction_id == dhcp_header->transactionID );
+        REQUIRE( seconds_elapsed == dhcp_header->secondsElapsed );
+        REQUIRE( bootp_flags == dhcp_header->flags );
+        REQUIRE( 0 == dhcp_header->clientIpAddress );
+        REQUIRE( client_ip == dhcp_header->yourIpAddress );
+        REQUIRE( server_ip == dhcp_header->serverIpAddress );
+        REQUIRE( server_ip == dhcp_header->gatewayIpAddress );
+        REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
+
+        auto server_name_start = reinterpret_cast<const char*>(dhcp_header->serverName);
+        auto server_name_end = server_name_start + sizeof(dhcp_header->serverName);
+        auto terminator_position = std::find(server_name_start, server_name_end, '\0');
+        std::string header_server_name(server_name_start, terminator_position);
+        REQUIRE( server_host_name == header_server_name );
+
+        std::string header_boot_file_name(reinterpret_cast<const char*>(dhcp_header->bootFilename));
+        REQUIRE( boot_file_name == header_boot_file_name );
+
         REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == server_ip );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(lease_time) );
         REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == server_netmask );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_NAME_SERVERS).getValueAsIpAddr() == server_ip );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == server_ip ); //double check this
+
+        auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
+        REQUIRE( serratia::utils::parseIPv4Addresses(&router_option) == routers );
+
+        auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
+        REQUIRE( serratia::utils::parseIPv4Addresses(&dns_option) == dns_servers );
+
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(renewal_time) );
+        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(rebind_time) );
+        REQUIRE( dhcp_layer->getOptionsCount() == 9 ); //7 options listed above plus message type option & end option (with no data)
     }
     
     SECTION( "DHCP initial request" ) {

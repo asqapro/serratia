@@ -80,28 +80,76 @@ namespace serratia::protocols {
     struct DHCPOfferConfig {
     public:
         DHCPOfferConfig(const DHCPCommonConfig& common_config,
-                        pcpp::IPv4Address server_ip, 
-                        pcpp::IPv4Address offered_ip, 
-                        std::uint32_t lease_time, 
-                        pcpp::IPv4Address netmask)
-            : common_config_(common_config), 
-              server_ip_(server_ip), 
-              offered_ip_(offered_ip), 
-              lease_time_(lease_time), 
-              netmask_(netmask) {}
+                        std::uint32_t transaction_id,
+                        std::optional<std::uint8_t> hops,
+                        pcpp::IPv4Address your_ip,
+                        pcpp::IPv4Address server_id,
+                        std::optional<std::uint16_t> seconds_elapsed,
+                        std::optional<std::uint16_t> bootp_flags,
+                        std::optional<pcpp::IPv4Address> server_ip,
+                        std::optional<pcpp::IPv4Address> gateway_ip,
+                        std::optional<std::array<std::uint8_t, 64>> server_name,
+                        std::optional<std::array<std::uint8_t, 128>> boot_name,
+                        std::optional<std::uint32_t> lease_time,
+                        std::optional<pcpp::IPv4Address> subnet_mask,
+                        std::optional<std::vector<pcpp::IPv4Address>> routers,
+                        std::optional<std::vector<pcpp::IPv4Address>> dns_servers,
+                        std::optional<std::uint32_t> renewal_time,
+                        std::optional<std::uint32_t> rebind_time)
+            : common_config_(common_config),
+              transaction_id_(transaction_id),
+              hops_(hops),
+              your_ip_(std::move(your_ip)),
+              server_id_(std::move(server_id)),
+              seconds_elapsed_(seconds_elapsed),
+              bootp_flags_(bootp_flags),
+              server_ip_(std::move(server_ip)),
+              gateway_ip_(std::move(gateway_ip)),
+              server_name_(server_name),
+              boot_name_(boot_name),
+              lease_time_(lease_time),
+              subnet_mask_(std::move(subnet_mask)),
+              routers_(std::move(routers)),
+              dns_servers_(std::move(dns_servers)),
+              renewal_time_(renewal_time),
+              rebind_time_(rebind_time) {}
         DHCPOfferConfig() = delete;
 
-        pcpp::IPv4Address get_server_ip() const;
-        pcpp::IPv4Address get_offered_ip() const;
-        std::uint32_t get_lease_time() const;
-        pcpp::IPv4Address get_netmask() const;
         DHCPCommonConfig get_common_config() const;
+        std::optional<std::uint8_t> get_hops() const;
+        std::uint32_t get_transaction_id() const;
+        std::optional<std::uint16_t> get_seconds_elapsed() const;
+        std::optional<std::uint16_t> get_bootp_flags() const;
+        pcpp::IPv4Address get_your_ip() const;
+        std::optional<pcpp::IPv4Address> get_server_ip() const;
+        std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+        std::optional<std::array<std::uint8_t, 64>> get_server_name() const;
+        std::optional<std::array<std::uint8_t, 128>> get_boot_name() const;
+        pcpp::IPv4Address get_server_id() const;
+        std::optional<std::uint32_t> get_lease_time() const;
+        std::optional<pcpp::IPv4Address> get_subnet_mask() const;
+        std::optional<std::vector<pcpp::IPv4Address>> get_routers() const;
+        std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
+        std::optional<std::uint32_t> get_renewal_time() const;
+        std::optional<std::uint32_t> get_rebind_time() const;
     private:
-        pcpp::IPv4Address server_ip_;
-        pcpp::IPv4Address offered_ip_;
-        std::uint32_t lease_time_;
-        pcpp::IPv4Address netmask_;
         DHCPCommonConfig common_config_;
+        std::optional<std::uint8_t> hops_;
+        std::uint32_t transaction_id_;
+        std::optional<std::uint16_t> seconds_elapsed_;
+        std::optional<std::uint16_t> bootp_flags_;
+        pcpp::IPv4Address your_ip_;
+        std::optional<pcpp::IPv4Address> server_ip_;
+        std::optional<pcpp::IPv4Address> gateway_ip_;
+        std::optional<std::array<std::uint8_t, 64>> server_name_;
+        std::optional<std::array<std::uint8_t, 128>> boot_name_;
+        pcpp::IPv4Address server_id_;
+        std::optional<std::uint32_t> lease_time_;
+        std::optional<pcpp::IPv4Address> subnet_mask_;
+        std::optional<std::vector<pcpp::IPv4Address>> routers_;
+        std::optional<std::vector<pcpp::IPv4Address>> dns_servers_;
+        std::optional<std::uint32_t> renewal_time_;
+        std::optional<std::uint32_t> rebind_time_;
     };
     
     struct DHCPRequestConfig {
