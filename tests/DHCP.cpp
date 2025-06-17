@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <cstring>
 #include <arpa/inet.h>
+#include <random>
 
 #include "../protocols/DHCP.h"
 #include "../utilities/DHCPUtils.h"
@@ -68,6 +69,11 @@ TEST_CASE( "Build DHCP packets" ) {
     std::uint32_t lease_time = 86400;
     pcpp::IPv4Address subnet_mask("255.255.255.0");
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<uint32_t> distrib;
+    std::uint32_t transaction_id = distrib(gen);
+
     SECTION( "DHCP discover" ) {
         auto src_mac = client_mac;
         auto dst_mac = broadcast_mac;
@@ -82,7 +88,6 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         std::uint8_t hops = 0;
-        std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0x8000;
         pcpp::IPv4Address gateway_ip = server_ip;
@@ -157,7 +162,6 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         std::uint8_t hops = 0;
-        std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
         pcpp::IPv4Address your_ip = client_ip;
@@ -237,7 +241,6 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         std::uint8_t hops = 0;
-        std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
         pcpp::IPv4Address gateway_ip = server_ip;
@@ -311,7 +314,6 @@ TEST_CASE( "Build DHCP packets" ) {
         serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
 
         std::uint8_t hops = 0;
-        std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
         pcpp::IPv4Address gateway_ip = server_ip;
@@ -380,7 +382,6 @@ TEST_CASE( "Build DHCP packets" ) {
 
         pcpp::IPv4Address offered_ip = client_ip;
         std::uint8_t hops = 0;
-        std::uint32_t transaction_id = 1; //randomize this for testing
         std::uint16_t seconds_elapsed = 0;
         std::uint16_t bootp_flags = 0;
         pcpp::IPv4Address gateway_ip = server_ip;

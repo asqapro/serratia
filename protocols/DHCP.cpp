@@ -34,6 +34,7 @@ std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig
 std::optional<std::string> serratia::protocols::DHCPDiscoverConfig::get_client_host_name() const { return client_host_name_; }
 std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_dhcp_message_size() const { return max_dhcp_message_size_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_vendor_class_id() const { return vendor_class_id_; }
+void serratia::protocols::DHCPDiscoverConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPOfferConfig::get_common_config() const { return common_config_; }
 std::optional<std::uint8_t> serratia::protocols::DHCPOfferConfig::get_hops() const { return hops_; }
@@ -52,6 +53,7 @@ std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPOfferConf
 std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPOfferConfig::get_dns_servers() const { return dns_servers_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPOfferConfig::get_renewal_time() const { return renewal_time_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPOfferConfig::get_rebind_time() const { return rebind_time_; }
+void serratia::protocols::DHCPOfferConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPRequestConfig::get_common_config() const { return common_config_; }
 std::optional<std::uint8_t> serratia::protocols::DHCPRequestConfig::get_hops() const { return hops_; }
@@ -65,6 +67,7 @@ std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_ser
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_client_id() const { return client_id_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_param_request_list() const { return param_request_list_; }
 std::optional<std::string> serratia::protocols::DHCPRequestConfig::get_client_host_name() const { return client_host_name_; }
+void serratia::protocols::DHCPRequestConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPAckConfig::get_common_config() const { return common_config_; }
 pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_your_ip() const { return your_ip_; }
@@ -83,6 +86,7 @@ std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPAckConfig:
 std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPAckConfig::get_dns_servers() const { return dns_servers_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPAckConfig::get_renewal_time() const { return renewal_time_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPAckConfig::get_rebind_time() const { return rebind_time_; }
+void serratia::protocols::DHCPAckConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::DHCPDiscoverConfig& config) {
     auto common_config = config.get_common_config();
@@ -142,6 +146,9 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
         pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, vendor_class_id_bytes, vendor_class_id_size);
         dhcp_layer->addOption(vendor_class_id_opt);
     }
+
+    for (auto opt : config.get_extra_options())
+        dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
     
     pcpp::Packet request_packet;
     auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
@@ -232,6 +239,9 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
         dhcp_layer->addOption(rebind_time_opt);
     }
 
+    for (auto opt : config.get_extra_options())
+        dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+
     pcpp::Packet offer_packet;
     auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
     auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
@@ -300,6 +310,9 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
         pcpp::DhcpOptionBuilder client_host_name_opt(pcpp::DhcpOptionTypes::DHCPOPT_HOST_NAME, client_host_name.value());
         dhcp_layer->addOption(client_host_name_opt);
     }
+
+    for (auto opt : config.get_extra_options())
+        dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
     
     pcpp::Packet request_packet;
     auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
@@ -384,6 +397,9 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
         pcpp::DhcpOptionBuilder rebind_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REBINDING_TIME, rebind_time.value());
         dhcp_layer->addOption(rebind_time_opt);
     }
+
+    for (auto opt : config.get_extra_options())
+        dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
 
     pcpp::Packet request_packet;
     auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();

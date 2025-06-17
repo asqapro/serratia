@@ -114,6 +114,9 @@ namespace serratia::protocols {
         std::optional<std::string> get_client_host_name() const;
         std::optional<std::uint16_t> get_max_dhcp_message_size() const;
         std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
+        std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
+
+        void add_option(pcpp::DhcpOptionBuilder option);
     private:
         DHCPCommonConfig common_config_;
         std::optional<std::uint8_t> hops_;
@@ -126,6 +129,7 @@ namespace serratia::protocols {
         std::optional<std::string> client_host_name_;
         std::optional<std::uint16_t> max_dhcp_message_size_;
         std::optional<std::vector<std::uint8_t>> vendor_class_id_;
+        std::vector<pcpp::DhcpOptionBuilder> extra_options;
     };
 
     struct DHCPOfferConfig {
@@ -183,6 +187,9 @@ namespace serratia::protocols {
         std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
         std::optional<std::uint32_t> get_renewal_time() const;
         std::optional<std::uint32_t> get_rebind_time() const;
+        std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
+
+        void add_option(pcpp::DhcpOptionBuilder option);
     private:
         DHCPCommonConfig common_config_;
         std::optional<std::uint8_t> hops_;
@@ -201,6 +208,7 @@ namespace serratia::protocols {
         std::optional<std::vector<pcpp::IPv4Address>> dns_servers_;
         std::optional<std::uint32_t> renewal_time_;
         std::optional<std::uint32_t> rebind_time_;
+        std::vector<pcpp::DhcpOptionBuilder> extra_options;
     };
     
     struct DHCPRequestConfig {
@@ -243,6 +251,9 @@ namespace serratia::protocols {
         std::optional<std::vector<std::uint8_t>> get_client_id() const;
         std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
         std::optional<std::string> get_client_host_name() const;
+        std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
+
+        void add_option(pcpp::DhcpOptionBuilder option);
     private:
         DHCPCommonConfig common_config_;
         std::optional<std::uint8_t> hops_;
@@ -256,6 +267,7 @@ namespace serratia::protocols {
         std::optional<std::vector<std::uint8_t>> client_id_;
         std::optional<std::vector<std::uint8_t>> param_request_list_;
         std::optional<std::string> client_host_name_;
+        std::vector<pcpp::DhcpOptionBuilder> extra_options;
     };
 
     struct DHCPAckConfig {
@@ -313,6 +325,9 @@ namespace serratia::protocols {
         std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
         std::optional<std::uint32_t> get_renewal_time() const;
         std::optional<std::uint32_t> get_rebind_time() const;
+        std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
+
+        void add_option(pcpp::DhcpOptionBuilder option);
     private:
         DHCPCommonConfig common_config_;
         std::optional<std::uint8_t> hops_;
@@ -331,6 +346,7 @@ namespace serratia::protocols {
         std::optional<std::vector<pcpp::IPv4Address>> dns_servers_;
         std::optional<std::uint32_t> renewal_time_;
         std::optional<std::uint32_t> rebind_time_;
+        std::vector<pcpp::DhcpOptionBuilder> extra_options;
     };
 
     pcpp::Packet buildDHCPDiscover(const DHCPDiscoverConfig& config);
