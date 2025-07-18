@@ -45,22 +45,22 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
-        auto eth_layer = dhcp_common_config.GetMACEndpoints().GetEthLayer();
-        REQUIRE( eth_layer->getSourceMac() == src_mac );
-        REQUIRE( eth_layer->getDestMac() == dst_mac );
+        auto config_eth_layer = dhcp_common_config.GetEthLayer();
+        REQUIRE( config_eth_layer->getSourceMac() == src_mac );
+        REQUIRE( config_eth_layer->getDestMac() == dst_mac );
 
-        auto ip_layer = dhcp_common_config.GetIPEndpoints().GetIPLayer();
-        REQUIRE( ip_layer->getSrcIPAddress() == src_ip );
-        REQUIRE( ip_layer->getDstIPAddress() == dst_ip );
+        auto config_ip_layer = dhcp_common_config.GetIPLayer();
+        REQUIRE( config_ip_layer->getSrcIPAddress() == src_ip );
+        REQUIRE( config_ip_layer->getDstIPAddress() == dst_ip );
 
-        auto udp_layer = dhcp_common_config.GetUDPPorts().GetUDPLayer();
-        REQUIRE( udp_layer->getSrcPort() == src_port );
-        REQUIRE( udp_layer->getDstPort() == dst_port );
+        auto config_udp_layer = dhcp_common_config.GetUDPLayer();
+        REQUIRE( config_udp_layer->getSrcPort() == src_port );
+        REQUIRE( config_udp_layer->getDstPort() == dst_port );
     }
 
     std::string server_host_name = "skalrog";
@@ -82,10 +82,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::uint8_t hops = 0;
         std::uint16_t seconds_elapsed = 0;
@@ -156,10 +156,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = server_port;
         auto dst_port = client_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::uint8_t hops = 0;
         std::uint16_t seconds_elapsed = 0;
@@ -235,10 +235,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::uint8_t hops = 0;
         std::uint16_t seconds_elapsed = 0;
@@ -308,10 +308,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::uint8_t hops = 0;
         std::uint16_t seconds_elapsed = 0;
@@ -375,10 +375,10 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = client_port;
         auto dst_port = server_port;
 
-        serratia::protocols::MACEndpoints mac_endpoints(src_mac, dst_mac);
-        serratia::protocols::IPEndpoints ip_endpoints(src_ip, dst_ip);
-        serratia::protocols::UDPPorts udp_ports(src_port, dst_port);
-        serratia::protocols::DHCPCommonConfig dhcp_common_config(mac_endpoints, ip_endpoints, udp_ports);
+        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         pcpp::IPv4Address offered_ip = client_ip;
         std::uint8_t hops = 0;

@@ -4,24 +4,15 @@
 #include <cstdint>
 #include <optional>
 #include <pcapplusplus/DhcpLayer.h>
+#include <pcapplusplus/EthLayer.h>
+#include <pcapplusplus/IPv4Layer.h>
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/Packet.h>
+#include <pcapplusplus/UdpLayer.h>
 
-pcpp::MacAddress serratia::protocols::MACEndpoints::GetSrcMAC() const { return src_mac_; }
-pcpp::MacAddress serratia::protocols::MACEndpoints::GetDstMAC() const { return dst_mac_; }
-pcpp::EthLayer* serratia::protocols::MACEndpoints::GetEthLayer() const { return new pcpp::EthLayer(src_mac_, dst_mac_); }
-
-pcpp::IPv4Address serratia::protocols::IPEndpoints::GetSrcIP() const { return src_ip_; }
-pcpp::IPv4Address serratia::protocols::IPEndpoints::GetDstIP() const { return dst_ip_; }
-pcpp::IPv4Layer* serratia::protocols::IPEndpoints::GetIPLayer() const { return new pcpp::IPv4Layer(src_ip_, dst_ip_); }
-
-std::uint16_t serratia::protocols::UDPPorts::GetSrcPort() const { return src_port_; }
-std::uint16_t serratia::protocols::UDPPorts::GetDstPort() const { return dst_port_; }
-pcpp::UdpLayer* serratia::protocols::UDPPorts::GetUDPLayer() const { return new pcpp::UdpLayer(src_port_, dst_port_); }
-
-serratia::protocols::MACEndpoints serratia::protocols::DHCPCommonConfig::GetMACEndpoints() const { return mac_endpoints_; }
-serratia::protocols::IPEndpoints serratia::protocols::DHCPCommonConfig::GetIPEndpoints() const { return ip_endpoints_; }
-serratia::protocols::UDPPorts serratia::protocols::DHCPCommonConfig::GetUDPPorts() const { return udp_ports_; }
+pcpp::EthLayer* serratia::protocols::DHCPCommonConfig::GetEthLayer() const { return eth_layer_; }
+pcpp::IPv4Layer* serratia::protocols::DHCPCommonConfig::GetIPLayer() const { return ip_layer_; }
+pcpp::UdpLayer* serratia::protocols::DHCPCommonConfig::GetUDPLayer() const { return udp_layer_; }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPDiscoverConfig::get_common_config() const { return common_config_; }
 std::optional<std::uint8_t> serratia::protocols::DHCPDiscoverConfig::get_hops() const { return hops_; }
@@ -34,6 +25,7 @@ std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig
 std::optional<std::string> serratia::protocols::DHCPDiscoverConfig::get_client_host_name() const { return client_host_name_; }
 std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_dhcp_message_size() const { return max_dhcp_message_size_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_vendor_class_id() const { return vendor_class_id_; }
+std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPDiscoverConfig::get_extra_options() const { return extra_options; }
 void serratia::protocols::DHCPDiscoverConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPOfferConfig::get_common_config() const { return common_config_; }
@@ -53,6 +45,7 @@ std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPOfferConf
 std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPOfferConfig::get_dns_servers() const { return dns_servers_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPOfferConfig::get_renewal_time() const { return renewal_time_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPOfferConfig::get_rebind_time() const { return rebind_time_; }
+std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPOfferConfig::get_extra_options() const { return extra_options; }
 void serratia::protocols::DHCPOfferConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPRequestConfig::get_common_config() const { return common_config_; }
@@ -67,6 +60,7 @@ std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_ser
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_client_id() const { return client_id_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_param_request_list() const { return param_request_list_; }
 std::optional<std::string> serratia::protocols::DHCPRequestConfig::get_client_host_name() const { return client_host_name_; }
+std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPRequestConfig::get_extra_options() const { return extra_options; }
 void serratia::protocols::DHCPRequestConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPAckConfig::get_common_config() const { return common_config_; }
@@ -86,11 +80,12 @@ std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPAckConfig:
 std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPAckConfig::get_dns_servers() const { return dns_servers_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPAckConfig::get_renewal_time() const { return renewal_time_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPAckConfig::get_rebind_time() const { return rebind_time_; }
+std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPAckConfig::get_extra_options() const { return extra_options; }
 void serratia::protocols::DHCPAckConfig::add_option(pcpp::DhcpOptionBuilder option) { extra_options.push_back(option); }
 
 pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::DHCPDiscoverConfig& config) {
     auto common_config = config.get_common_config();
-    auto src_mac = common_config.GetMACEndpoints().GetSrcMAC();
+    auto src_mac = common_config.GetEthLayer()->getSourceMac();
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -151,9 +146,9 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
         dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
     
     pcpp::Packet request_packet;
-    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
-    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
-    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
+    auto eth_layer = common_config.GetEthLayer();
+    auto ip_layer = common_config.GetIPLayer();
+    auto udp_layer = common_config.GetUDPLayer();
     request_packet.addLayer(eth_layer, true);
     request_packet.addLayer(ip_layer, true);
     request_packet.addLayer(udp_layer, true);
@@ -166,7 +161,7 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
 
 pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCPOfferConfig& config) {
     auto common_config = config.get_common_config();
-    auto dst_mac = common_config.GetMACEndpoints().GetDstMAC();
+    auto dst_mac = common_config.GetEthLayer()->getDestMac();
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -243,9 +238,9 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
         dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
 
     pcpp::Packet offer_packet;
-    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
-    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
-    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
+    auto eth_layer = common_config.GetEthLayer();
+    auto ip_layer = common_config.GetIPLayer();
+    auto udp_layer = common_config.GetUDPLayer();
     offer_packet.addLayer(eth_layer, true);
     offer_packet.addLayer(ip_layer, true);
     offer_packet.addLayer(udp_layer, true);
@@ -256,7 +251,7 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
 
 pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DHCPRequestConfig& config) {
     auto common_config = config.get_common_config();
-    auto src_mac = common_config.GetMACEndpoints().GetSrcMAC();
+    auto src_mac = common_config.GetEthLayer()->getSourceMac();
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_REQUEST, src_mac);
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -315,9 +310,9 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
         dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
     
     pcpp::Packet request_packet;
-    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
-    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
-    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
+    auto eth_layer = common_config.GetEthLayer();
+    auto ip_layer = common_config.GetIPLayer();
+    auto udp_layer = common_config.GetUDPLayer();
     request_packet.addLayer(eth_layer, true);
     request_packet.addLayer(ip_layer, true);
     request_packet.addLayer(udp_layer, true);
@@ -330,7 +325,7 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
 
 pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAckConfig& config) {
     auto common_config = config.get_common_config();
-    auto dst_mac = common_config.GetMACEndpoints().GetDstMAC();
+    auto dst_mac = common_config.GetEthLayer()->getDestMac();
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -402,9 +397,9 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
         dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
 
     pcpp::Packet request_packet;
-    auto eth_layer = common_config.GetMACEndpoints().GetEthLayer();
-    auto ip_layer = common_config.GetIPEndpoints().GetIPLayer();
-    auto udp_layer = common_config.GetUDPPorts().GetUDPLayer();
+    auto eth_layer = common_config.GetEthLayer();
+    auto ip_layer = common_config.GetIPLayer();
+    auto udp_layer = common_config.GetUDPLayer();
     request_packet.addLayer(eth_layer, true);
     request_packet.addLayer(ip_layer, true);
     request_packet.addLayer(udp_layer, true);

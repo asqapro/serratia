@@ -15,66 +15,24 @@
 #include <utility>
 
 namespace serratia::protocols {
-    struct MACEndpoints {
-    public:
-        MACEndpoints(pcpp::MacAddress src_mac, 
-                     pcpp::MacAddress dst_mac) 
-            : src_mac_(src_mac), dst_mac_(dst_mac) {}
-        MACEndpoints() = delete;
-        pcpp::MacAddress GetSrcMAC() const;
-        pcpp::MacAddress GetDstMAC() const;
-        pcpp::EthLayer* GetEthLayer() const;
-    private:
-        pcpp::MacAddress src_mac_;
-        pcpp::MacAddress dst_mac_;
-    };
-
-    struct IPEndpoints {
-    public:
-        IPEndpoints(pcpp::IPv4Address src_ip,
-                    pcpp::IPv4Address dst_ip)
-            : src_ip_(src_ip), dst_ip_(dst_ip) {}
-        IPEndpoints() = delete;
-        pcpp::IPv4Address GetSrcIP() const;
-        pcpp::IPv4Address GetDstIP() const;
-        pcpp::IPv4Layer* GetIPLayer() const;
-    private:
-        pcpp::IPv4Address src_ip_;
-        pcpp::IPv4Address dst_ip_;
-    };
-
-    struct UDPPorts {
-    public:
-        UDPPorts(std::uint16_t src_port,
-                 std::uint16_t dst_port)
-            : src_port_(src_port), dst_port_(dst_port) {}
-        UDPPorts() = delete;
-        std::uint16_t GetSrcPort() const;
-        std::uint16_t GetDstPort() const;
-        pcpp::UdpLayer* GetUDPLayer() const;
-    private:
-        std::uint16_t src_port_;
-        std::uint16_t dst_port_;
-    };
-
     struct DHCPCommonConfig {
     public:
-        DHCPCommonConfig(const MACEndpoints& mac_endpoints,
-                         const IPEndpoints& ip_endpoints,
-                         const UDPPorts& udp_ports) 
-            : mac_endpoints_(std::move(mac_endpoints)), 
-              ip_endpoints_(std::move(ip_endpoints)),
-              udp_ports_(std::move(udp_ports)) {}
+        DHCPCommonConfig(pcpp::EthLayer* eth_layer,
+                         pcpp::IPv4Layer* ip_layer,
+                         pcpp::UdpLayer* udp_layer) 
+            : eth_layer_(eth_layer),
+              ip_layer_(ip_layer),
+              udp_layer_(udp_layer) {}
         DHCPCommonConfig() = delete;
 
-        MACEndpoints GetMACEndpoints() const;
-        IPEndpoints GetIPEndpoints() const;
-        UDPPorts GetUDPPorts() const;
+        pcpp::EthLayer* GetEthLayer() const;
+        pcpp::IPv4Layer* GetIPLayer() const;
+        pcpp::UdpLayer* GetUDPLayer() const;
 
     private:
-        MACEndpoints mac_endpoints_;
-        IPEndpoints ip_endpoints_;
-        UDPPorts udp_ports_;
+        pcpp::EthLayer* eth_layer_;
+        pcpp::IPv4Layer* ip_layer_;
+        pcpp::UdpLayer* udp_layer_;
     };
 
     struct DHCPDiscoverConfig {
