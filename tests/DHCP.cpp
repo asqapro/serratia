@@ -435,3 +435,8 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( dhcp_layer->getOptionsCount() == 9 ); //7 options listed above plus message type option & end option (with no data)
     }
 }
+
+TEST_CASE( "Interact with DHCP server" ) {
+    serratia::utils::DHCPServer server;
+    server.run();
+}

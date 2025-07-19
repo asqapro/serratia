@@ -13,6 +13,8 @@
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/PcapLiveDeviceList.h>
 
+//TODO: Move this function somewhere else
+//or move the server stuff somewhere else
 std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::DhcpOption* option) {
     std::vector<pcpp::IPv4Address> addresses;
 
@@ -53,6 +55,27 @@ serratia::utils::DHCPServer::DHCPServer() {
     lease_time = std::chrono::hours(1);
     renewal_time = lease_time / 2;
     rebind_time = lease_time / (8/7);
+}
+
+
+
+void serratia::utils::DHCPServer::run() {
+
+}
+
+void serratia::utils::DHCPServer::handlePacket(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
+    pcpp::Packet parsed_packet(packet);
+    auto dhcp_layer = parsed_packet.getLayerOfType<pcpp::DhcpLayer>();
+    switch (dhcp_layer->getMessageType()) {
+        case pcpp::DHCP_DISCOVER:
+            handleDiscover(parsed_packet);
+        case pcpp::DHCP_REQUEST:
+            handleRequest(parsed_packet);
+        case pcpp::DHCP_RELEASE:
+            handleRelease(parsed_packet);
+        default:
+        //TOOD: ignore the request? Idk yet;
+    }
 }
 
 pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac) {

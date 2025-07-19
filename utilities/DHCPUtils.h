@@ -8,6 +8,7 @@
 #include <pcapplusplus/MacAddress.h>
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/PcapLiveDevice.h>
+#include <pcapplusplus/RawPacket.h>
 #include <unordered_map>
 #include <vector>
 #include <chrono>
@@ -40,6 +41,7 @@ namespace serratia::utils {
         DHCPServer();
         void run();
     private:
+        void handlePacket(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);
         void handleDiscover(const pcpp::Packet& dhcp_packet);
         void handleRequest(const pcpp::Packet& dhcp_packet);
         void handleRelease(const pcpp::Packet& dhcp_packet);
