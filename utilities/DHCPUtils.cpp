@@ -73,8 +73,8 @@ void serratia::utils::DHCPServer::handlePacket(pcpp::RawPacket* packet, pcpp::Pc
             handleRequest(parsed_packet);
         case pcpp::DHCP_RELEASE:
             handleRelease(parsed_packet);
-        default:
-        //TOOD: ignore the request? Idk yet;
+        default:;
+        //TOOD: ignore the request? Idk yet
     }
 }
 
