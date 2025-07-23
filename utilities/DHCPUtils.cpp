@@ -122,23 +122,13 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
     auto client_mac = dhcp_layer->getClientHardwareAddress();
     pcpp::IPv4Address offered_ip = allocateIP(client_mac);
 
-    //TOOD: remove dead code
-
     auto src_mac = listener_->getMacAddress();
     auto dst_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac();
-    //auto eth_layer = dhcp_packet.getLayerOfType<pcpp::EthLayer>();
     auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-    //auto dst_mac = eth_layer->getSourceMac();
-    //eth_layer->setSourceMac(src_mac);
-    //eth_layer->setDestMac(dst_mac);
 
     auto src_ip = listener_->getIPv4Address();
     auto dst_ip = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>()->getSrcIPv4Address();
-    //auto ip_layer = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>();
     auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-    //auto dst_ip = ip_layer->getSrcIPv4Address();
-    //ip_layer->setSrcIPv4Address(src_ip);
-    //ip_layer->setDstIPv4Address(dst_ip);
 
     std::uint16_t src_port = 67;
     std::uint16_t dst_port = 68;
@@ -180,7 +170,6 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
                                                             bootfile_name, lease_time.count(),
                                                             server_netmask, {}, {}, renewal_time.count(), rebind_time.count());
     auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
-    //send_dev->sendPacket(&packet);
     sender_->send(packet);
 }
 

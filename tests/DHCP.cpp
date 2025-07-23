@@ -441,6 +441,7 @@ TEST_CASE( "Build DHCP packets" ) {
     }
 }
 
+//TODO: Update other test_case to use this
 //Maybe move to header, idk
 //also probably parameterize the fields
 struct TestEnvironment{
@@ -510,148 +511,16 @@ TestEnvironment& getEnv() {
 }
 
 struct MockSender : public serratia::utils::IPacketSender {
-    //std::vector<pcpp::Packet> sentPackets;
     std::vector<pcpp::DhcpLayer> sentDHCPPackets;
     TestEnvironment* env_;
     MockSender(TestEnvironment* env) : env_(env) {}
     bool send(pcpp::Packet& packet) override {
-        //sentPackets.push_back(std::move(packet));
         sentDHCPPackets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
         env_->capture_done.set_value();
 
-        /*auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-        if ( nullptr == dhcp_layer ) {
-            return true;
-        }
-
-        auto dhcp_header = dhcp_layer->getDhcpHeader();
-
-        if (pcpp::BootpOpCodes::DHCP_BOOTREPLY != dhcp_header->opCode) {
-            return true;
-        }
-
-        if(pcpp::DhcpMessageType::DHCP_OFFER != dhcp_layer->getMessageType()) {
-            return true;
-        }
-
-        constexpr std::uint8_t HTYPE_ETHER = 1;
-        constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
-        constexpr std::uint32_t EMPTY_IP_ADDR = 0;
-        constexpr int NO_DIFFERENCE = 0;
-        constexpr char NULL_TERMINATOR = '\0';
-        constexpr std::uint8_t OPTION_COUNT = 9;
-
-        REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
-        REQUIRE( HTYPE_ETHER == dhcp_header->hardwareType );
-        REQUIRE( STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength );
-        REQUIRE( env_->hops == dhcp_header->hops );
-        REQUIRE( env_->transaction_id == dhcp_header->transactionID );
-        REQUIRE( env_->seconds_elapsed == dhcp_header->secondsElapsed );
-        REQUIRE( env_->bootp_flags == dhcp_header->flags );
-        REQUIRE( EMPTY_IP_ADDR == dhcp_header->clientIpAddress );
-        REQUIRE( env_->client_ip == dhcp_header->yourIpAddress );
-        REQUIRE( env_->server_ip == dhcp_header->serverIpAddress );
-        REQUIRE( env_->server_ip == dhcp_header->gatewayIpAddress );
-        REQUIRE( NO_DIFFERENCE == memcmp(dhcp_header->clientHardwareAddress, env_->client_mac.toByteArray().data(), STANDARD_MAC_LENGTH) );
-
-        auto server_name_start = reinterpret_cast<const char*>(dhcp_header->serverName);
-        auto server_name_end = server_name_start + sizeof(dhcp_header->serverName);
-        auto terminator_position = std::find(server_name_start, server_name_end, NULL_TERMINATOR);
-        std::string header_server_name(server_name_start, terminator_position);
-        REQUIRE( env_->server_host_name == header_server_name );
-
-        std::string header_boot_file_name(reinterpret_cast<const char*>(dhcp_header->bootFilename));
-        REQUIRE( env_->boot_file_name == header_boot_file_name );
-
-        REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env_->server_ip );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(env_->lease_time) );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == env_->subnet_mask );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env_->server_ip ); //TODO: check this
-
-        auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
-        REQUIRE( serratia::utils::parseIPv4Addresses(&router_option) == env_->routers );
-
-        auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
-        REQUIRE( serratia::utils::parseIPv4Addresses(&dns_option) == env_->dns_servers );
-
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(env_->renewal_time) );
-        REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(env_->rebind_time) );
-        REQUIRE( dhcp_layer->getOptionsCount() == OPTION_COUNT ); //7 options listed above plus message type option & end option (with no data)
-        */
         return true;
     }
 };
-
-static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
-    TestEnvironment* env = static_cast<TestEnvironment*>(cookie);
-
-    pcpp::Packet parsed_packet(packet);
-
-    auto dhcp_layer = parsed_packet.getLayerOfType<pcpp::DhcpLayer>();
-    if (nullptr == dhcp_layer) {
-        //exit function ASAP to speed up processing
-        return;
-    }
-
-    auto dhcp_header = dhcp_layer->getDhcpHeader();
-    if (pcpp::BootpOpCodes::DHCP_BOOTREPLY != dhcp_header->opCode) {
-        //exit function ASAP to speed up processing
-        return;
-    }
-
-    if (pcpp::DhcpMessageType::DHCP_OFFER != dhcp_layer->getMessageType()) {
-        //exit function ASAP to speed up processing
-        return;
-    }
-
-    const std::uint8_t HTYPE_ETHER = 1;
-    const std::uint8_t STANDARD_MAC_LENGTH = 6;
-    const std::uint32_t EMPTY_IP_ADDR = 0;
-    const int NO_DIFFERENCE = 0;
-    const char NULL_TERMINATOR = '\0';
-    const std::uint8_t OPTION_COUNT = 9;
-
-    REQUIRE( pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode );
-    REQUIRE( HTYPE_ETHER == dhcp_header->hardwareType );
-    REQUIRE( STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength );
-    REQUIRE( env->hops == dhcp_header->hops );
-    REQUIRE( env->transaction_id == dhcp_header->transactionID );
-    REQUIRE( env->seconds_elapsed == dhcp_header->secondsElapsed );
-    REQUIRE( env->bootp_flags == dhcp_header->flags );
-    REQUIRE( EMPTY_IP_ADDR == dhcp_header->clientIpAddress );
-    REQUIRE( env->client_ip == dhcp_header->yourIpAddress );
-    REQUIRE( env->server_ip == dhcp_header->serverIpAddress );
-    REQUIRE( env->server_ip == dhcp_header->gatewayIpAddress );
-    REQUIRE( NO_DIFFERENCE == memcmp(dhcp_header->clientHardwareAddress, env->client_mac.toByteArray().data(), STANDARD_MAC_LENGTH) );
-
-    auto server_name_start = reinterpret_cast<const char*>(dhcp_header->serverName);
-    auto server_name_end = server_name_start + sizeof(dhcp_header->serverName);
-    auto terminator_position = std::find(server_name_start, server_name_end, NULL_TERMINATOR);
-    std::string header_server_name(server_name_start, terminator_position);
-    REQUIRE( env->server_host_name == header_server_name );
-
-    std::string header_boot_file_name(reinterpret_cast<const char*>(dhcp_header->bootFilename));
-    REQUIRE( env->boot_file_name == header_boot_file_name );
-
-    REQUIRE( pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType() );
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env->server_ip );
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() == ntohl(env->lease_time) );
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == env->subnet_mask );
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env->server_ip ); //TODO: check this
-
-    auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
-    REQUIRE( serratia::utils::parseIPv4Addresses(&router_option) == env->routers );
-
-    auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
-    REQUIRE( serratia::utils::parseIPv4Addresses(&dns_option) == env->dns_servers );
-
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(env->renewal_time) );
-    REQUIRE( dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(env->rebind_time) );
-    REQUIRE( dhcp_layer->getOptionsCount() == OPTION_COUNT ); //7 options listed above plus message type option & end option (with no data)
-
-    env->capture_done.set_value();
-}
 
 TEST_CASE( "Interact with DHCP server" ) {
     auto& env = getEnv();
@@ -697,35 +566,19 @@ TEST_CASE( "Interact with DHCP server" ) {
 
     std::future<void> capture_future = env.capture_done.get_future();
 
-    //pcpp::RawPacketVector packets;
-    //env.dev->startCapture(packets);
-    //env.dev->startCapture(onPacketArrives, &env);
     env.dev->sendPacket(&packet);
     REQUIRE( std::future_status::ready == capture_future.wait_for(std::chrono::seconds(2)) );
     server.stop();
     REQUIRE( 1 == sender_ptr->sentDHCPPackets.size() );
 
-    //bool found_offer = false;
-    //for (const auto& raw_packet : packets) {
     auto& dhcp_layer = sender_ptr->sentDHCPPackets.back();
-    //pcpp::Packet parsed_packet(raw_packet);
-    //auto dhcp_layer = offer_packet.getLayerOfType<pcpp::DhcpLayer>();
-    //layers are null be ownInPacket causes layers to be deleted when packet goes out of scope
-    //--REQUIRE( nullptr != dhcp_layer );
-
-    //if (pcpp::BootpOpCodes::DHCP_BOOTREPLY != dhcp_header->opCode) {
-    //    continue;
-    //d}
-
-    //if(pcpp::DhcpMessageType::DHCP_OFFER != dhcp_layer->getMessageType()) {
-    //    continue;
-    //}
 
     const std::uint8_t HTYPE_ETHER = 1;
     const std::uint8_t STANDARD_MAC_LENGTH = 6;
     const std::uint32_t EMPTY_IP_ADDR = 0;
     const int NO_DIFFERENCE = 0;
     const char NULL_TERMINATOR = '\0';
+    //7 options plus message type option & end option (with no data)
     const std::uint8_t OPTION_COUNT = 9;
 
     auto dhcp_header = dhcp_layer.getDhcpHeader();
@@ -766,12 +619,5 @@ TEST_CASE( "Interact with DHCP server" ) {
 
     REQUIRE( dhcp_layer.getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() == ntohl(env.renewal_time) );
     REQUIRE( dhcp_layer.getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() == ntohl(env.rebind_time) );
-    REQUIRE( dhcp_layer.getOptionsCount() == OPTION_COUNT ); //7 options listed above plus message type option & end option (with no data)
-    
-    //found_offer = true;
-    
-    //stop processing packets after finding the DHCP offer
-    //break;
-    //}
-    //REQUIRE( true == found_offer );*/
+    REQUIRE( dhcp_layer.getOptionsCount() == OPTION_COUNT );
 }

@@ -87,6 +87,7 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     auto common_config = config.get_common_config();
     auto src_mac = common_config.GetEthLayer()->getSourceMac();
     //pointer not leaked, pcpp::Packet tracks it by setting ownInPacket
+    //TODO: probably make similar commment for other instances of this
     pcpp::DhcpLayer* dhcp_layer = new pcpp::DhcpLayer(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
 
     auto dhcp_header = dhcp_layer->getDhcpHeader();
