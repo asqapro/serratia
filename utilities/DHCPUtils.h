@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <pcapplusplus/IPv4Layer.h>
 #include <pcapplusplus/DhcpLayer.h>
 
@@ -13,6 +14,7 @@
 #include <vector>
 #include <chrono>
 #include <set>
+#include "spdlog/spdlog.h"
 
 namespace std {
     template<>
@@ -36,19 +38,36 @@ namespace serratia::utils {
         std::chrono::steady_clock::time_point expiry_time;
     };
 
+    class IPacketSender {
+    public:
+        virtual bool send(pcpp::Packet& packet) = 0;
+        virtual ~IPacketSender() = default;
+    };
+
+    class RealPacketSender : public IPacketSender {
+    public:
+        RealPacketSender(pcpp::PcapLiveDevice* device) : device_(device) {}
+        bool send(pcpp::Packet& packet) override;
+    private:
+        pcpp::PcapLiveDevice* device_;
+    };
+
     class DHCPServer {
     public:
-        DHCPServer();
+        DHCPServer(pcpp::PcapLiveDevice* device, std::unique_ptr<IPacketSender> sender);
         void run();
+        void stop();
+        void handlePacket(const pcpp::Packet& packet);
     private:
-        void handlePacket(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);
         void handleDiscover(const pcpp::Packet& dhcp_packet);
         void handleRequest(const pcpp::Packet& dhcp_packet);
         void handleRelease(const pcpp::Packet& dhcp_packet);
 
         pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac);
 
-        pcpp::PcapLiveDevice* send_dev;
+        //TODO: add underscores to all private variables
+        std::unique_ptr<IPacketSender> sender_;
+        pcpp::PcapLiveDevice* listener_;
 
         std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table;
         std::set<pcpp::IPv4Address> available_ips;

@@ -5,12 +5,13 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
-#include <exception>
+#include <memory>
 #include <pcapplusplus/DhcpLayer.h>
 #include <pcapplusplus/EthLayer.h>
 #include <pcapplusplus/IPv4Layer.h>
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/Packet.h>
+#include <pcapplusplus/PcapLiveDevice.h>
 #include <pcapplusplus/PcapLiveDeviceList.h>
 
 //TODO: Move this function somewhere else
@@ -33,6 +34,7 @@ std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::D
     for (size_t i = 0; i < data_len; i += 4) {
         uint32_t raw_addr;
         std::memcpy(&raw_addr, &data[i], sizeof(uint32_t));
+        //TODO: move comments out from in-line
         pcpp::IPv4Address addr(raw_addr); //construct from 4 bytes
         addresses.push_back(addr);
     }
@@ -40,39 +42,49 @@ std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::D
     return addresses;
 }
 
+bool serratia::utils::RealPacketSender::send(pcpp::Packet& packet) {
+    return device_->sendPacket(&packet);
+}
+
 //TODO: change lease time & other fields to parameters
-serratia::utils::DHCPServer::DHCPServer() {
-    send_dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName("eth0");
-    if (send_dev == nullptr) {
-        throw std::exception();
-    }
-
-    // Open the device
-    if (!send_dev->open()) {
-        throw std::exception();
-    }
-
+serratia::utils::DHCPServer::DHCPServer(pcpp::PcapLiveDevice* listener, std::unique_ptr<IPacketSender> sender) : listener_(listener),
+                                                                                                                 sender_(std::move(sender)) {
     lease_time = std::chrono::hours(1);
     renewal_time = lease_time / 2;
     rebind_time = lease_time / (8/7);
+
+    //TODO: get available_ips from configuration file or passed in params, idk yet
+    available_ips.insert(pcpp::IPv4Address("192.168.0.2"));
 }
 
+static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
+    serratia::utils::DHCPServer* server = static_cast<serratia::utils::DHCPServer*>(cookie);
 
+    pcpp::Packet parsed_packet(packet);
+
+    server->handlePacket(parsed_packet);
+}
 
 void serratia::utils::DHCPServer::run() {
-
+    listener_->startCapture(onPacketArrives, this);
 }
 
-void serratia::utils::DHCPServer::handlePacket(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
-    pcpp::Packet parsed_packet(packet);
-    auto dhcp_layer = parsed_packet.getLayerOfType<pcpp::DhcpLayer>();
+void serratia::utils::DHCPServer::stop() {
+    listener_->stopCapture();
+}
+
+void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
+    auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    if (nullptr == dhcp_layer) {
+        return;
+    }
     switch (dhcp_layer->getMessageType()) {
         case pcpp::DHCP_DISCOVER:
-            handleDiscover(parsed_packet);
+            handleDiscover(packet);
         case pcpp::DHCP_REQUEST:
-            handleRequest(parsed_packet);
+            handleRequest(packet);
         case pcpp::DHCP_RELEASE:
-            handleRelease(parsed_packet);
+            handleRelease(packet);
         default:;
         //TOOD: ignore the request? Idk yet
     }
@@ -93,6 +105,7 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress
     }
 
     if (available_ips.empty()) {
+        //TODO: probably shouldn't be a runtime error, dunno how to handle it yet though
         throw std::runtime_error("No available IP addresses in pool");
     }
 
@@ -109,17 +122,23 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
     auto client_mac = dhcp_layer->getClientHardwareAddress();
     pcpp::IPv4Address offered_ip = allocateIP(client_mac);
 
-    auto src_mac = send_dev->getMacAddress();
-    auto eth_layer = dhcp_packet.getLayerOfType<pcpp::EthLayer>();
-    auto dst_mac = eth_layer->getSourceMac();
-    eth_layer->setSourceMac(src_mac);
-    eth_layer->setDestMac(dst_mac);
+    //TOOD: remove dead code
 
-    auto src_ip = send_dev->getIPv4Address();
-    auto ip_layer = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>();
-    auto dst_ip = ip_layer->getSrcIPv4Address();
-    ip_layer->setSrcIPv4Address(src_ip);
-    ip_layer->setDstIPv4Address(dst_ip);
+    auto src_mac = listener_->getMacAddress();
+    auto dst_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac();
+    //auto eth_layer = dhcp_packet.getLayerOfType<pcpp::EthLayer>();
+    auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+    //auto dst_mac = eth_layer->getSourceMac();
+    //eth_layer->setSourceMac(src_mac);
+    //eth_layer->setDestMac(dst_mac);
+
+    auto src_ip = listener_->getIPv4Address();
+    auto dst_ip = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>()->getSrcIPv4Address();
+    //auto ip_layer = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>();
+    auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+    //auto dst_ip = ip_layer->getSrcIPv4Address();
+    //ip_layer->setSrcIPv4Address(src_ip);
+    //ip_layer->setDstIPv4Address(dst_ip);
 
     std::uint16_t src_port = 67;
     std::uint16_t dst_port = 68;
@@ -161,5 +180,13 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
                                                             bootfile_name, lease_time.count(),
                                                             server_netmask, {}, {}, renewal_time.count(), rebind_time.count());
     auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
-    send_dev->sendPacket(&packet);
+    //send_dev->sendPacket(&packet);
+    sender_->send(packet);
+}
+
+void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet) {
+
+}
+void serratia::utils::DHCPServer::handleRelease(const pcpp::Packet& dhcp_packet) {
+
 }
