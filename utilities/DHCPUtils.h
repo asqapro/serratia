@@ -11,6 +11,7 @@
 #include <pcapplusplus/PcapLiveDevice.h>
 #include <pcapplusplus/RawPacket.h>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <chrono>
 #include <set>
@@ -52,9 +53,44 @@ namespace serratia::utils {
         pcpp::PcapLiveDevice* device_;
     };
 
+    struct DHCPServerConfig {
+    public:
+        DHCPServerConfig(const pcpp::IPv4Address& server_ip, std::string server_name,
+                        const pcpp::IPv4Address& lease_pool_start, const pcpp::IPv4Address& server_netmask,
+                        const std::vector<pcpp::IPv4Address>& dns_servers,
+                        const std::chrono::seconds lease_time, const std::chrono::seconds renewal_time,
+                        const std::chrono::seconds rebind_time)
+            : server_ip_(server_ip),
+              server_name_(std::move(server_name)),
+              lease_pool_start_(lease_pool_start),
+              server_netmask_(server_netmask),
+              dns_servers_(dns_servers),
+              lease_time_(lease_time),
+              renewal_time_(renewal_time),
+              rebind_time_(rebind_time) {}
+
+        [[nodiscard]] pcpp::IPv4Address get_server_ip() const;
+        [[nodiscard]] std::string get_server_name() const;
+        [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
+        [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
+        [[nodiscard]] std::vector<pcpp::IPv4Address> get_dns_servers() const;
+        [[nodiscard]] std::chrono::seconds get_lease_time() const;
+        [[nodiscard]] std::chrono::seconds get_renewal_time() const;
+        [[nodiscard]] std::chrono::seconds get_rebind_time() const;
+    private:
+        pcpp::IPv4Address server_ip_;
+        std::string server_name_;
+        pcpp::IPv4Address lease_pool_start_;
+        pcpp::IPv4Address server_netmask_;
+        std::vector<pcpp::IPv4Address> dns_servers_;
+        std::chrono::seconds lease_time_;
+        std::chrono::seconds renewal_time_;
+        std::chrono::seconds rebind_time_;
+    };
+
     class DHCPServer {
     public:
-        DHCPServer(pcpp::PcapLiveDevice* device, std::unique_ptr<IPacketSender> sender);
+        DHCPServer(DHCPServerConfig  config, pcpp::PcapLiveDevice* listener, std::unique_ptr<IPacketSender> sender);
         void run();
         void stop();
         void handlePacket(const pcpp::Packet& packet);
@@ -65,15 +101,11 @@ namespace serratia::utils {
 
         pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac);
 
-        //TODO: add underscores to all private variables
-        std::unique_ptr<IPacketSender> sender_;
+        DHCPServerConfig config_;
         pcpp::PcapLiveDevice* listener_;
+        std::unique_ptr<IPacketSender> sender_;
+        std::set<pcpp::IPv4Address> available_ips_;
+        std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table_;
 
-        std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table;
-        std::set<pcpp::IPv4Address> available_ips;
-        pcpp::IPv4Address server_netmask;
-        std::chrono::seconds lease_time;
-        std::chrono::seconds renewal_time;
-        std::chrono::seconds rebind_time;
     };
 }

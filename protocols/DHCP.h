@@ -14,12 +14,15 @@
 #include <pcapplusplus/DhcpLayer.h>
 #include <utility>
 
+//TODO: Use alt + shift + L to autoformat code, maybe use this. Look it up for CLion / clang-tidy
+
 namespace serratia::protocols {
     struct DHCPCommonConfig {
     public:
         DHCPCommonConfig(pcpp::EthLayer* eth_layer,
-                         pcpp::IPv4Layer* ip_layer,
-                         pcpp::UdpLayer* udp_layer) 
+            //TODO: Switch to this style
+            pcpp::IPv4Layer* ip_layer,
+            pcpp::UdpLayer* udp_layer)
             : eth_layer_(eth_layer),
               ip_layer_(ip_layer),
               udp_layer_(udp_layer) {}
@@ -168,7 +171,7 @@ namespace serratia::protocols {
         std::optional<std::uint32_t> rebind_time_;
         std::vector<pcpp::DhcpOptionBuilder> extra_options;
     };
-    
+
     struct DHCPRequestConfig {
     public:
         DHCPRequestConfig(const DHCPCommonConfig common_config,
