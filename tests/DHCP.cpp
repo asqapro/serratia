@@ -599,7 +599,6 @@ TEST_CASE( "Interact with DHCP server" ) {
     REQUIRE( HTYPE_ETHER == dhcp_header->hardwareType );
     REQUIRE( STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength );
     REQUIRE( env.hops == dhcp_header->hops );
-    //TODO: figure out if transaction ID should have an option to not be random for testing. Idk yet
     REQUIRE( env.transaction_id == dhcp_header->transactionID );
     REQUIRE( env.seconds_elapsed == dhcp_header->secondsElapsed );
     REQUIRE( env.bootp_flags == dhcp_header->flags );

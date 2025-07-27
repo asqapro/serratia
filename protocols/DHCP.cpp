@@ -175,13 +175,13 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
     if (auto server_arr = config.get_server_name(); server_arr.has_value())
         std::ranges::copy(server_arr.value(), dhcp_header->serverName);
     else
-        std::memset(dhcp_header->serverName, 0, sizeof(dhcp_header->serverName));
+        std::ranges::fill(dhcp_header->serverName, 0);
 
     if (auto boot_file_arr = config.get_boot_name(); boot_file_arr.has_value())
         std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
     else
-        std::memset(dhcp_header->bootFilename, 0, sizeof(dhcp_header->bootFilename));
-    
+        std::ranges::fill(dhcp_header->bootFilename, 0);
+
     dhcp_layer->setMessageType(pcpp::DHCP_OFFER);
 
     pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_id());
@@ -326,13 +326,12 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     if (auto server_arr = config.get_server_name(); server_arr.has_value())
         std::ranges::copy(server_arr.value(), dhcp_header->serverName);
     else
-        //TODO: decide to use either memset or fill. Changes between functions
-        std::memset(dhcp_header->serverName, 0, sizeof(dhcp_header->serverName));
+        std::ranges::fill(dhcp_header->serverName, 0);
 
     if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value())
         std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
     else
-        std::memset(dhcp_header->bootFilename, 0, sizeof(dhcp_header->bootFilename));
+        std::ranges::fill(dhcp_header->bootFilename, 0);
 
     pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_id());
     dhcp_layer->addOption(server_id_opt);
