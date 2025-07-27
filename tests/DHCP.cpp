@@ -3,7 +3,6 @@
 #include <chrono>
 #include <future>
 #include <optional>
-#include <pcapplusplus/Device.h>
 #include <pcapplusplus/PcapLiveDeviceList.h>
 #include <pcapplusplus/PcapLiveDevice.h>
 #include <pcapplusplus/DhcpLayer.h>
@@ -186,10 +185,11 @@ TEST_CASE( "Build DHCP packets" ) {
         std::uint32_t renewal_time = 43200; //50% of lease time
         std::uint32_t rebind_time = 75600;  //87.5% of lease time
 
-        serratia::protocols::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, transaction_id, hops,
-                                                               your_ip, server_id, seconds_elapsed, bootp_flags, server_ip, 
-                                                               gateway_ip, server_name, boot_name, lease_time, subnet_mask,
-                                                               routers, dns_servers, renewal_time, rebind_time);
+        serratia::protocols::DHCPOfferConfig dhcp_offer_config(dhcp_common_config, hops, transaction_id,
+                                                               your_ip, server_id, seconds_elapsed, bootp_flags,
+                                                               server_ip, gateway_ip, server_name, boot_name,
+                                                               lease_time, subnet_mask, routers, dns_servers,
+                                                               renewal_time, rebind_time);
         auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
 
         auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
@@ -396,6 +396,7 @@ TEST_CASE( "Build DHCP packets" ) {
         std::array<std::uint8_t, 64> server_name = {0};
         //Copy server_host_name string into server_name array
         std::copy_n(server_host_name.begin(), std::min(server_host_name.size(), server_name.size()), server_name.begin());
+        //TODO: Use env stuff instead of defining here
         std::array<std::uint8_t, 128> boot_file_name = {0};
 
         std::vector<pcpp::IPv4Address> dns_servers = {pcpp::IPv4Address("9.9.9.9")}; //Quad9 > Google
@@ -475,7 +476,7 @@ struct TestEnvironment{
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_int_distribution<uint32_t> distrib;
-        std::uint32_t transaction_id = distrib(gen);
+        transaction_id = distrib(gen);
         hops = 0;
         seconds_elapsed = 0;
         bootp_flags = 0x8000;
@@ -498,6 +499,7 @@ struct TestEnvironment{
     std::uint16_t client_port = 68;
     pcpp::IPv4Address broadcast_ip;
     std::uint8_t hops;
+    std::uint32_t transaction_id;
     std::uint16_t seconds_elapsed ;
     std::uint16_t bootp_flags;
     pcpp::IPv4Address gateway_ip;
@@ -520,11 +522,11 @@ TestEnvironment& getEnv() {
     return env;
 }
 
-struct MockSender : public serratia::utils::IPacketSender {
+struct MockSender final : public serratia::utils::IPacketSender {
     std::vector<pcpp::DhcpLayer> sentDHCPPackets;
     TestEnvironment* env_;
-    MockSender(TestEnvironment* env) : env_(env) {}
-    bool send(pcpp::Packet& packet) override {
+    explicit MockSender(TestEnvironment* env) : env_(env) {}
+    bool send(const pcpp::Packet& packet) override {
         sentDHCPPackets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
         env_->capture_done.set_value();
 
@@ -555,7 +557,6 @@ TEST_CASE( "Interact with DHCP server" ) {
     std::uint8_t hops = 0;
     std::uint16_t seconds_elapsed = 0;
     std::uint16_t bootp_flags = 0x8000;
-    pcpp::IPv4Address gateway_ip = env.client_ip;
 
     std::vector<std::uint8_t> client_id = {1};
     auto client_mac_bytes = env.client_mac.toByteArray();
@@ -567,14 +568,9 @@ TEST_CASE( "Interact with DHCP server" ) {
     std::uint16_t max_message_size = 567;
     std::vector<std::uint8_t> vendor_class_id = {};
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> distrib;
-    std::uint32_t transaction_id = distrib(gen);
-
     std::string client_host_name = "skalrog_client";
 
-    serratia::protocols::DHCPDiscoverConfig dhcp_discover_config(dhcp_common_config, transaction_id, hops,
+    serratia::protocols::DHCPDiscoverConfig dhcp_discover_config(dhcp_common_config, env.transaction_id, hops,
                                                                     seconds_elapsed, bootp_flags, std::nullopt,
                                                                     client_id, param_request_list, client_host_name,
                                                                     max_message_size, vendor_class_id);
@@ -604,7 +600,7 @@ TEST_CASE( "Interact with DHCP server" ) {
     REQUIRE( STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength );
     REQUIRE( env.hops == dhcp_header->hops );
     //TODO: figure out if transaction ID should have an option to not be random for testing. Idk yet
-    //REQUIRE( env.transaction_id == dhcp_header->transactionID );
+    REQUIRE( env.transaction_id == dhcp_header->transactionID );
     REQUIRE( env.seconds_elapsed == dhcp_header->secondsElapsed );
     REQUIRE( env.bootp_flags == dhcp_header->flags );
     REQUIRE( EMPTY_IP_ADDR == dhcp_header->clientIpAddress );

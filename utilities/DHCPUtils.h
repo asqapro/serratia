@@ -1,15 +1,11 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
-#include <pcapplusplus/IPv4Layer.h>
 #include <pcapplusplus/DhcpLayer.h>
 
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
-#include <pcapplusplus/Packet.h>
 #include <pcapplusplus/PcapLiveDevice.h>
-#include <pcapplusplus/RawPacket.h>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -17,22 +13,21 @@
 #include <set>
 #include "spdlog/spdlog.h"
 
-namespace std {
-    template<>
-    struct hash<pcpp::MacAddress> {
-        std::size_t operator()(const pcpp::MacAddress& mac) const noexcept {
-            const uint8_t* data = mac.getRawData();
-            std::size_t h = 0;
-            for (int i = 0; i < 6; ++i)
-                h ^= std::size_t(data[i]) << (i * 8);
-            return h;
-        }
-    };
-}
+template<>
+struct std::hash<pcpp::MacAddress> {
+    std::size_t operator()(const pcpp::MacAddress& mac) const noexcept {
+        const uint8_t* data = mac.getRawData();
+        std::size_t h = 0;
+        for (int i = 0; i < 6; ++i)
+            h ^= static_cast<std::size_t>(data[i]) << (i * 8);
+        return h;
+    }
+};
 
 namespace serratia::utils {
     std::vector<pcpp::IPv4Address> parseIPv4Addresses(const pcpp::DhcpOption* option);
 
+    //TODO: make a constructor for this
     struct LeaseInfo {
         std::vector<std::uint8_t> client_id;
         pcpp::IPv4Address assigned_ip;
@@ -41,14 +36,14 @@ namespace serratia::utils {
 
     class IPacketSender {
     public:
-        virtual bool send(pcpp::Packet& packet) = 0;
+        virtual bool send(const pcpp::Packet& packet) = 0;
         virtual ~IPacketSender() = default;
     };
 
-    class RealPacketSender : public IPacketSender {
+    class RealPacketSender final : public IPacketSender {
     public:
-        RealPacketSender(pcpp::PcapLiveDevice* device) : device_(device) {}
-        bool send(pcpp::Packet& packet) override;
+        explicit RealPacketSender(pcpp::PcapLiveDevice* device) : device_(device) {}
+        bool send(const pcpp::Packet& packet) override;
     private:
         pcpp::PcapLiveDevice* device_;
     };
@@ -90,9 +85,10 @@ namespace serratia::utils {
 
     class DHCPServer {
     public:
+        //TODO: Change listener to dependency injection
         DHCPServer(DHCPServerConfig  config, pcpp::PcapLiveDevice* listener, std::unique_ptr<IPacketSender> sender);
         void run();
-        void stop();
+        void stop() const;
         void handlePacket(const pcpp::Packet& packet);
     private:
         void handleDiscover(const pcpp::Packet& dhcp_packet);
