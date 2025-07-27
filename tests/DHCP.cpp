@@ -457,7 +457,9 @@ constexpr std::uint32_t REBIND_TIME_VAL = 43200;
 //Maybe move to header, idk
 //also probably parameterize the fields
 struct TestEnvironment{
-    TestEnvironment() : broadcast_mac("ff:ff:ff:ff:ff:ff"),
+    TestEnvironment() : server_mac("ca:5e:d7:6B:c2:7c"),
+                        client_mac("a1:eb:37:7b:e9:bf"),
+                        broadcast_mac("ff:ff:ff:ff:ff:ff"),
                         server_ip("192.168.0.1"),
                         client_ip("192.168.0.2"),
                         broadcast_ip("255.255.255.255"),
@@ -465,12 +467,8 @@ struct TestEnvironment{
                         subnet_mask("255.255.255.0"),
                         renewal_time(RENEWAL_TIME_VAL),
                         rebind_time(REBIND_TIME_VAL) {
-        dev_name = "wlan0";
-        dev = pcpp::PcapLiveDeviceList::getInstance().getDeviceByName(dev_name);
-        REQUIRE( nullptr != dev );
-        REQUIRE( true == dev->open() );
-        server_mac = dev->getMacAddress();
-        client_mac = dev->getMacAddress();
+        server_mac = pcpp::MacAddress("ff:ff:ff:ff:ff:ff");
+        client_mac = pcpp::MacAddress("ff:ff:ff:ff:ff:ff");
         server_port = 67;
         client_port = 68;
         std::random_device rd;
@@ -488,8 +486,6 @@ struct TestEnvironment{
     }
 
     //TODO: rearrange or group related fields together
-    std::string dev_name;
-    pcpp::PcapLiveDevice* dev;
     pcpp::MacAddress server_mac;
     pcpp::MacAddress client_mac;
     pcpp::MacAddress broadcast_mac;
@@ -512,8 +508,6 @@ struct TestEnvironment{
     std::chrono::seconds renewal_time;
     std::chrono::seconds rebind_time;
     //TODO: figure out other fields that need to be included
-
-    std::promise<void> capture_done;
 };
 
 //TODO: fill out environment stuff here
@@ -522,31 +516,55 @@ TestEnvironment& getEnv() {
     return env;
 }
 
-struct MockSender final : public serratia::utils::IPacketSender {
-    std::vector<pcpp::DhcpLayer> sentDHCPPackets;
-    TestEnvironment* env_;
-    explicit MockSender(TestEnvironment* env) : env_(env) {}
+struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice{
+    std::vector<pcpp::DhcpLayer> sent_dhcp_packets;
+
+    pcpp::OnPacketArrivesCallback capture_callback;
+    bool capturing = false;
+    void* packet_arrives_cookie = nullptr;
+
+    std::promise<void> captured_offer;
+
     bool send(const pcpp::Packet& packet) override {
-        sentDHCPPackets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
-        env_->capture_done.set_value();
+        sent_dhcp_packets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
+        if (sent_dhcp_packets.size() > 1) {
+            captured_offer.set_value();
+        }
+
+        if (true == capturing && nullptr != capture_callback) {
+            const auto raw_packet = packet.getRawPacket();
+            capture_callback(raw_packet, nullptr, packet_arrives_cookie);
+        }
 
         return true;
+    }
+    bool startCapture(const pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) override {
+        capturing = true;
+        capture_callback = onPacketArrives;
+        packet_arrives_cookie = onPacketArrivesUserCookie;
+        return true;
+    }
+
+    void stopCapture() override {
+        capturing = false;
+        capture_callback = nullptr;
+        packet_arrives_cookie = nullptr;
     }
 };
 
 TEST_CASE( "Interact with DHCP server" ) {
     auto& env = getEnv();
 
-    auto sender = std::make_unique<MockSender>(&env);
-    auto sender_ptr = sender.get();
+    auto device = std::make_unique<MockPcapLiveDevice>();
+    auto device_ptr = device.get();
 
     //TODO: add "pool start" to env
-    serratia::utils::DHCPServerConfig config(env.server_ip, env.server_host_name,
+    serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_host_name,
                                             pcpp::IPv4Address("192.168.0.2"),
                                             env.subnet_mask, env.dns_servers, env.lease_time,
                                             env.renewal_time, env.rebind_time);
 
-    serratia::utils::DHCPServer server(config, env.dev, std::move(sender));
+    serratia::utils::DHCPServer server(config, std::move(device));
     server.run();
 
     auto eth_layer = new pcpp::EthLayer(env.client_mac, env.server_mac);
@@ -576,14 +594,14 @@ TEST_CASE( "Interact with DHCP server" ) {
                                                                     max_message_size, vendor_class_id);
     auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
 
-    std::future<void> capture_future = env.capture_done.get_future();
+    std::future<void> capture_future = device_ptr->captured_offer.get_future();
 
-    env.dev->sendPacket(&packet);
+    device_ptr->send(packet);
     REQUIRE( std::future_status::ready == capture_future.wait_for(std::chrono::seconds(2)) );
     server.stop();
-    REQUIRE( 1 == sender_ptr->sentDHCPPackets.size() );
+    REQUIRE( 2 == device_ptr->sent_dhcp_packets.size() );
 
-    auto& dhcp_layer = sender_ptr->sentDHCPPackets.back();
+    auto& dhcp_layer = device_ptr->sent_dhcp_packets.back();
 
     constexpr std::uint8_t HTYPE_ETHER = 1;
     constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
