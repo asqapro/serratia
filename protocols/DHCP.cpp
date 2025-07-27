@@ -103,9 +103,8 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
 
     std::ranges::fill(dhcp_header->serverName, 0);
     std::ranges::fill(dhcp_header->bootFilename, 0);
-    
-    auto client_id = config.get_client_id();
-    if (client_id.has_value()) {
+
+    if (auto client_id = config.get_client_id(); client_id.has_value()) {
         auto client_id_vec_val = client_id.value();
         auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
         std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -113,8 +112,7 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
         dhcp_layer->addOption(client_id_opt);
     }
 
-    auto param_request_list = config.get_param_request_list();
-    if (param_request_list.has_value()) {
+    if (auto param_request_list = config.get_param_request_list(); param_request_list.has_value()) {
         auto param_request_list_vec_val = param_request_list.value();
         auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
         std::size_t param_request_list_bytes_size = param_request_list_vec_val.size() * sizeof(param_request_list_vec_val.at(0));
@@ -122,21 +120,18 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
         dhcp_layer->addOption(param_request_list_opt);
     }
 
-    auto client_host_name = config.get_client_host_name();
-    if (client_host_name.has_value()) {
+    if (auto client_host_name = config.get_client_host_name(); client_host_name.has_value()) {
         pcpp::DhcpOptionBuilder client_host_name_opt(pcpp::DhcpOptionTypes::DHCPOPT_HOST_NAME, client_host_name.value());
         dhcp_layer->addOption(client_host_name_opt);
     }
 
-    auto max_dhcp_message_size = config.get_max_dhcp_message_size();
-    if (max_dhcp_message_size.has_value()) {
+    if (auto max_dhcp_message_size = config.get_max_dhcp_message_size(); max_dhcp_message_size.has_value()) {
         pcpp::DhcpOptionBuilder max_dhcp_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_dhcp_message_size.value());
         dhcp_layer->addOption(max_dhcp_message_size_opt);
     }
 
-    auto vendor_class_id = config.get_vendor_class_id();
-    if (vendor_class_id.has_value()) {
-        auto vendor_class_id_val = param_request_list.value();
+    if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
+        auto vendor_class_id_val = vendor_class_id.value();
         auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
         std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
         pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, vendor_class_id_bytes, vendor_class_id_size);
@@ -345,8 +340,7 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, config.get_lease_time());
     dhcp_layer->addOption(lease_time_opt);
 
-    auto subnet_mask = config.get_subnet_mask();
-    if (subnet_mask.has_value()) {
+    if (auto subnet_mask = config.get_subnet_mask(); subnet_mask.has_value()) {
         pcpp::DhcpOptionBuilder subnet_mask_opt(pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, subnet_mask.value());
         dhcp_layer->addOption(subnet_mask_opt);
     }
