@@ -110,7 +110,6 @@ void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
     if (nullptr == dhcp_layer) {
         return;
     }
-    //TODO: Change handleX() to return configs & set a Packet to buildX() using the config
     switch (dhcp_layer->getMessageType()) {
         case pcpp::DHCP_DISCOVER:
             handleDiscover(packet);
@@ -199,6 +198,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
     const auto server_ip = config_.get_server_ip();
     std::array<std::uint8_t, 64> server_name = {};
     const std::string config_server_name = config_.get_server_name();
+    //TODO: switch copy_n to ranges copy style
     std::copy_n(config_server_name.begin(), config_server_name.size(), server_name.begin());
     //auto server_name = std::to_array(dhcp_header->serverName);
     const auto bootfile_name = std::to_array(dhcp_header->bootFilename);

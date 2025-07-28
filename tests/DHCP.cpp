@@ -89,10 +89,40 @@ struct TestEnvironment{
     //TODO: figure out other fields that need to be included
 };
 
-//TODO: fill out environment stuff here
 TestEnvironment& getEnv() {
     static TestEnvironment env;
     return env;
+}
+
+pcpp::Packet buildTestDiscover(const TestEnvironment& env) {
+    const auto src_mac = env.client_mac;
+    const auto dst_mac = env.broadcast_mac;
+    const pcpp::IPv4Address src_ip("0.0.0.0");
+    const auto dst_ip = env.broadcast_ip;
+    const auto src_port = env.client_port;
+    const auto dst_port = env.server_port;
+
+    const auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+    const auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+    const auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+    const serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
+
+    std::vector<std::uint8_t> client_id = {1};
+    for (const auto src_mac_bytes = src_mac.toByteArray(); const auto octet : src_mac_bytes)
+        client_id.push_back(octet);
+
+    //TODO: name these values using constexpr
+    std::vector<std::uint8_t> param_request_list = {1, 3, 6};
+
+    constexpr std::uint16_t max_message_size = 567;
+    std::vector<std::uint8_t> vendor_class_id{};
+
+    const serratia::protocols::DHCPDiscoverConfig dhcp_discover_config(dhcp_common_config, env.transaction_id, env.hops,
+                                                                    env.seconds_elapsed, env.bootp_flags,
+                                                                    env.gateway_ip, client_id,
+                                                                    param_request_list, env.client_host_name,
+                                                                    max_message_size, vendor_class_id);
+    return serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
 }
 
 TEST_CASE( "Build DHCP packets" ) {
@@ -147,7 +177,7 @@ TEST_CASE( "Build DHCP packets" ) {
         std::vector<std::uint8_t> param_request_list = {1, 3, 6};
 
         constexpr std::uint16_t max_message_size = 567;
-        std::vector<std::uint8_t> vendor_class_id = {};
+        std::vector<std::uint8_t> vendor_class_id{};
 
         serratia::protocols::DHCPDiscoverConfig dhcp_discover_config(dhcp_common_config, env.transaction_id, env.hops,
                                                                         env.seconds_elapsed, env.bootp_flags,
@@ -543,7 +573,7 @@ TEST_CASE( "Interact with DHCP server" ) {
     std::vector<std::uint8_t> param_request_list = {1, 3, 6};
 
     std::uint16_t max_message_size = 567;
-    std::vector<std::uint8_t> vendor_class_id = {};
+    std::vector<std::uint8_t> vendor_class_id{};
 
     std::string client_host_name = "skalrog_client";
 
