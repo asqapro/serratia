@@ -139,9 +139,6 @@ TEST_CASE( "Build DHCP packets" ) {
         auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
-        //TODO: check if gateway should be in DHCP Discover
-        //pcpp::IPv4Address gateway_ip = env.server_ip;
-
         std::vector<std::uint8_t> client_id = {1};
         for (auto src_mac_bytes = src_mac.toByteArray(); const auto octet : src_mac_bytes)
             client_id.push_back(octet);
@@ -154,7 +151,7 @@ TEST_CASE( "Build DHCP packets" ) {
 
         serratia::protocols::DHCPDiscoverConfig dhcp_discover_config(dhcp_common_config, env.transaction_id, env.hops,
                                                                         env.seconds_elapsed, env.bootp_flags,
-                                                                        std::nullopt, client_id,
+                                                                        env.gateway_ip, client_id,
                                                                         param_request_list, env.client_host_name,
                                                                         max_message_size, vendor_class_id);
         auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
@@ -173,7 +170,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( 0 == dhcp_header->clientIpAddress );
         REQUIRE( 0 == dhcp_header->yourIpAddress );
         REQUIRE( 0 == dhcp_header->serverIpAddress );
-        REQUIRE( 0 == dhcp_header->gatewayIpAddress ); //TODO: Change this for all test cases to check for 0 instead of server_ip
+        REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
 
         auto server_name_field = dhcp_header->bootFilename;
@@ -247,7 +244,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( 0 == dhcp_header->clientIpAddress );
         REQUIRE( env.client_ip == dhcp_header->yourIpAddress );
         REQUIRE( env.server_ip == dhcp_header->serverIpAddress );
-        REQUIRE( env.server_ip == dhcp_header->gatewayIpAddress );
+        REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
 
         auto server_name_start = reinterpret_cast<const char*>(dhcp_header->serverName);
@@ -320,7 +317,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( 0 == dhcp_header->clientIpAddress );
         REQUIRE( 0 == dhcp_header->yourIpAddress );
         REQUIRE( 0 == dhcp_header->serverIpAddress );
-        REQUIRE( env.server_ip == dhcp_header->gatewayIpAddress );
+        REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
 
         std::string header_server_name(reinterpret_cast<const char*>(dhcp_header->serverName), sizeof(dhcp_header->serverName));
@@ -386,7 +383,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( env.client_ip == dhcp_header->clientIpAddress );
         REQUIRE( 0 == dhcp_header->yourIpAddress );
         REQUIRE( 0 == dhcp_header->serverIpAddress );
-        REQUIRE( env.server_ip == dhcp_header->gatewayIpAddress );
+        REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, src_mac.toByteArray().data(), 6) );
 
         std::string header_server_name(reinterpret_cast<const char*>(dhcp_header->serverName), sizeof(dhcp_header->serverName));
@@ -453,7 +450,7 @@ TEST_CASE( "Build DHCP packets" ) {
         REQUIRE( 0 == dhcp_header->clientIpAddress );
         REQUIRE( offered_ip == dhcp_header->yourIpAddress );
         REQUIRE( env.server_ip == dhcp_header->serverIpAddress );
-        REQUIRE( env.server_ip == dhcp_header->gatewayIpAddress );
+        REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
         REQUIRE( 0 == memcmp(dhcp_header->clientHardwareAddress, dst_mac.toByteArray().data(), 6) );
         REQUIRE( env.server_host_name == std::string(reinterpret_cast<const char*>(dhcp_header->serverName), env.server_host_name.size()) );
 
@@ -583,9 +580,9 @@ TEST_CASE( "Interact with DHCP server" ) {
     REQUIRE( env.seconds_elapsed == dhcp_header->secondsElapsed );
     REQUIRE( env.bootp_flags == dhcp_header->flags );
     REQUIRE( EMPTY_IP_ADDR == dhcp_header->clientIpAddress );
-    REQUIRE( env.client_ip.toInt() == dhcp_header->yourIpAddress );
-    REQUIRE( env.server_ip.toInt() == dhcp_header->serverIpAddress );
-    REQUIRE( env.server_ip.toInt() == dhcp_header->gatewayIpAddress );
+    REQUIRE( env.client_ip == dhcp_header->yourIpAddress );
+    REQUIRE( env.server_ip == dhcp_header->serverIpAddress );
+    REQUIRE( env.gateway_ip == dhcp_header->gatewayIpAddress );
     REQUIRE( NO_DIFFERENCE == memcmp(dhcp_header->clientHardwareAddress, env.client_mac.toByteArray().data(), STANDARD_MAC_LENGTH) );
 
     auto server_name_start = reinterpret_cast<const char*>(dhcp_header->serverName);

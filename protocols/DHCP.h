@@ -2,14 +2,13 @@
 
 #include <array>
 #include <optional>
+#include <utility>
 #include <pcapplusplus/IPv4Layer.h>
 #include <pcapplusplus/IpAddress.h>
-#include <pcapplusplus/MacAddress.h>
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/EthLayer.h>
 #include <pcapplusplus/UdpLayer.h>
 #include <pcapplusplus/DhcpLayer.h>
-#include <utility>
 
 //TODO: Use alt + shift + L to autoformat code, maybe use this. Look it up for CLion / clang-tidy
 
@@ -40,13 +39,13 @@ namespace serratia::protocols {
         DHCPDiscoverConfig(const DHCPCommonConfig &common_config,
                         const std::uint32_t transaction_id,
                         const std::optional<std::uint8_t> hops = std::nullopt,
-                        std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-                        std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                        std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                        const std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                        const std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                        const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                         std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
                         std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
                         std::optional<std::string> client_host_name = std::nullopt,
-                        std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
+                        const std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
                         std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt)
             : common_config_(common_config),
               hops_(hops),
@@ -94,22 +93,22 @@ namespace serratia::protocols {
     public:
         //TODO: Add std::nullopt default values
         DHCPOfferConfig(const DHCPCommonConfig& common_config,
-                        std::optional<std::uint8_t> hops,
-                        std::uint32_t transaction_id,
-                        pcpp::IPv4Address your_ip,
-                        pcpp::IPv4Address server_id,
-                        std::optional<std::uint16_t> seconds_elapsed,
-                        std::optional<std::uint16_t> bootp_flags,
-                        std::optional<pcpp::IPv4Address> server_ip,
-                        std::optional<pcpp::IPv4Address> gateway_ip,
-                        std::optional<std::array<std::uint8_t, 64>> server_name,
-                        std::optional<std::array<std::uint8_t, 128>> boot_name,
-                        std::optional<std::uint32_t> lease_time,
-                        std::optional<pcpp::IPv4Address> subnet_mask,
+                        const std::optional<std::uint8_t> hops,
+                        const std::uint32_t transaction_id,
+                        const pcpp::IPv4Address your_ip,
+                        const pcpp::IPv4Address server_id,
+                        const std::optional<std::uint16_t> seconds_elapsed,
+                        const std::optional<std::uint16_t> bootp_flags,
+                        const std::optional<pcpp::IPv4Address> server_ip,
+                        const std::optional<pcpp::IPv4Address> gateway_ip,
+                        const std::optional<std::array<std::uint8_t, 64>>& server_name,
+                        const std::optional<std::array<std::uint8_t, 128>>& boot_name,
+                        const std::optional<std::uint32_t> lease_time,
+                        const std::optional<pcpp::IPv4Address> subnet_mask,
                         std::optional<std::vector<pcpp::IPv4Address>> routers,
                         std::optional<std::vector<pcpp::IPv4Address>> dns_servers,
-                        std::optional<std::uint32_t> renewal_time,
-                        std::optional<std::uint32_t> rebind_time)
+                        const std::optional<std::uint32_t> renewal_time,
+                        const std::optional<std::uint32_t> rebind_time)
             : common_config_(common_config),
               hops_(hops),
               transaction_id_(transaction_id),
@@ -232,22 +231,22 @@ namespace serratia::protocols {
     struct DHCPAckConfig {
     public:
         DHCPAckConfig(const DHCPCommonConfig& common_config,
-                      std::uint32_t transaction_id,
-                      pcpp::IPv4Address your_ip,
-                      pcpp::IPv4Address server_id,
-                      std::uint32_t lease_time,
-                      std::optional<std::uint8_t> hops = std::nullopt,
-                      std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-                      std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                      std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
-                      std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                      std::optional<std::array<std::uint8_t, 64>> server_name = std::nullopt,
-                      std::optional<std::array<std::uint8_t, 128>> boot_file_name = std::nullopt,
-                      std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
+                      const std::uint32_t transaction_id,
+                      const pcpp::IPv4Address your_ip,
+                      const pcpp::IPv4Address server_id,
+                      const std::uint32_t lease_time,
+                      const std::optional<std::uint8_t> hops = std::nullopt,
+                      const std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                      const std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                      const std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
+                      const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                      const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+                      const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
+                      const std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
                       std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
                       std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
-                      std::optional<std::uint32_t> renewal_time = std::nullopt,
-                      std::optional<std::uint32_t> rebind_time = std::nullopt)
+                      const std::optional<std::uint32_t> renewal_time = std::nullopt,
+                      const std::optional<std::uint32_t> rebind_time = std::nullopt)
             : common_config_(common_config),
               hops_(hops),
               transaction_id_(transaction_id),
