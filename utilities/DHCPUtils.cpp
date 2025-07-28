@@ -110,6 +110,7 @@ void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
     if (nullptr == dhcp_layer) {
         return;
     }
+    //TODO: Change handleX() to return configs & set a Packet to buildX() using the config
     switch (dhcp_layer->getMessageType()) {
         case pcpp::DHCP_DISCOVER:
             handleDiscover(packet);
@@ -123,7 +124,6 @@ void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
         default:
             return;
     }
-    //TODO: move send() here and have each handleX() return the built packet
 }
 
 pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac) {
