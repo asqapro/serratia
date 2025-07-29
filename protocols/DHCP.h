@@ -82,24 +82,23 @@ namespace serratia::protocols {
 
     struct DHCPOfferConfig {
     public:
-        //TODO: Add std::nullopt default values
         DHCPOfferConfig(DHCPCommonConfig common_config,
                         std::optional<std::uint8_t> hops,
                         std::uint32_t transaction_id,
                         pcpp::IPv4Address your_ip,
                         pcpp::IPv4Address server_id,
-                        std::optional<std::uint16_t> seconds_elapsed,
-                        std::optional<std::uint16_t> bootp_flags,
-                        std::optional<pcpp::IPv4Address> server_ip,
-                        std::optional<pcpp::IPv4Address> gateway_ip,
-                        const std::optional<std::array<std::uint8_t, 64>>& server_name,
-                        const std::optional<std::array<std::uint8_t, 128>>& boot_name,
-                        std::optional<std::uint32_t> lease_time,
-                        std::optional<pcpp::IPv4Address> subnet_mask,
-                        std::optional<std::vector<pcpp::IPv4Address>> routers,
-                        std::optional<std::vector<pcpp::IPv4Address>> dns_servers,
-                        std::optional<std::uint32_t> renewal_time,
-                        std::optional<std::uint32_t> rebind_time);
+                        std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                        std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                        std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
+                        std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                        const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+                        const std::optional<std::array<std::uint8_t, 128>>& boot_name = std::nullopt,
+                        std::optional<std::uint32_t> lease_time = std::nullopt,
+                        std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
+                        std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
+                        std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
+                        std::optional<std::uint32_t> renewal_time = std::nullopt,
+                        std::optional<std::uint32_t> rebind_time = std::nullopt);
         DHCPOfferConfig() = delete;
 
         [[nodiscard]] DHCPCommonConfig get_common_config() const;
