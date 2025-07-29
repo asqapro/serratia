@@ -102,9 +102,9 @@ pcpp::Packet buildTestDiscover(const TestEnvironment& env) {
     const auto src_port = env.client_port;
     const auto dst_port = env.server_port;
 
-    const auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-    const auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-    const auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+    const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+    const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+    const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
     const serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
     std::vector<std::uint8_t> client_id = {1};
@@ -136,9 +136,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.client_port;
         auto dst_port = env.server_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         auto config_eth_layer = dhcp_common_config.GetEthLayer();
@@ -164,9 +164,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.client_port;
         auto dst_port = env.server_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::vector<std::uint8_t> client_id = {1};
@@ -235,9 +235,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.server_port;
         auto dst_port = env.client_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         pcpp::IPv4Address your_ip = env.client_ip;
@@ -311,9 +311,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.client_port;
         auto dst_port = env.server_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         pcpp::IPv4Address requested_ip = env.client_ip;
@@ -381,9 +381,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.client_port;
         auto dst_port = env.server_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         std::vector<std::uint8_t> client_id = {1};
@@ -444,9 +444,9 @@ TEST_CASE( "Build DHCP packets" ) {
         auto src_port = env.client_port;
         auto dst_port = env.server_port;
 
-        auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
-        auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
-        auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+        const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+        const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+        const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
         serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
         pcpp::IPv4Address offered_ip = env.client_ip;
@@ -556,9 +556,16 @@ TEST_CASE( "Interact with DHCP server" ) {
     serratia::utils::DHCPServer server(config, std::move(device));
     server.run();
 
-    auto eth_layer = new pcpp::EthLayer(env.client_mac, env.server_mac);
-    auto ip_layer = new pcpp::IPv4Layer(env.client_ip, env.server_ip);
-    auto udp_layer = new pcpp::UdpLayer(env.client_port, env.server_port);
+    auto src_mac = env.client_mac;
+    auto dst_mac = env.server_mac;
+    auto src_ip = env.client_ip;
+    auto dst_ip = env.server_ip;
+    auto src_port = env.client_port;
+    auto dst_port = env.server_port;
+
+    const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
+    const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
+    const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
     serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
     std::uint8_t hops = 0;

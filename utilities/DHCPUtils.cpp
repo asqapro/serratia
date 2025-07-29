@@ -160,16 +160,16 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
     const auto src_mac = config_.get_server_mac();
     const auto dst_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac();
-    const auto eth_layer = new pcpp::EthLayer(src_mac, dst_mac);
+    const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
 
     const auto src_ip = config_.get_server_ip();
     const auto dst_ip = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>()->getSrcIPv4Address();
-    const auto ip_layer = new pcpp::IPv4Layer(src_ip, dst_ip);
+    const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
 
     //TODO: move these to constructor
     constexpr std::uint16_t src_port = 67;
     constexpr std::uint16_t dst_port = 68;
-    const auto udp_layer = new pcpp::UdpLayer(src_port, dst_port);
+    const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
 
     //record the lease
     LeaseInfo lease;
