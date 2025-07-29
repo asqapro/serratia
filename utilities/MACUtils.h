@@ -3,5 +3,5 @@
 #include <pcapplusplus/MacAddress.h>
 
 namespace serratia::utils {
-    pcpp::MacAddress randomize_mac();
+pcpp::MacAddress randomize_mac();
 }

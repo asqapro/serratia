@@ -2,4 +2,3 @@ build/
 .cache/
 .vscode/
 .idea/
-sudo-gdb-wrapper.sh
