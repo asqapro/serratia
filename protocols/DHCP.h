@@ -14,12 +14,9 @@
 namespace serratia::protocols {
 struct DHCPCommonConfig {
  public:
-  DHCPCommonConfig(std::shared_ptr<pcpp::EthLayer> eth_layer,
-                   std::shared_ptr<pcpp::IPv4Layer> ip_layer,
+  DHCPCommonConfig(std::shared_ptr<pcpp::EthLayer> eth_layer, std::shared_ptr<pcpp::IPv4Layer> ip_layer,
                    std::shared_ptr<pcpp::UdpLayer> udp_layer)
-      : eth_layer_(std::move(eth_layer)),
-        ip_layer_(std::move(ip_layer)),
-        udp_layer_(std::move(udp_layer)) {}
+      : eth_layer_(std::move(eth_layer)), ip_layer_(std::move(ip_layer)), udp_layer_(std::move(udp_layer)) {}
   DHCPCommonConfig() = delete;
 
   [[nodiscard]] std::shared_ptr<pcpp::EthLayer> GetEthLayer() const;
@@ -34,18 +31,16 @@ struct DHCPCommonConfig {
 
 struct DHCPDiscoverConfig {
  public:
-  DHCPDiscoverConfig(
-      DHCPCommonConfig common_config, std::uint32_t transaction_id,
-      std::optional<std::uint8_t> hops = std::nullopt,
-      std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-      std::optional<std::uint16_t> bootp_flags = std::nullopt,
-      std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-      std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
-      std::optional<std::vector<std::uint8_t>> param_request_list =
-          std::nullopt,
-      std::optional<std::string> client_host_name = std::nullopt,
-      std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
-      std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt);
+  DHCPDiscoverConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id,
+                     std::optional<std::uint8_t> hops = std::nullopt,
+                     std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                     std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                     std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                     std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                     std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                     std::optional<std::string> client_host_name = std::nullopt,
+                     std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
+                     std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt);
   DHCPDiscoverConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
@@ -55,12 +50,10 @@ struct DHCPDiscoverConfig {
   [[nodiscard]] std::optional<std::uint16_t> get_bootp_flags() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
   [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_client_id() const;
-  [[nodiscard]] std::optional<std::vector<std::uint8_t>>
-  get_param_request_list() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
   [[nodiscard]] std::optional<std::string> get_client_host_name() const;
   [[nodiscard]] std::optional<std::uint16_t> get_max_dhcp_message_size() const;
-  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_class_id()
-      const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
   [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
 
@@ -84,24 +77,20 @@ struct DHCPDiscoverConfig {
 
 struct DHCPOfferConfig {
  public:
-  DHCPOfferConfig(
-      DHCPCommonConfig common_config, std::optional<std::uint8_t> hops,
-      std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
-      pcpp::IPv4Address server_id,
-      std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-      std::optional<std::uint16_t> bootp_flags = std::nullopt,
-      std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
-      std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-      const std::optional<std::array<std::uint8_t, 64>>& server_name =
-          std::nullopt,
-      const std::optional<std::array<std::uint8_t, 128>>& boot_name =
-          std::nullopt,
-      std::optional<std::uint32_t> lease_time = std::nullopt,
-      std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
-      std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
-      std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
-      std::optional<std::uint32_t> renewal_time = std::nullopt,
-      std::optional<std::uint32_t> rebind_time = std::nullopt);
+  DHCPOfferConfig(DHCPCommonConfig common_config, std::optional<std::uint8_t> hops, std::uint32_t transaction_id,
+                  pcpp::IPv4Address your_ip, pcpp::IPv4Address server_id,
+                  std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                  std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                  std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
+                  std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                  const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+                  const std::optional<std::array<std::uint8_t, 128>>& boot_name = std::nullopt,
+                  std::optional<std::uint32_t> lease_time = std::nullopt,
+                  std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
+                  std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
+                  std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
+                  std::optional<std::uint32_t> renewal_time = std::nullopt,
+                  std::optional<std::uint32_t> rebind_time = std::nullopt);
   DHCPOfferConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
@@ -112,17 +101,13 @@ struct DHCPOfferConfig {
   [[nodiscard]] pcpp::IPv4Address get_your_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
-  [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name()
-      const;
-  [[nodiscard]] std::optional<std::array<std::uint8_t, 128>> get_boot_name()
-      const;
+  [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name() const;
+  [[nodiscard]] std::optional<std::array<std::uint8_t, 128>> get_boot_name() const;
   [[nodiscard]] pcpp::IPv4Address get_server_id() const;
   [[nodiscard]] std::optional<std::uint32_t> get_lease_time() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_subnet_mask() const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_routers()
-      const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers()
-      const;
+  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_routers() const;
+  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
   [[nodiscard]] std::optional<std::uint32_t> get_renewal_time() const;
   [[nodiscard]] std::optional<std::uint32_t> get_rebind_time() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
@@ -154,19 +139,17 @@ struct DHCPOfferConfig {
 
 struct DHCPRequestConfig {
  public:
-  DHCPRequestConfig(
-      DHCPCommonConfig common_config, std::uint32_t transaction_id,
-      std::optional<std::uint8_t> hops = std::nullopt,
-      std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-      std::optional<std::uint16_t> bootp_flags = std::nullopt,
-      std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-      std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
-      std::optional<std::vector<std::uint8_t>> param_request_list =
-          std::nullopt,
-      std::optional<std::string> client_host_name = std::nullopt,
-      std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
-      std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
-      std::optional<pcpp::IPv4Address> server_id = std::nullopt);
+  DHCPRequestConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id,
+                    std::optional<std::uint8_t> hops = std::nullopt,
+                    std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                    std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                    std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                    std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                    std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                    std::optional<std::string> client_host_name = std::nullopt,
+                    std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
+                    std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+                    std::optional<pcpp::IPv4Address> server_id = std::nullopt);
   DHCPRequestConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
@@ -179,8 +162,7 @@ struct DHCPRequestConfig {
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_requested_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_id() const;
   [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_client_id() const;
-  [[nodiscard]] std::optional<std::vector<std::uint8_t>>
-  get_param_request_list() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
   [[nodiscard]] std::optional<std::string> get_client_host_name() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
   [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
@@ -206,23 +188,19 @@ struct DHCPRequestConfig {
 
 struct DHCPAckConfig {
  public:
-  DHCPAckConfig(
-      DHCPCommonConfig common_config, std::uint32_t transaction_id,
-      pcpp::IPv4Address your_ip, pcpp::IPv4Address server_id,
-      std::uint32_t lease_time, std::optional<std::uint8_t> hops = std::nullopt,
-      std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-      std::optional<std::uint16_t> bootp_flags = std::nullopt,
-      std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
-      std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-      const std::optional<std::array<std::uint8_t, 64>>& server_name =
-          std::nullopt,
-      const std::optional<std::array<std::uint8_t, 128>>& boot_file_name =
-          std::nullopt,
-      std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
-      std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
-      std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
-      std::optional<std::uint32_t> renewal_time = std::nullopt,
-      std::optional<std::uint32_t> rebind_time = std::nullopt);
+  DHCPAckConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
+                pcpp::IPv4Address server_id, std::uint32_t lease_time, std::optional<std::uint8_t> hops = std::nullopt,
+                std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
+                std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+                const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
+                std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
+                std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
+                std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
+                std::optional<std::uint32_t> renewal_time = std::nullopt,
+                std::optional<std::uint32_t> rebind_time = std::nullopt);
   DHCPAckConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
@@ -233,17 +211,13 @@ struct DHCPAckConfig {
   [[nodiscard]] pcpp::IPv4Address get_your_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
-  [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name()
-      const;
-  [[nodiscard]] std::optional<std::array<std::uint8_t, 128>>
-  get_boot_file_name() const;
+  [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name() const;
+  [[nodiscard]] std::optional<std::array<std::uint8_t, 128>> get_boot_file_name() const;
   [[nodiscard]] pcpp::IPv4Address get_server_id() const;
   [[nodiscard]] std::uint32_t get_lease_time() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_subnet_mask() const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_routers()
-      const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers()
-      const;
+  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_routers() const;
+  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
   [[nodiscard]] std::optional<std::uint32_t> get_renewal_time() const;
   [[nodiscard]] std::optional<std::uint32_t> get_rebind_time() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;

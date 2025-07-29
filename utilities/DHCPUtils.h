@@ -19,15 +19,13 @@ struct std::hash<pcpp::MacAddress> {
   std::size_t operator()(const pcpp::MacAddress& mac) const noexcept {
     const uint8_t* data = mac.getRawData();
     std::size_t h = 0;
-    for (int i = 0; i < 6; ++i)
-      h ^= static_cast<std::size_t>(data[i]) << (i * 8);
+    for (int i = 0; i < 6; ++i) h ^= static_cast<std::size_t>(data[i]) << (i * 8);
     return h;
   }
 };
 
 namespace serratia::utils {
-std::vector<pcpp::IPv4Address> parseIPv4Addresses(
-    const pcpp::DhcpOption* option);
+std::vector<pcpp::IPv4Address> parseIPv4Addresses(const pcpp::DhcpOption* option);
 
 // TODO: make a constructor for this
 struct LeaseInfo {
@@ -39,8 +37,7 @@ struct LeaseInfo {
 class IPcapLiveDevice {
  public:
   virtual bool send(const pcpp::Packet& packet) = 0;
-  virtual bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives,
-                            void* onPacketArrivesUserCookie) = 0;
+  virtual bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) = 0;
   virtual void stopCapture() = 0;
   virtual ~IPcapLiveDevice() = default;
 };
@@ -49,8 +46,7 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
  public:
   explicit RealPcapLiveDevice(pcpp::PcapLiveDevice* device) : device_(device) {}
   bool send(const pcpp::Packet& packet) override;
-  bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives,
-                    void* onPacketArrivesUserCookie) override;
+  bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) override;
   void stopCapture() override;
 
  private:
@@ -59,14 +55,10 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
 
 struct DHCPServerConfig {
  public:
-  DHCPServerConfig(const pcpp::MacAddress server_mac,
-                   const pcpp::IPv4Address& server_ip, std::string server_name,
-                   const pcpp::IPv4Address& lease_pool_start,
-                   const pcpp::IPv4Address& server_netmask,
-                   const std::vector<pcpp::IPv4Address>& dns_servers,
-                   const std::chrono::seconds lease_time,
-                   const std::chrono::seconds renewal_time,
-                   const std::chrono::seconds rebind_time)
+  DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip, std::string server_name,
+                   const pcpp::IPv4Address& lease_pool_start, const pcpp::IPv4Address& server_netmask,
+                   const std::vector<pcpp::IPv4Address>& dns_servers, const std::chrono::seconds lease_time,
+                   const std::chrono::seconds renewal_time, const std::chrono::seconds rebind_time)
       : server_mac_(server_mac),
         server_ip_(server_ip),
         server_name_(std::move(server_name)),
