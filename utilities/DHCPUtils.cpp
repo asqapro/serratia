@@ -67,8 +67,8 @@ std::chrono::seconds serratia::utils::DHCPServerConfig::get_lease_time() const {
 std::chrono::seconds serratia::utils::DHCPServerConfig::get_renewal_time() const { return renewal_time_; }
 std::chrono::seconds serratia::utils::DHCPServerConfig::get_rebind_time() const { return rebind_time_; }
 
-serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::unique_ptr<IPcapLiveDevice> device)
-    : config_(std::move(config)), device_(std::move(device)) {
+serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr<IPcapLiveDevice> device)
+    : server_running_(false), config_(std::move(config)), device_(std::move(device)) {
   const auto lease_pool_start_int = ntohl(config_.get_lease_pool_start().toInt());
   const auto server_netmask_int = ntohl(config_.get_server_netmask().toInt());
 
@@ -98,9 +98,21 @@ static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, 
   server->handlePacket(parsed_packet);
 }
 
-void serratia::utils::DHCPServer::run() { device_->startCapture(onPacketArrives, this); }
+void serratia::utils::DHCPServer::run() {
+  if (true == server_running_) {
+    return;
+  }
+  device_->startCapture(onPacketArrives, this);
+  server_running_ = true;
+}
 
-void serratia::utils::DHCPServer::stop() const { device_->stopCapture(); }
+void serratia::utils::DHCPServer::stop() {
+  device_->stopCapture();
+  server_running_ = false;
+}
+bool serratia::utils::DHCPServer::is_running() const {
+  return server_running_;
+}
 
 void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
   const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();

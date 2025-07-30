@@ -515,7 +515,6 @@ TEST_CASE("Build DHCP packets") {
   }
 }
 
-// TODO: Need to write unit tests for server "start" + "stop"
 // TODO: Need to write unit test for server "handlePacket()" after refactor
 // (check DHCPUtils.cpp)
 
@@ -526,13 +525,8 @@ struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
   bool capturing = false;
   void* packet_arrives_cookie = nullptr;
 
-  std::promise<void> captured_offer;
-
   bool send(const pcpp::Packet& packet) override {
     sent_dhcp_packets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
-    if (sent_dhcp_packets.size() > 1) {
-      captured_offer.set_value();
-    }
 
     if (true == capturing && nullptr != capture_callback) {
       const auto raw_packet = packet.getRawPacket();
@@ -558,27 +552,44 @@ struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
 TEST_CASE("Interact with DHCP server") {
   auto& env = getEnv();
 
-  auto device = std::make_unique<MockPcapLiveDevice>();
-  auto device_ptr = device.get();
+  auto device = std::make_shared<MockPcapLiveDevice>();
 
   // TODO: add "pool start" to env
   serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, SERVER_PORT, CLIENT_PORT,
                                            env.server_host_name, pcpp::IPv4Address("192.168.0.2"), env.subnet_mask,
                                            env.dns_servers, env.lease_time, env.renewal_time, env.rebind_time);
 
-  serratia::utils::DHCPServer server(config, std::move(device));
-  server.run();
+  SECTION("Start & stop server") {
+    serratia::utils::DHCPServer server(config, device);
+    server.run();
+    REQUIRE(true == server.is_running());
+    auto dhcp_discover_config = buildTestDiscover(env);
+    auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
+    device->send(packet);
+    // 1 packet sent, server responds with 1 packet
+    REQUIRE(2 == device->sent_dhcp_packets.size());
 
-  auto dhcp_discover_config = buildTestDiscover(env);
-  auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
+    server.stop();
+    device->sent_dhcp_packets.clear();
+    REQUIRE(false == server.is_running());
+    device->send(packet);
+    // 1 packet sent, server shouldn't respond
+    REQUIRE(1 == device->sent_dhcp_packets.size());
+  }
 
-  std::future<void> capture_future = device_ptr->captured_offer.get_future();
+  SECTION("Acquire IP") {
+    serratia::utils::DHCPServer server(config, device);
+    server.run();
 
-  device_ptr->send(packet);
-  REQUIRE(std::future_status::ready == capture_future.wait_for(std::chrono::seconds(2)));
-  server.stop();
-  REQUIRE(2 == device_ptr->sent_dhcp_packets.size());
+    auto dhcp_discover_config = buildTestDiscover(env);
+    auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
 
-  auto& dhcp_layer = device_ptr->sent_dhcp_packets.back();
-  verifyDHCPOffer(env, &dhcp_layer);
+    device->send(packet);
+    server.stop();
+    REQUIRE(2 == device->sent_dhcp_packets.size());
+
+    auto& dhcp_layer = device->sent_dhcp_packets.back();
+    verifyDHCPOffer(env, &dhcp_layer);
+    //TODO: Complete request of process
+  }
 }

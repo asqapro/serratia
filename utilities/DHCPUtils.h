@@ -105,9 +105,10 @@ struct DHCPServerConfig {
 
 class DHCPServer {
  public:
-  DHCPServer(DHCPServerConfig config, std::unique_ptr<IPcapLiveDevice> device);
+  DHCPServer(DHCPServerConfig config, std::shared_ptr<IPcapLiveDevice> device);
   void run();
-  void stop() const;
+  void stop();
+  bool is_running() const;
   void handlePacket(const pcpp::Packet& packet);
 
  private:
@@ -117,8 +118,9 @@ class DHCPServer {
 
   pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac);
 
+  bool server_running_;
   DHCPServerConfig config_;
-  std::unique_ptr<IPcapLiveDevice> device_;
+  std::shared_ptr<IPcapLiveDevice> device_;
   std::set<pcpp::IPv4Address> available_ips_;
   std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table_;
 };
