@@ -29,9 +29,14 @@ std::vector<pcpp::IPv4Address> parseIPv4Addresses(const pcpp::DhcpOption* option
 
 // TODO: make a constructor for this
 struct LeaseInfo {
-  std::vector<std::uint8_t> client_id;
-  pcpp::IPv4Address assigned_ip;
-  std::chrono::steady_clock::time_point expiry_time;
+  LeaseInfo(std::vector<std::uint8_t> client_id, const pcpp::IPv4Address assigned_ip,
+            const std::chrono::steady_clock::time_point expiry_time)
+      : client_id_(std::move(client_id)), assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
+  LeaseInfo() = default;
+
+  std::vector<std::uint8_t> client_id_;
+  pcpp::IPv4Address assigned_ip_;
+  std::chrono::steady_clock::time_point expiry_time_;
 };
 
 class IPcapLiveDevice {
@@ -55,12 +60,15 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
 
 struct DHCPServerConfig {
  public:
-  DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip, std::string server_name,
+  DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip,
+                   const std::uint16_t server_port, const std::uint16_t client_port, std::string server_name,
                    const pcpp::IPv4Address& lease_pool_start, const pcpp::IPv4Address& server_netmask,
                    const std::vector<pcpp::IPv4Address>& dns_servers, const std::chrono::seconds lease_time,
                    const std::chrono::seconds renewal_time, const std::chrono::seconds rebind_time)
       : server_mac_(server_mac),
         server_ip_(server_ip),
+        server_port_(server_port),
+        client_port_(client_port),
         server_name_(std::move(server_name)),
         lease_pool_start_(lease_pool_start),
         server_netmask_(server_netmask),
@@ -71,6 +79,8 @@ struct DHCPServerConfig {
 
   [[nodiscard]] pcpp::MacAddress get_server_mac() const;
   [[nodiscard]] pcpp::IPv4Address get_server_ip() const;
+  [[nodiscard]] std::uint16_t get_server_port() const;
+  [[nodiscard]] std::uint16_t get_client_port() const;
   [[nodiscard]] std::string get_server_name() const;
   [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
   [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
@@ -82,6 +92,8 @@ struct DHCPServerConfig {
  private:
   pcpp::MacAddress server_mac_;
   pcpp::IPv4Address server_ip_;
+  std::uint16_t server_port_;
+  std::uint16_t client_port_;
   std::string server_name_;
   pcpp::IPv4Address lease_pool_start_;
   pcpp::IPv4Address server_netmask_;

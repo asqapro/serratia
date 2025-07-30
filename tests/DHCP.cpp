@@ -23,6 +23,8 @@
 
 #include "../utilities/DHCPUtils.h"
 
+constexpr std::uint16_t SERVER_PORT = 67;
+constexpr std::uint16_t CLIENT_PORT = 68;
 constexpr std::uint32_t LEASE_TIME_VAL = 86400;
 // 87.5% of lease time
 constexpr std::uint32_t RENEWAL_TIME_VAL = 75600;
@@ -59,8 +61,6 @@ struct TestEnvironment {
         renewal_time(RENEWAL_TIME_VAL),
         rebind_time(REBIND_TIME_VAL) {
     // TODO: move other initializers to initializer list
-    server_port = 67;
-    client_port = 68;
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> distrib;
@@ -90,8 +90,6 @@ struct TestEnvironment {
   pcpp::MacAddress broadcast_mac;
   pcpp::IPv4Address server_ip;
   pcpp::IPv4Address client_ip;
-  std::uint16_t server_port = 67;
-  std::uint16_t client_port = 68;
   pcpp::IPv4Address broadcast_ip;
   std::uint8_t hops;
   std::uint32_t transaction_id;
@@ -123,8 +121,8 @@ serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment&
   const auto dst_mac = env.broadcast_mac;
   const pcpp::IPv4Address src_ip("0.0.0.0");
   const auto dst_ip = env.broadcast_ip;
-  const auto src_port = env.client_port;
-  const auto dst_port = env.server_port;
+  constexpr auto src_port = CLIENT_PORT;
+  constexpr auto dst_port = SERVER_PORT;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -183,8 +181,8 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
   auto dst_mac = env.client_mac;
   pcpp::IPv4Address src_ip = env.server_ip;
   auto dst_ip = env.client_ip;
-  auto src_port = env.server_port;
-  auto dst_port = env.client_port;
+  constexpr auto src_port = SERVER_PORT;
+  constexpr auto dst_port = CLIENT_PORT;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -277,8 +275,8 @@ serratia::protocols::DHCPRequestConfig buildTestRequest(const TestEnvironment& e
     src_ip = env.client_ip;
   }
   auto dst_ip = env.broadcast_ip;
-  auto src_port = env.client_port;
-  auto dst_port = env.server_port;
+  constexpr auto src_port = CLIENT_PORT;
+  constexpr auto dst_port = SERVER_PORT;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -370,8 +368,8 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
   auto dst_mac = env.client_mac;
   pcpp::IPv4Address src_ip("0.0.0.0");  // TODO: check this
   auto dst_ip = env.client_ip;
-  auto src_port = env.client_port;
-  auto dst_port = env.server_port;
+  constexpr auto src_port = CLIENT_PORT;
+  constexpr auto dst_port = SERVER_PORT;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -453,8 +451,8 @@ TEST_CASE("Build DHCP packets") {
     auto dst_mac = env.broadcast_mac;
     pcpp::IPv4Address src_ip("0.0.0.0");
     auto dst_ip = env.broadcast_ip;
-    auto src_port = env.client_port;
-    auto dst_port = env.server_port;
+    constexpr auto src_port = CLIENT_PORT;
+    constexpr auto dst_port = SERVER_PORT;
 
     const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
     const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -474,9 +472,6 @@ TEST_CASE("Build DHCP packets") {
     REQUIRE(config_udp_layer->getDstPort() == dst_port);
   }
 
-  // TODO: Probably move this into a function since REQUIRE()'s are repeated in
-  // "Interact with server" and probably move other test sections into functions
-  // for the same reason
   SECTION("DHCP discover") {
     auto dhcp_discover_config = buildTestDiscover(env);
     auto packet = serratia::protocols::buildDHCPDiscover(dhcp_discover_config);
@@ -502,7 +497,6 @@ TEST_CASE("Build DHCP packets") {
     verifyDHCPRequest(env, dhcp_layer, initial_request);
   }
 
-  // TODO: check how this is different from initial request, I forgot
   SECTION("DHCP renewal request") {
     constexpr bool initial_request = false;
     auto dhcp_request_config = buildTestRequest(env, initial_request);
@@ -568,9 +562,9 @@ TEST_CASE("Interact with DHCP server") {
   auto device_ptr = device.get();
 
   // TODO: add "pool start" to env
-  serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_host_name,
-                                           pcpp::IPv4Address("192.168.0.2"), env.subnet_mask, env.dns_servers,
-                                           env.lease_time, env.renewal_time, env.rebind_time);
+  serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, SERVER_PORT, CLIENT_PORT,
+                                           env.server_host_name, pcpp::IPv4Address("192.168.0.2"), env.subnet_mask,
+                                           env.dns_servers, env.lease_time, env.renewal_time, env.rebind_time);
 
   serratia::utils::DHCPServer server(config, std::move(device));
   server.run();

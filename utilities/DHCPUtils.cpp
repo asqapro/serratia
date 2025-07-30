@@ -22,8 +22,10 @@ std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::D
 
   if (nullptr == option) return addresses;
 
-  const size_t data_len = option->getDataSize();  // length in bytes
-  const uint8_t* data = option->getValue();       // raw pointer to the data
+  // length in bytes
+  const size_t data_len = option->getDataSize();
+  // raw pointer to the data
+  const uint8_t* data = option->getValue();
 
   // Each IPv4 address is 4 bytes
   if (data_len % 4 != 0) {
@@ -34,8 +36,8 @@ std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::D
   for (size_t i = 0; i < data_len; i += 4) {
     uint32_t raw_addr;
     std::memcpy(&raw_addr, &data[i], sizeof(uint32_t));
-    // TODO: move comments out from in-line
-    pcpp::IPv4Address addr(raw_addr);  // construct from 4 bytes
+    // construct from 4 bytes
+    pcpp::IPv4Address addr(raw_addr);
     addresses.push_back(addr);
   }
 
@@ -55,6 +57,8 @@ void serratia::utils::RealPcapLiveDevice::stopCapture() { device_->stopCapture()
 
 pcpp::MacAddress serratia::utils::DHCPServerConfig::get_server_mac() const { return server_mac_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_ip() const { return server_ip_; }
+std::uint16_t serratia::utils::DHCPServerConfig::get_server_port() const { return server_port_; }
+std::uint16_t serratia::utils::DHCPServerConfig::get_client_port() const { return client_port_; }
 std::string serratia::utils::DHCPServerConfig::get_server_name() const { return server_name_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_lease_pool_start() const { return lease_pool_start_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_netmask() const { return server_netmask_; }
@@ -121,14 +125,14 @@ void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
 pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac) {
   if (const auto it = lease_table_.find(client_mac); it != lease_table_.end()) {
     const LeaseInfo& lease = it->second;
-    if (std::chrono::steady_clock::now() < lease.expiry_time) {
+    if (std::chrono::steady_clock::now() < lease.expiry_time_) {
       // lease hasn't expired yet
-      return lease.assigned_ip;
+      return lease.assigned_ip_;
     }
 
     // TODO: probably remove this, doesn't make sense in allocateIP()
     // if the lease is expired then return IP to pool
-    available_ips_.insert(lease.assigned_ip);
+    available_ips_.insert(lease.assigned_ip_);
     lease_table_.erase(it);
   }
 
@@ -160,26 +164,24 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const auto dst_ip = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>()->getSrcIPv4Address();
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
 
-  // TODO: move these to constructor
-  constexpr std::uint16_t src_port = 67;
-  constexpr std::uint16_t dst_port = 68;
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
+  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(config_.get_server_port(), config_.get_client_port());
 
-  // record the lease
-  LeaseInfo lease;
-  lease.assigned_ip = offered_ip;
-  lease.expiry_time = std::chrono::steady_clock::now() + config_.get_lease_time();
-
+  std::vector<std::uint8_t> client_id;
   // Client ID is either client MAC or set in DHCP discover
   if (const auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
       client_id_option.isNotNull()) {
     const auto id_size = client_id_option.getDataSize();
     const auto id_data = client_id_option.getValue();
-    lease.client_id = std::vector<std::uint8_t>(id_data, id_data + id_size);
+    client_id.assign(id_data, id_data + id_size);
   } else {
-    const auto client_id = dhcp_layer->getClientHardwareAddress();
-    lease.client_id = std::vector<std::uint8_t>(client_id.getRawData(), client_id.getRawData() + 6);
+    const auto client_id_mac = dhcp_layer->getClientHardwareAddress();
+    client_id.assign(client_id_mac.getRawData(), client_id_mac.getRawData() + 6);
   }
+
+  auto lease_expiry = std::chrono::steady_clock::now() + config_.get_lease_time();
+
+  // record the lease
+  LeaseInfo lease(client_id, offered_ip, lease_expiry);
 
   lease_table_[client_mac] = lease;
 
@@ -203,7 +205,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const auto renewal_time = config_.get_renewal_time();
   const auto rebind_time = config_.get_rebind_time();
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
-      dhcp_common_config, dhcp_header->hops, dhcp_header->transactionID, lease.assigned_ip, server_ip,
+      dhcp_common_config, dhcp_header->hops, dhcp_header->transactionID, lease.assigned_ip_, server_ip,
       dhcp_header->secondsElapsed, dhcp_header->flags, server_ip, server_ip, server_name, bootfile_name,
       lease_time.count(), server_netmask, routers, dns_servers, renewal_time.count(), rebind_time.count());
   const auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
