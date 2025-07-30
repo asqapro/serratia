@@ -417,6 +417,8 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   offer_packet.addLayer(udp_layer.get());
   offer_packet.addLayer(dhcp_layer.get());
 
+  offer_packet.computeCalculateFields();
+
   return offer_packet;
 }
 
