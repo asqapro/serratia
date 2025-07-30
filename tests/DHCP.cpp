@@ -108,7 +108,6 @@ struct TestEnvironment {
   std::vector<pcpp::IPv4Address> dns_servers;
   std::chrono::seconds renewal_time;
   std::chrono::seconds rebind_time;
-  // TODO: figure out other fields that need to be included
 };
 
 TestEnvironment& getEnv() {
@@ -166,6 +165,8 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
   REQUIRE(NO_DIFFERENCE == memcmp(param_request_option, env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == env.client_host_name);
+  // TODO: this results in warning: unsigned conversion from ‘int’ to ‘uint16_t’ {aka ‘short unsigned int’} changes
+  // value from ‘145154’ to ‘14082’
   std::uint16_t byte_swapped_opt = ((MAX_MESSAGE_SIZE >> 8) | (MAX_MESSAGE_SIZE << 8));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
           byte_swapped_opt);
@@ -515,9 +516,6 @@ TEST_CASE("Build DHCP packets") {
   }
 }
 
-// TODO: Need to write unit test for server "handlePacket()" after refactor
-// (check DHCPUtils.cpp)
-
 struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
   std::vector<pcpp::DhcpLayer> sent_dhcp_packets;
 
@@ -577,6 +575,8 @@ TEST_CASE("Interact with DHCP server") {
     REQUIRE(1 == device->sent_dhcp_packets.size());
   }
 
+  SECTION("Verify server can handle various packets") { serratia::utils::DHCPServer server(config, device); }
+
   SECTION("Acquire IP") {
     serratia::utils::DHCPServer server(config, device);
     server.run();
@@ -590,6 +590,6 @@ TEST_CASE("Interact with DHCP server") {
 
     auto& dhcp_layer = device->sent_dhcp_packets.back();
     verifyDHCPOffer(env, &dhcp_layer);
-    //TODO: Complete request of process
+    // TODO: Complete request of process
   }
 }

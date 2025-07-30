@@ -90,19 +90,11 @@ serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr
   }
 }
 
-static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
-  auto* server = static_cast<serratia::utils::DHCPServer*>(cookie);
-
-  const pcpp::Packet parsed_packet(packet);
-
-  server->handlePacket(parsed_packet);
-}
-
 void serratia::utils::DHCPServer::run() {
   if (true == server_running_) {
     return;
   }
-  device_->startCapture(onPacketArrives, this);
+  device_->startCapture(DHCPServer::onPacketArrives, this);
   server_running_ = true;
 }
 
@@ -112,6 +104,14 @@ void serratia::utils::DHCPServer::stop() {
 }
 bool serratia::utils::DHCPServer::is_running() const {
   return server_running_;
+}
+
+void serratia::utils::DHCPServer::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
+  auto* server = static_cast<serratia::utils::DHCPServer*>(cookie);
+
+  const pcpp::Packet parsed_packet(packet);
+
+  server->handlePacket(parsed_packet);
 }
 
 void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {

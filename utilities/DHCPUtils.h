@@ -109,9 +109,10 @@ class DHCPServer {
   void run();
   void stop();
   bool is_running() const;
-  void handlePacket(const pcpp::Packet& packet);
 
  private:
+  static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);
+  void handlePacket(const pcpp::Packet& packet);
   void handleDiscover(const pcpp::Packet& dhcp_packet);
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
