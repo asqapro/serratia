@@ -322,8 +322,9 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(vendor_class_id_opt);
   }
 
-  // TODO: Change code blocks to always include {}
-  for (const auto& opt : config.get_extra_options()) dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  for (const auto& opt : config.get_extra_options()) {
+    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  }
 
   pcpp::Packet request_packet;
   auto eth_layer = common_config.GetEthLayer();
@@ -354,15 +355,17 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   dhcp_header->serverIpAddress = config.get_server_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
-  if (auto server_arr = config.get_server_name(); server_arr.has_value())
+  if (auto server_arr = config.get_server_name(); server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
-  else
+  } else {
     std::ranges::fill(dhcp_header->serverName, 0);
+  }
 
-  if (auto boot_file_arr = config.get_boot_name(); boot_file_arr.has_value())
+  if (auto boot_file_arr = config.get_boot_name(); boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
-  else
+  } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
+  }
 
   dhcp_layer->setMessageType(pcpp::DHCP_OFFER);
 
@@ -406,7 +409,9 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
     dhcp_layer->addOption(rebind_time_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  for (const auto& opt : config.get_extra_options()) {
+    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  }
 
   pcpp::Packet offer_packet;
   auto eth_layer = common_config.GetEthLayer();
@@ -477,7 +482,9 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
     dhcp_layer->addOption(client_host_name_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  for (const auto& opt : config.get_extra_options()) {
+    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  }
 
   pcpp::Packet request_packet;
   auto eth_layer = common_config.GetEthLayer();
@@ -508,15 +515,17 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
   dhcp_header->serverIpAddress = config.get_server_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
-  if (auto server_arr = config.get_server_name(); server_arr.has_value())
+  if (auto server_arr = config.get_server_name(); server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
-  else
+  } else {
     std::ranges::fill(dhcp_header->serverName, 0);
+  }
 
-  if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value())
+  if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
-  else
+  } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
+  }
 
   pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_id());
   dhcp_layer->addOption(server_id_opt);
@@ -556,7 +565,9 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     dhcp_layer->addOption(rebind_time_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  for (const auto& opt : config.get_extra_options()) {
+    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+  }
 
   pcpp::Packet request_packet;
   auto eth_layer = common_config.GetEthLayer();

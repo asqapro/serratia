@@ -19,7 +19,9 @@ struct std::hash<pcpp::MacAddress> {
   std::size_t operator()(const pcpp::MacAddress& mac) const noexcept {
     const uint8_t* data = mac.getRawData();
     std::size_t h = 0;
-    for (int i = 0; i < 6; ++i) h ^= static_cast<std::size_t>(data[i]) << (i * 8);
+    for (int i = 0; i < 6; ++i) {
+      h ^= static_cast<std::size_t>(data[i]) << (i * 8);
+    }
     return h;
   }
 };
@@ -27,7 +29,6 @@ struct std::hash<pcpp::MacAddress> {
 namespace serratia::utils {
 std::vector<pcpp::IPv4Address> parseIPv4Addresses(const pcpp::DhcpOption* option);
 
-// TODO: make a constructor for this
 struct LeaseInfo {
   LeaseInfo(std::vector<std::uint8_t> client_id, const pcpp::IPv4Address assigned_ip,
             const std::chrono::steady_clock::time_point expiry_time)

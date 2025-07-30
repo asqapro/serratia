@@ -20,7 +20,9 @@
 std::vector<pcpp::IPv4Address> serratia::utils::parseIPv4Addresses(const pcpp::DhcpOption* option) {
   std::vector<pcpp::IPv4Address> addresses;
 
-  if (nullptr == option) return addresses;
+  if (nullptr == option) {
+    return addresses;
+  }
 
   // length in bytes
   const size_t data_len = option->getDataSize();
@@ -76,7 +78,9 @@ serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr
   // TODO: broadcast probably calculated correctly but double check with test
   const auto broadcast_addr_int = network_addr_int | ~server_netmask_int;
 
-  if (broadcast_addr_int - network_addr_int <= 1) throw std::runtime_error("Invalid lease pool size");
+  if (broadcast_addr_int - network_addr_int <= 1) {
+    throw std::runtime_error("Invalid lease pool size");
+  }
 
   bool found_server_ip = false;
   // First IP is network address, second is server, last is broadcast
@@ -102,9 +106,7 @@ void serratia::utils::DHCPServer::stop() {
   device_->stopCapture();
   server_running_ = false;
 }
-bool serratia::utils::DHCPServer::is_running() const {
-  return server_running_;
-}
+bool serratia::utils::DHCPServer::is_running() const { return server_running_; }
 
 void serratia::utils::DHCPServer::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
   auto* server = static_cast<serratia::utils::DHCPServer*>(cookie);
