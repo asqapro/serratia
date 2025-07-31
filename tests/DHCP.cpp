@@ -1,23 +1,8 @@
 #include "../protocols/DHCP.h"
 
 #include <arpa/inet.h>
-#include <pcapplusplus/DhcpLayer.h>
-#include <pcapplusplus/EthLayer.h>
-#include <pcapplusplus/IPv4Layer.h>
-#include <pcapplusplus/IpAddress.h>
-#include <pcapplusplus/MacAddress.h>
-#include <pcapplusplus/Packet.h>
-#include <pcapplusplus/PcapLiveDevice.h>
-#include <pcapplusplus/PcapLiveDeviceList.h>
-#include <pcapplusplus/UdpLayer.h>
-#include <sys/types.h>
 
 #include <catch2/catch_test_macros.hpp>
-#include <chrono>
-#include <cstdint>
-#include <cstring>
-#include <future>
-#include <optional>
 #include <random>
 #include <ranges>
 
