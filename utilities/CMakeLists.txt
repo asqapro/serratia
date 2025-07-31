@@ -3,6 +3,8 @@ add_library(utilities
         MACUtils.cpp
         DHCPUtils.h
         DHCPUtils.cpp
+        DHCPServer.h
+        DHCPServer.cpp
 )
 
 target_link_libraries(utilities PUBLIC -lpcap -lPcap++ -lPacket++ -lCommon++)

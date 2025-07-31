@@ -21,6 +21,7 @@
 #include <random>
 #include <ranges>
 
+#include "../utilities/DHCPServer.h"
 #include "../utilities/DHCPUtils.h"
 
 constexpr std::uint16_t SERVER_PORT = 67;
