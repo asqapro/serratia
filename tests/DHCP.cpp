@@ -153,11 +153,8 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
   REQUIRE(NO_DIFFERENCE == memcmp(param_request_option, env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == env.client_host_name);
-  // TODO: this results in warning: unsigned conversion from ‘int’ to ‘uint16_t’ {aka ‘short unsigned int’} changes
-  // value from ‘145154’ to ‘14082’
-  std::uint16_t byte_swapped_opt = ((MAX_MESSAGE_SIZE >> 8) | (MAX_MESSAGE_SIZE << 8));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
-          byte_swapped_opt);
+          ntohs(MAX_MESSAGE_SIZE));
 
   auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER).getValue();
   REQUIRE(NO_DIFFERENCE == memcmp(vendor_class_id_option, env.vendor_class_id.data(), env.vendor_class_id.size()));
@@ -238,7 +235,7 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
           ntohl(env.lease_time.count()));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == env.subnet_mask);
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);  // TODO: check this
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);
 
   auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
   REQUIRE(serratia::utils::parseIPv4Addresses(&router_option) == env.routers);
@@ -539,8 +536,8 @@ TEST_CASE("Interact with DHCP server") {
   auto device = std::make_shared<MockPcapLiveDevice>();
 
   serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, SERVER_PORT, CLIENT_PORT,
-                                           env.server_host_name, env.lease_pool_start, env.subnet_mask,
-                                           env.dns_servers, env.lease_time, env.renewal_time, env.rebind_time);
+                                           env.server_host_name, env.lease_pool_start, env.subnet_mask, env.dns_servers,
+                                           env.lease_time, env.renewal_time, env.rebind_time);
 
   SECTION("Verify server configuration") {
     serratia::utils::DHCPServer server(config, device);
