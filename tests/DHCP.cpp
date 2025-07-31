@@ -367,11 +367,10 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
 
   std::array<std::uint8_t, MAX_SERVER_NAME_SIZE> server_name{};
   // Copy server_host_name string into server_name array
-  // TODO: switch this to std::ranges::views style (check other example above)
-  std::copy_n(env.server_host_name.begin(), std::min(env.server_host_name.size(), server_name.size()),
-              server_name.begin());
-  // TODO: Use env stuff instead of defining here
+  std::ranges::copy(env.server_host_name | std::ranges::views::take(server_name.size()), server_name.begin());
+
   std::array<std::uint8_t, MAX_BOOT_FILE_NAME_SIZE> boot_file_name = {0};
+  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
   return {dhcp_common_config,
           env.transaction_id,
@@ -540,9 +539,8 @@ TEST_CASE("Interact with DHCP server") {
 
   auto device = std::make_shared<MockPcapLiveDevice>();
 
-  // TODO: add "pool start" to env
   serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, SERVER_PORT, CLIENT_PORT,
-                                           env.server_host_name, pcpp::IPv4Address("192.168.0.2"), env.subnet_mask,
+                                           env.server_host_name, env.lease_pool_start, env.subnet_mask,
                                            env.dns_servers, env.lease_time, env.renewal_time, env.rebind_time);
 
   SECTION("Verify server configuration") {
