@@ -355,7 +355,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
 serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
   auto src_mac = env.server_mac;
   auto dst_mac = env.client_mac;
-  pcpp::IPv4Address src_ip("0.0.0.0");  // TODO: check this
+  auto src_ip = env.server_ip;
   auto dst_ip = env.client_ip;
   constexpr auto src_port = CLIENT_PORT;
   constexpr auto dst_port = SERVER_PORT;
@@ -415,7 +415,6 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
           ntohl(env.lease_time.count()));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == env.subnet_mask);
-  // TODO: double check this
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);
 
   auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
