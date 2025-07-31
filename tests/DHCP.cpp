@@ -312,16 +312,11 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
   REQUIRE(NO_DIFFERENCE ==
           memcmp(dhcp_header->clientHardwareAddress, env.client_hw_address.data(), STANDARD_MAC_LENGTH));
 
-  std::string header_server_name(reinterpret_cast<const char*>(dhcp_header->serverName),
-                                 sizeof(dhcp_header->serverName));
-  REQUIRE(false == header_server_name.empty());
-  REQUIRE(std::string::npos == header_server_name.find_first_not_of(NULL_TERMINATOR));
-  // TODO: Change to use: std::all_of(arr, arr + size, [](int x) { return x == 0; });
+  auto server_name_field = dhcp_header->serverName;
+  REQUIRE(std::all_of(server_name_field, server_name_field + sizeof(server_name_field), [](int x) { return x == 0; }));
 
-  std::string header_boot_file_name(reinterpret_cast<const char*>(dhcp_header->bootFilename),
-                                    sizeof(dhcp_header->bootFilename));
-  REQUIRE(false == header_boot_file_name.empty());
-  REQUIRE(std::string::npos == header_boot_file_name.find_first_not_of(NULL_TERMINATOR));
+  auto boot_file_field = dhcp_header->bootFilename;
+  REQUIRE(std::all_of(boot_file_field, boot_file_field + sizeof(boot_file_field), [](int x) { return x == 0; }));
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_REQUEST == dhcp_layer->getMessageType());
 
