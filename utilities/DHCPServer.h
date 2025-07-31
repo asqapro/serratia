@@ -103,6 +103,8 @@ class DHCPServer {
   void run();
   void stop();
   bool is_running() const;
+  std::set<pcpp::IPv4Address> get_lease_pool() const;
+  std::unordered_map<pcpp::MacAddress, LeaseInfo> get_lease_table() const;
 
  private:
   static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);
@@ -116,7 +118,7 @@ class DHCPServer {
   bool server_running_;
   DHCPServerConfig config_;
   std::shared_ptr<IPcapLiveDevice> device_;
-  std::set<pcpp::IPv4Address> available_ips_;
+  std::set<pcpp::IPv4Address> lease_pool_;
   std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table_;
 };
 }  // namespace serratia::utils

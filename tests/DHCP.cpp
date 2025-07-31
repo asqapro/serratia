@@ -45,7 +45,8 @@ struct TestEnvironment {
         lease_time(LEASE_TIME_VAL),
         subnet_mask("255.255.255.0"),
         renewal_time(RENEWAL_TIME_VAL),
-        rebind_time(REBIND_TIME_VAL) {
+        rebind_time(REBIND_TIME_VAL),
+        lease_pool_start("192.168.0.2") {
     // TODO: move other initializers to initializer list
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -94,6 +95,7 @@ struct TestEnvironment {
   std::vector<pcpp::IPv4Address> dns_servers;
   std::chrono::seconds renewal_time;
   std::chrono::seconds rebind_time;
+  pcpp::IPv4Address lease_pool_start;
 };
 
 TestEnvironment& getEnv() {
@@ -543,6 +545,14 @@ TEST_CASE("Interact with DHCP server") {
                                            env.server_host_name, pcpp::IPv4Address("192.168.0.2"), env.subnet_mask,
                                            env.dns_servers, env.lease_time, env.renewal_time, env.rebind_time);
 
+  SECTION("Verify server configuration") {
+    serratia::utils::DHCPServer server(config, device);
+    constexpr std::uint8_t LEASE_POOL_SIZE = 253;
+    auto lease_pool = server.get_lease_pool();
+    REQUIRE(LEASE_POOL_SIZE == lease_pool.size());
+    REQUIRE(env.lease_pool_start == *lease_pool.begin());
+  }
+
   SECTION("Start & stop server") {
     serratia::utils::DHCPServer server(config, device);
     server.run();
@@ -561,8 +571,6 @@ TEST_CASE("Interact with DHCP server") {
     REQUIRE(1 == device->sent_dhcp_packets.size());
   }
 
-  SECTION("Verify server can handle various packets") { serratia::utils::DHCPServer server(config, device); }
-
   SECTION("Acquire IP") {
     serratia::utils::DHCPServer server(config, device);
     server.run();
@@ -577,5 +585,15 @@ TEST_CASE("Interact with DHCP server") {
     auto& dhcp_layer = device->sent_dhcp_packets.back();
     verifyDHCPOffer(env, &dhcp_layer);
     // TODO: Complete request of process
+
+    auto lease_table = server.get_lease_table();
+    constexpr std::uint8_t LEASE_TABLE_SIZE = 1;
+    REQUIRE(LEASE_TABLE_SIZE == lease_table.size());
+    REQUIRE(env.client_mac == lease_table.begin()->first);
+    REQUIRE(env.client_ip == lease_table.begin()->second.assigned_ip_);
+    REQUIRE(env.client_id == lease_table.begin()->second.client_id_);
+    auto estimated_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
+    auto expiry_difference = std::chrono::steady_clock::now() - estimated_expiry_time;
+    REQUIRE(expiry_difference.count() < 5);
   }
 }

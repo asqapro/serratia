@@ -48,7 +48,7 @@ serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr
       found_server_ip = true;
       continue;
     }
-    available_ips_.insert(ip);
+    lease_pool_.insert(ip);
   }
 }
 
@@ -65,6 +65,11 @@ void serratia::utils::DHCPServer::stop() {
   server_running_ = false;
 }
 bool serratia::utils::DHCPServer::is_running() const { return server_running_; }
+
+std::set<pcpp::IPv4Address> serratia::utils::DHCPServer::get_lease_pool() const { return lease_pool_; }
+std::unordered_map<pcpp::MacAddress, serratia::utils::LeaseInfo> serratia::utils::DHCPServer::get_lease_table() const {
+  return lease_table_;
+}
 
 void serratia::utils::DHCPServer::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
   auto* server = static_cast<serratia::utils::DHCPServer*>(cookie);
@@ -104,20 +109,20 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress
 
     // TODO: probably remove this, doesn't make sense in allocateIP()
     // if the lease is expired then return IP to pool
-    available_ips_.insert(lease.assigned_ip_);
+    lease_pool_.insert(lease.assigned_ip_);
     lease_table_.erase(it);
   }
 
-  if (available_ips_.empty()) {
+  if (lease_pool_.empty()) {
     // TODO: change this to sending no reply or a DHCP NAK or whatever is
     // defined by RFC
     throw std::runtime_error("No available IP addresses in pool");
   }
 
   // pick the first available IP
-  const auto ip_iter = available_ips_.begin();
+  const auto ip_iter = lease_pool_.begin();
   const pcpp::IPv4Address assigned_ip = *ip_iter;
-  available_ips_.erase(ip_iter);
+  lease_pool_.erase(ip_iter);
 
   return assigned_ip;
 }
