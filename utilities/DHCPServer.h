@@ -55,15 +55,17 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
 struct DHCPServerConfig {
  public:
   DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip,
-                   const std::uint16_t server_port, const std::uint16_t client_port, std::string server_name,
-                   const pcpp::IPv4Address& lease_pool_start, const pcpp::IPv4Address& server_netmask,
-                   const std::vector<pcpp::IPv4Address>& dns_servers, const std::chrono::seconds lease_time,
-                   const std::chrono::seconds renewal_time, const std::chrono::seconds rebind_time)
+                   const std::uint16_t server_port, const std::uint16_t client_port,
+                   const std::array<std::uint8_t, 64>& server_name, const pcpp::IPv4Address& lease_pool_start,
+                   const pcpp::IPv4Address& server_netmask, const std::vector<pcpp::IPv4Address>& dns_servers,
+                   const std::chrono::seconds lease_time, const std::chrono::seconds renewal_time,
+                   const std::chrono::seconds rebind_time, const std::array<std::uint8_t, 128>& boot_file_name = {})
       : server_mac_(server_mac),
         server_ip_(server_ip),
         server_port_(server_port),
         client_port_(client_port),
-        server_name_(std::move(server_name)),
+        server_name_(server_name),
+        boot_file_name_(boot_file_name),
         lease_pool_start_(lease_pool_start),
         server_netmask_(server_netmask),
         dns_servers_(dns_servers),
@@ -75,7 +77,8 @@ struct DHCPServerConfig {
   [[nodiscard]] pcpp::IPv4Address get_server_ip() const;
   [[nodiscard]] std::uint16_t get_server_port() const;
   [[nodiscard]] std::uint16_t get_client_port() const;
-  [[nodiscard]] std::string get_server_name() const;
+  [[nodiscard]] std::array<std::uint8_t, 64> get_server_name() const;
+  [[nodiscard]] std::array<std::uint8_t, 128> get_boot_file_name() const;
   [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
   [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
   [[nodiscard]] std::vector<pcpp::IPv4Address> get_dns_servers() const;
@@ -88,7 +91,8 @@ struct DHCPServerConfig {
   pcpp::IPv4Address server_ip_;
   std::uint16_t server_port_;
   std::uint16_t client_port_;
-  std::string server_name_;
+  std::array<std::uint8_t, 64> server_name_;
+  std::array<std::uint8_t, 128> boot_file_name_;
   pcpp::IPv4Address lease_pool_start_;
   pcpp::IPv4Address server_netmask_;
   std::vector<pcpp::IPv4Address> dns_servers_;

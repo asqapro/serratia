@@ -9,15 +9,31 @@
 #include "../utilities/DHCPServer.h"
 #include "../utilities/DHCPUtils.h"
 
+const std::string SERVER_MAC = "ca:5e:d7:6B:c2:7c";
+const std::string CLIENT_MAC = "a1:eb:37:7b:e9:bf";
+const std::string BROADCAST_MAC = "ff:ff:ff:ff:ff:ff";
+const std::string SERVER_IP = "192.168.0.1";
+const std::string CLIENT_IP = "192.168.0.2";
+const std::string BROADCAST_IP = "255.255.255.255";
 constexpr std::uint16_t SERVER_PORT = 67;
 constexpr std::uint16_t CLIENT_PORT = 68;
+constexpr std::uint8_t HOPS = 0;
+constexpr std::uint16_t SECONDS_ELAPSED = 0;
+constexpr std::uint16_t BOOTP_FLAGS = 0x8000;
+const std::string GATEWAY_IP = "192.168.0.1";
+const std::string SERVER_HOST_NAME = "skalrog";
+const std::string CLIENT_HOST_NAME = "malric";
+const std::string BOOT_FILE_NAME = "boot/fake";
+const std::string SUBNET_MASK = "255.255.255.0";
+const std::string ROUTERS = "192.168.0.1";
 constexpr std::uint32_t LEASE_TIME_VAL = 86400;
 // 87.5% of lease time
 constexpr std::uint32_t RENEWAL_TIME_VAL = 75600;
 // 50& of lease time
 constexpr std::uint32_t REBIND_TIME_VAL = 43200;
+const std::string LEASE_POOL_START = "192.168.0.2";
 constexpr std::uint16_t MAX_MESSAGE_SIZE = 567;
-constexpr std::string QUAD9_DNS = "9.9.9.9";
+const std::string QUAD9_DNS = "9.9.9.9";
 constexpr std::uint8_t HTYPE_ETHER = 1;
 constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
 constexpr std::uint32_t EMPTY_IP_ADDR = 0;
@@ -35,39 +51,39 @@ constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
 // TODO: also probably parameterize the fields
 struct TestEnvironment {
   TestEnvironment()
-      : server_mac("ca:5e:d7:6B:c2:7c"),
-        client_mac("a1:eb:37:7b:e9:bf"),
+      : server_mac(SERVER_MAC),
+        client_mac(CLIENT_MAC),
         client_hw_address(client_mac.toByteArray()),
-        broadcast_mac("ff:ff:ff:ff:ff:ff"),
-        server_ip("192.168.0.1"),
-        client_ip("192.168.0.2"),
-        broadcast_ip("255.255.255.255"),
+        broadcast_mac(BROADCAST_MAC),
+        server_ip(SERVER_IP),
+        client_ip(CLIENT_IP),
+        broadcast_ip(BROADCAST_IP),
+        server_port(SERVER_PORT),
+        client_port(CLIENT_PORT),
+        hops(HOPS),
+        seconds_elapsed(SECONDS_ELAPSED),
+        bootp_flags(BOOTP_FLAGS),
+        gateway_ip(GATEWAY_IP),
+        server_host_name(SERVER_HOST_NAME),
+        client_host_name(CLIENT_HOST_NAME),
+        boot_file_name(BOOT_FILE_NAME),
+        client_id{HTYPE_ETHER},
+        param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
+                           pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
+        subnet_mask(SUBNET_MASK),
+        routers{ROUTERS},
+        dns_servers{QUAD9_DNS},
         lease_time(LEASE_TIME_VAL),
-        subnet_mask("255.255.255.0"),
         renewal_time(RENEWAL_TIME_VAL),
         rebind_time(REBIND_TIME_VAL),
-        lease_pool_start("192.168.0.2") {
-    // TODO: move other initializers to initializer list
+        lease_pool_start(LEASE_POOL_START) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> distrib;
     transaction_id = distrib(gen);
-    hops = 0;
-    seconds_elapsed = 0;
-    bootp_flags = 0x8000;
-    gateway_ip = server_ip;
-    server_host_name = "skalrog";
-    client_host_name = "malric";
-    boot_file_name = "";
-    client_id.push_back(HTYPE_ETHER);
     for (const auto octet : client_mac.toByteArray()) {
       client_id.push_back(octet);
     }
-    std::vector<std::uint8_t> param_request_list = {pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK,
-                                                    pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
-                                                    pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS};
-    routers.push_back(server_ip);
-    dns_servers.emplace_back(QUAD9_DNS);
   }
 
   // TODO: rearrange or group related fields together
@@ -78,6 +94,8 @@ struct TestEnvironment {
   pcpp::IPv4Address server_ip;
   pcpp::IPv4Address client_ip;
   pcpp::IPv4Address broadcast_ip;
+  std::uint16_t server_port;
+  std::uint16_t client_port;
   std::uint8_t hops;
   std::uint32_t transaction_id;
   std::uint16_t seconds_elapsed;
@@ -89,10 +107,10 @@ struct TestEnvironment {
   std::vector<std::uint8_t> client_id;
   std::vector<std::uint8_t> vendor_class_id;
   std::vector<std::uint8_t> param_request_list;
-  std::chrono::seconds lease_time;
   pcpp::IPv4Address subnet_mask;
   std::vector<pcpp::IPv4Address> routers;
   std::vector<pcpp::IPv4Address> dns_servers;
+  std::chrono::seconds lease_time;
   std::chrono::seconds renewal_time;
   std::chrono::seconds rebind_time;
   pcpp::IPv4Address lease_pool_start;
@@ -108,8 +126,8 @@ serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment&
   const auto dst_mac = env.broadcast_mac;
   const pcpp::IPv4Address src_ip("0.0.0.0");
   const auto dst_ip = env.broadcast_ip;
-  constexpr auto src_port = CLIENT_PORT;
-  constexpr auto dst_port = SERVER_PORT;
+  const auto src_port = env.client_port;
+  const auto dst_port = env.server_port;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -167,8 +185,8 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
   auto dst_mac = env.client_mac;
   pcpp::IPv4Address src_ip = env.server_ip;
   auto dst_ip = env.client_ip;
-  constexpr auto src_port = SERVER_PORT;
-  constexpr auto dst_port = CLIENT_PORT;
+  const auto src_port = env.server_port;
+  const auto dst_port = env.client_port;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -261,8 +279,8 @@ serratia::protocols::DHCPRequestConfig buildTestRequest(const TestEnvironment& e
     src_ip = env.client_ip;
   }
   auto dst_ip = env.broadcast_ip;
-  constexpr auto src_port = CLIENT_PORT;
-  constexpr auto dst_port = SERVER_PORT;
+  const auto src_port = env.client_port;
+  const auto dst_port = env.server_port;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -349,8 +367,8 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
   auto dst_mac = env.client_mac;
   auto src_ip = env.server_ip;
   auto dst_ip = env.client_ip;
-  constexpr auto src_port = CLIENT_PORT;
-  constexpr auto dst_port = SERVER_PORT;
+  const auto src_port = env.client_port;
+  const auto dst_port = env.server_port;
 
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -430,8 +448,8 @@ TEST_CASE("Build DHCP packets") {
     auto dst_mac = env.broadcast_mac;
     pcpp::IPv4Address src_ip("0.0.0.0");
     auto dst_ip = env.broadcast_ip;
-    constexpr auto src_port = CLIENT_PORT;
-    constexpr auto dst_port = SERVER_PORT;
+    const auto src_port = env.client_port;
+    const auto dst_port = env.server_port;
 
     const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
     const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
@@ -530,9 +548,16 @@ TEST_CASE("Interact with DHCP server") {
 
   auto device = std::make_shared<MockPcapLiveDevice>();
 
-  serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, SERVER_PORT, CLIENT_PORT,
-                                           env.server_host_name, env.lease_pool_start, env.subnet_mask, env.dns_servers,
-                                           env.lease_time, env.renewal_time, env.rebind_time);
+  std::array<std::uint8_t, 64> server_name{};
+  // Copy server_host_name string into server_name array
+  std::ranges::copy(env.server_host_name | std::ranges::views::take(server_name.size()), server_name.begin());
+
+  std::array<std::uint8_t, 128> boot_name{};
+  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_name.size()), boot_name.begin());
+
+  serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_port, env.client_port, server_name,
+                                           env.lease_pool_start, env.subnet_mask, env.dns_servers, env.lease_time,
+                                           env.renewal_time, env.rebind_time, boot_name);
 
   SECTION("Verify server configuration") {
     serratia::utils::DHCPServer server(config, device);

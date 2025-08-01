@@ -19,7 +19,8 @@ pcpp::MacAddress serratia::utils::DHCPServerConfig::get_server_mac() const { ret
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_ip() const { return server_ip_; }
 std::uint16_t serratia::utils::DHCPServerConfig::get_server_port() const { return server_port_; }
 std::uint16_t serratia::utils::DHCPServerConfig::get_client_port() const { return client_port_; }
-std::string serratia::utils::DHCPServerConfig::get_server_name() const { return server_name_; }
+std::array<std::uint8_t, 64> serratia::utils::DHCPServerConfig::get_server_name() const { return server_name_; }
+std::array<std::uint8_t, 128> serratia::utils::DHCPServerConfig::get_boot_file_name() const { return boot_file_name_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_lease_pool_start() const { return lease_pool_start_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_netmask() const { return server_netmask_; }
 std::vector<pcpp::IPv4Address> serratia::utils::DHCPServerConfig::get_dns_servers() const { return dns_servers_; }
@@ -33,7 +34,6 @@ serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr
   const auto server_netmask_int = ntohl(config_.get_server_netmask().toInt());
 
   const auto network_addr_int = lease_pool_start_int & server_netmask_int;
-  // TODO: broadcast probably calculated correctly but double check with test
   const auto broadcast_addr_int = network_addr_int | ~server_netmask_int;
 
   if (broadcast_addr_int - network_addr_int <= 1) {
@@ -169,12 +169,8 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   const auto server_ip = config_.get_server_ip();
-  std::array<std::uint8_t, 64> server_name = {};
-  const std::string config_server_name = config_.get_server_name();
-  // TODO: switch copy_n to ranges copy style
-  std::copy_n(config_server_name.begin(), config_server_name.size(), server_name.begin());
-  // auto server_name = std::to_array(dhcp_header->serverName);
-  const auto bootfile_name = std::to_array(dhcp_header->bootFilename);
+  auto server_name = config_.get_server_name();
+  auto boot_file_name = config_.get_boot_file_name();
   const auto lease_time = config_.get_lease_time();
   const auto server_netmask = config_.get_server_netmask();
   const std::vector<pcpp::IPv4Address> routers = {server_ip};
@@ -183,7 +179,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const auto rebind_time = config_.get_rebind_time();
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
       dhcp_common_config, dhcp_header->hops, dhcp_header->transactionID, lease.assigned_ip_, server_ip,
-      dhcp_header->secondsElapsed, dhcp_header->flags, server_ip, server_ip, server_name, bootfile_name,
+      dhcp_header->secondsElapsed, dhcp_header->flags, server_ip, server_ip, server_name, boot_file_name,
       lease_time.count(), server_netmask, routers, dns_servers, renewal_time.count(), rebind_time.count());
   const auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
   device_->send(packet);
