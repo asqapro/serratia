@@ -198,8 +198,8 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
   // Copy server_host_name string into server_name array
   std::ranges::copy(env.server_host_name | std::ranges::views::take(server_name.size()), server_name.begin());
 
-  std::array<std::uint8_t, 128> boot_name{};
-  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_name.size()), boot_name.begin());
+  std::array<std::uint8_t, 128> boot_file_name{};
+  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
   pcpp::IPv4Address server_id = env.server_ip;
 
@@ -213,7 +213,7 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
           env.server_ip,
           env.gateway_ip,
           server_name,
-          boot_name,
+          boot_file_name,
           env.lease_time.count(),
           env.subnet_mask,
           env.routers,
@@ -552,12 +552,12 @@ TEST_CASE("Interact with DHCP server") {
   // Copy server_host_name string into server_name array
   std::ranges::copy(env.server_host_name | std::ranges::views::take(server_name.size()), server_name.begin());
 
-  std::array<std::uint8_t, 128> boot_name{};
-  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_name.size()), boot_name.begin());
+  std::array<std::uint8_t, 128> boot_file_name{};
+  std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
   serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_port, env.client_port, server_name,
                                            env.lease_pool_start, env.subnet_mask, env.dns_servers, env.lease_time,
-                                           env.renewal_time, env.rebind_time, boot_name);
+                                           env.renewal_time, env.rebind_time, boot_file_name);
 
   SECTION("Verify server configuration") {
     serratia::utils::DHCPServer server(config, device);

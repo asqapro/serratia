@@ -76,7 +76,7 @@ serratia::protocols::DHCPOfferConfig::DHCPOfferConfig(
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
     const std::optional<pcpp::IPv4Address> server_ip, const std::optional<pcpp::IPv4Address> gateway_ip,
     const std::optional<std::array<std::uint8_t, 64>>& server_name,
-    const std::optional<std::array<std::uint8_t, 128>>& boot_name, const std::optional<std::uint32_t> lease_time,
+    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, const std::optional<std::uint32_t> lease_time,
     const std::optional<pcpp::IPv4Address> subnet_mask, std::optional<std::vector<pcpp::IPv4Address>> routers,
     std::optional<std::vector<pcpp::IPv4Address>> dns_servers, const std::optional<std::uint32_t> renewal_time,
     const std::optional<std::uint32_t> rebind_time)
@@ -89,7 +89,7 @@ serratia::protocols::DHCPOfferConfig::DHCPOfferConfig(
       server_ip_(server_ip),
       gateway_ip_(gateway_ip),
       server_name_(server_name),
-      boot_name_(boot_name),
+      boot_file_name_(boot_file_name),
       server_id_(server_id),
       lease_time_(lease_time),
       subnet_mask_(subnet_mask),
@@ -116,8 +116,8 @@ std::optional<pcpp::IPv4Address> serratia::protocols::DHCPOfferConfig::get_gatew
 std::optional<std::array<std::uint8_t, 64>> serratia::protocols::DHCPOfferConfig::get_server_name() const {
   return server_name_;
 }
-std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPOfferConfig::get_boot_name() const {
-  return boot_name_;
+std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPOfferConfig::get_boot_file_name() const {
+  return boot_file_name_;
 }
 pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_server_id() const { return server_id_; }
 std::optional<std::uint32_t> serratia::protocols::DHCPOfferConfig::get_lease_time() const { return lease_time_; }
@@ -361,7 +361,7 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
     std::ranges::fill(dhcp_header->serverName, 0);
   }
 
-  if (auto boot_file_arr = config.get_boot_name(); boot_file_arr.has_value()) {
+  if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
   } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
