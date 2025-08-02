@@ -256,11 +256,10 @@ struct DHCPAckConfig {
 
 struct DHCPNakConfig {
  public:
-  DHCPNakConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
-                pcpp::IPv4Address server_id, std::uint32_t lease_time, std::optional<std::uint8_t> hops = std::nullopt,
+  DHCPNakConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address server_id,
+                std::optional<std::uint8_t> hops = std::nullopt,
                 std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
                 std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
                 std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                 std::optional<std::vector<std::uint8_t>> vendor_specific_info = std::nullopt);
   DHCPNakConfig() = delete;
@@ -270,7 +269,6 @@ struct DHCPNakConfig {
   [[nodiscard]] std::uint32_t get_transaction_id() const;
   [[nodiscard]] std::optional<std::uint16_t> get_seconds_elapsed() const;
   [[nodiscard]] std::optional<std::uint16_t> get_bootp_flags() const;
-  [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
   [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_specific_info() const;
   [[nodiscard]] pcpp::IPv4Address get_server_id() const;
@@ -285,7 +283,6 @@ struct DHCPNakConfig {
   std::uint32_t transaction_id_;
   std::optional<std::uint16_t> seconds_elapsed_;
   std::optional<std::uint16_t> bootp_flags_;
-  std::optional<pcpp::IPv4Address> server_ip_;
   std::optional<pcpp::IPv4Address> gateway_ip_;
   std::optional<std::vector<std::uint8_t>> vendor_specific_info_;
   pcpp::IPv4Address server_id_;

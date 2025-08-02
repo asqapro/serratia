@@ -274,11 +274,10 @@ void serratia::protocols::DHCPAckConfig::add_option(const pcpp::DhcpOptionBuilde
 }
 
 serratia::protocols::DHCPNakConfig::DHCPNakConfig(DHCPCommonConfig common_config, const std::uint32_t transaction_id,
-                                                  pcpp::IPv4Address your_ip, const pcpp::IPv4Address server_id,
-                                                  std::uint32_t lease_time, const std::optional<std::uint8_t> hops,
+                                                  const pcpp::IPv4Address server_id,
+                                                  const std::optional<std::uint8_t> hops,
                                                   const std::optional<std::uint16_t> seconds_elapsed,
                                                   const std::optional<std::uint16_t> bootp_flags,
-                                                  const std::optional<pcpp::IPv4Address> server_ip,
                                                   const std::optional<pcpp::IPv4Address> gateway_ip,
                                                   std::optional<std::vector<std::uint8_t>> vendor_specific_info)
     : common_config_(std::move(common_config)),
@@ -286,12 +285,11 @@ serratia::protocols::DHCPNakConfig::DHCPNakConfig(DHCPCommonConfig common_config
       transaction_id_(transaction_id),
       seconds_elapsed_(seconds_elapsed),
       bootp_flags_(bootp_flags),
-      server_ip_(server_ip),
       gateway_ip_(gateway_ip),
       vendor_specific_info_(std::move(vendor_specific_info)),
       server_id_(server_id) {
   auto dst_mac = common_config_.GetEthLayer()->getDestMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
+  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_NAK, dst_mac);
 }
 
 serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPNakConfig::get_common_config() const {
@@ -303,7 +301,6 @@ std::optional<std::uint16_t> serratia::protocols::DHCPNakConfig::get_seconds_ela
   return seconds_elapsed_;
 }
 std::optional<std::uint16_t> serratia::protocols::DHCPNakConfig::get_bootp_flags() const { return bootp_flags_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPNakConfig::get_server_ip() const { return server_ip_; }
 std::optional<pcpp::IPv4Address> serratia::protocols::DHCPNakConfig::get_gateway_ip() const { return gateway_ip_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPNakConfig::get_vendor_specific_info() const {
   return vendor_specific_info_;
@@ -661,7 +658,7 @@ pcpp::Packet serratia::protocols::buildDHCPNak(const DHCPNakConfig& config) {
   dhcp_header->flags = config.get_bootp_flags().value_or(0);
   dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = config.get_server_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   if (const auto vendor_specific_info = config.get_vendor_specific_info(); vendor_specific_info.has_value()) {
