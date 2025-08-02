@@ -30,8 +30,17 @@ std::chrono::seconds serratia::utils::DHCPServerConfig::get_rebind_time() const 
 
 serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr<IPcapLiveDevice> device)
     : server_running_(false), config_(std::move(config)), device_(std::move(device)) {
-  const auto lease_pool_start_int = ntohl(config_.get_lease_pool_start().toInt());
-  const auto server_netmask_int = ntohl(config_.get_server_netmask().toInt());
+  auto lease_pool_start = config_.get_lease_pool_start();
+  if (pcpp::IPv4Address::Zero == lease_pool_start) {
+    throw std::runtime_error("Invalid lease pool start");
+  }
+  const auto lease_pool_start_int = ntohl(lease_pool_start.toInt());
+
+  auto server_netmask = config_.get_server_netmask();
+  if (pcpp::IPv4Address::Zero == server_netmask) {
+    throw std::runtime_error("Invalid server netmask");
+  }
+  const auto server_netmask_int = ntohl(server_netmask.toInt());
 
   const auto network_addr_int = lease_pool_start_int & server_netmask_int;
   const auto broadcast_addr_int = network_addr_int | ~server_netmask_int;
@@ -99,7 +108,8 @@ void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
   }
 }
 
-pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac) {
+pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac,
+                                                          const pcpp::IPv4Address requested_ip) {
   if (const auto it = lease_table_.find(client_mac); it != lease_table_.end()) {
     const LeaseInfo& lease = it->second;
     if (std::chrono::steady_clock::now() < lease.expiry_time_) {
@@ -107,16 +117,20 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress
       return lease.assigned_ip_;
     }
 
-    // TODO: probably remove this, doesn't make sense in allocateIP()
-    // if the lease is expired then return IP to pool
-    lease_pool_.insert(lease.assigned_ip_);
-    lease_table_.erase(it);
+    if (lease_pool_.contains(lease.assigned_ip_)) {
+      // lease expired but the old IP is still available
+      return lease.assigned_ip_;
+    }
   }
 
   if (lease_pool_.empty()) {
     // TODO: change this to sending no reply or a DHCP NAK or whatever is
     // defined by RFC
     throw std::runtime_error("No available IP addresses in pool");
+  }
+
+  if (lease_pool_.contains(requested_ip)) {
+    return requested_ip;
   }
 
   // pick the first available IP
@@ -130,8 +144,13 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress
 void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet) {
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
   const auto client_mac = dhcp_layer->getClientHardwareAddress();
+  pcpp::IPv4Address requested_ip("0.0.0.0");
+  if (const auto requested_ip_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS);
+      true == requested_ip_opt.isNotNull()) {
+    requested_ip = requested_ip_opt.getValueAsIpAddr();
+  }
   // TODO: potentially check client ID option
-  const pcpp::IPv4Address offered_ip = allocateIP(client_mac);
+  const pcpp::IPv4Address offered_ip = allocateIP(client_mac, requested_ip);
 
   const auto src_mac = config_.get_server_mac();
   const auto dst_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac();

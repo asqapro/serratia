@@ -117,7 +117,7 @@ class DHCPServer {
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
 
-  pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac);
+  pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac, pcpp::IPv4Address requested_ip);
 
   bool server_running_;
   DHCPServerConfig config_;
