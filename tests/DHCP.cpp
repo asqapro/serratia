@@ -24,6 +24,7 @@ const std::string GATEWAY_IP = "192.168.0.1";
 const std::string SERVER_HOST_NAME = "skalrog";
 const std::string CLIENT_HOST_NAME = "malric";
 const std::string BOOT_FILE_NAME = "boot/fake";
+constexpr std::uint8_t VENDOR_SPECIFIC_INFO = 1;
 const std::string SUBNET_MASK = "255.255.255.0";
 const std::string ROUTERS = "192.168.0.1";
 constexpr std::uint32_t LEASE_TIME_VAL = 86400;
@@ -40,7 +41,7 @@ constexpr std::uint32_t EMPTY_IP_ADDR = 0;
 constexpr int NO_DIFFERENCE = 0;
 constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t DISCOVER_OPTION_COUNT = 7;
-constexpr std::size_t OFFER_OPTION_COUNT = 9;
+constexpr std::size_t OFFER_OPTION_COUNT = 10;
 constexpr std::size_t INITIAL_REQUEST_OPTION_COUNT = 7;
 constexpr std::size_t RENEWAL_REQUEST_OPTION_COUNT = 5;
 constexpr std::size_t ACK_OPTION_COUNT = 9;
@@ -67,6 +68,7 @@ struct TestEnvironment {
         server_host_name(SERVER_HOST_NAME),
         client_host_name(CLIENT_HOST_NAME),
         boot_file_name(BOOT_FILE_NAME),
+        vendor_specific_info{VENDOR_SPECIFIC_INFO},
         client_id{HTYPE_ETHER},
         param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
                            pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
@@ -104,6 +106,7 @@ struct TestEnvironment {
   std::string server_host_name;
   std::string client_host_name;
   std::string boot_file_name;
+  std::vector<std::uint8_t> vendor_specific_info;
   std::vector<std::uint8_t> client_id;
   std::vector<std::uint8_t> vendor_class_id;
   std::vector<std::uint8_t> param_request_list;
@@ -214,6 +217,7 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
           env.gateway_ip,
           server_name,
           boot_file_name,
+          env.vendor_specific_info,
           env.lease_time.count(),
           env.subnet_mask,
           env.routers,
@@ -249,6 +253,10 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(env.boot_file_name == header_boot_file_name);
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType());
+  auto vendor_specific_info_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS);
+  REQUIRE(vendor_specific_info_opt.getDataSize() == env.vendor_specific_info.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(vendor_specific_info_opt.getValue(), env.vendor_specific_info.data(),
+                                  env.vendor_specific_info.size()));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
           ntohl(env.lease_time.count()));
@@ -557,7 +565,7 @@ TEST_CASE("Interact with DHCP server") {
 
   serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_port, env.client_port, server_name,
                                            env.lease_pool_start, env.subnet_mask, env.dns_servers, env.lease_time,
-                                           env.renewal_time, env.rebind_time, boot_file_name);
+                                           env.renewal_time, env.rebind_time, boot_file_name, env.vendor_specific_info);
 
   SECTION("Verify server configuration") {
     serratia::utils::DHCPServer server(config, device);

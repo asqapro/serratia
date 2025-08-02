@@ -6,6 +6,7 @@
 #include <pcapplusplus/PcapLiveDevice.h>
 
 #include <set>
+#include <utility>
 
 #include "spdlog/spdlog.h"
 
@@ -59,13 +60,15 @@ struct DHCPServerConfig {
                    const std::array<std::uint8_t, 64>& server_name, const pcpp::IPv4Address& lease_pool_start,
                    const pcpp::IPv4Address& server_netmask, const std::vector<pcpp::IPv4Address>& dns_servers,
                    const std::chrono::seconds lease_time, const std::chrono::seconds renewal_time,
-                   const std::chrono::seconds rebind_time, const std::array<std::uint8_t, 128>& boot_file_name = {})
+                   const std::chrono::seconds rebind_time, const std::array<std::uint8_t, 128>& boot_file_name = {},
+                   std::vector<std::uint8_t> vendor_specific_info = {})
       : server_mac_(server_mac),
         server_ip_(server_ip),
         server_port_(server_port),
         client_port_(client_port),
         server_name_(server_name),
         boot_file_name_(boot_file_name),
+        vendor_specific_info_(std::move(vendor_specific_info)),
         lease_pool_start_(lease_pool_start),
         server_netmask_(server_netmask),
         dns_servers_(dns_servers),
@@ -79,6 +82,7 @@ struct DHCPServerConfig {
   [[nodiscard]] std::uint16_t get_client_port() const;
   [[nodiscard]] std::array<std::uint8_t, 64> get_server_name() const;
   [[nodiscard]] std::array<std::uint8_t, 128> get_boot_file_name() const;
+  [[nodiscard]] std::vector<std::uint8_t> get_vendor_specific_info() const;
   [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
   [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
   [[nodiscard]] std::vector<pcpp::IPv4Address> get_dns_servers() const;
@@ -93,6 +97,7 @@ struct DHCPServerConfig {
   std::uint16_t client_port_;
   std::array<std::uint8_t, 64> server_name_;
   std::array<std::uint8_t, 128> boot_file_name_;
+  std::vector<std::uint8_t> vendor_specific_info_;
   pcpp::IPv4Address lease_pool_start_;
   pcpp::IPv4Address server_netmask_;
   std::vector<pcpp::IPv4Address> dns_servers_;

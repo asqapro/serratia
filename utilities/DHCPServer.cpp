@@ -21,6 +21,9 @@ std::uint16_t serratia::utils::DHCPServerConfig::get_server_port() const { retur
 std::uint16_t serratia::utils::DHCPServerConfig::get_client_port() const { return client_port_; }
 std::array<std::uint8_t, 64> serratia::utils::DHCPServerConfig::get_server_name() const { return server_name_; }
 std::array<std::uint8_t, 128> serratia::utils::DHCPServerConfig::get_boot_file_name() const { return boot_file_name_; }
+std::vector<std::uint8_t> serratia::utils::DHCPServerConfig::get_vendor_specific_info() const {
+  return vendor_specific_info_;
+}
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_lease_pool_start() const { return lease_pool_start_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_netmask() const { return server_netmask_; }
 std::vector<pcpp::IPv4Address> serratia::utils::DHCPServerConfig::get_dns_servers() const { return dns_servers_; }
@@ -185,6 +188,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const auto server_ip = config_.get_server_ip();
   auto server_name = config_.get_server_name();
   auto boot_file_name = config_.get_boot_file_name();
+  auto vendor_specific_info = config_.get_vendor_specific_info();
   const auto lease_time = config_.get_lease_time();
   const auto server_netmask = config_.get_server_netmask();
   const std::vector<pcpp::IPv4Address> routers = {server_ip};
@@ -194,7 +198,8 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
       dhcp_common_config, dhcp_header->hops, dhcp_header->transactionID, lease.assigned_ip_, server_ip,
       dhcp_header->secondsElapsed, dhcp_header->flags, server_ip, server_ip, server_name, boot_file_name,
-      lease_time.count(), server_netmask, routers, dns_servers, renewal_time.count(), rebind_time.count());
+      vendor_specific_info, lease_time.count(), server_netmask, routers, dns_servers, renewal_time.count(),
+      rebind_time.count());
   const auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
   device_->send(packet);
 }

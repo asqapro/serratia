@@ -85,6 +85,7 @@ struct DHCPOfferConfig {
                   std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
+                  std::optional<std::vector<std::uint8_t>> vendor_specific_info = std::nullopt,
                   std::optional<std::uint32_t> lease_time = std::nullopt,
                   std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
                   std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
@@ -103,6 +104,7 @@ struct DHCPOfferConfig {
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
   [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name() const;
   [[nodiscard]] std::optional<std::array<std::uint8_t, 128>> get_boot_file_name() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_specific_info() const;
   [[nodiscard]] pcpp::IPv4Address get_server_id() const;
   [[nodiscard]] std::optional<std::uint32_t> get_lease_time() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_subnet_mask() const;
@@ -126,6 +128,8 @@ struct DHCPOfferConfig {
   std::optional<pcpp::IPv4Address> gateway_ip_;
   std::optional<std::array<std::uint8_t, 64>> server_name_;
   std::optional<std::array<std::uint8_t, 128>> boot_file_name_;
+  // TODO: need to add following field to ACK & NAK
+  std::optional<std::vector<std::uint8_t>> vendor_specific_info_;
   pcpp::IPv4Address server_id_;
   std::optional<std::uint32_t> lease_time_;
   std::optional<pcpp::IPv4Address> subnet_mask_;
@@ -135,8 +139,6 @@ struct DHCPOfferConfig {
   std::optional<std::uint32_t> rebind_time_;
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
-  // TODO: add vendor class identifier option
-  // TODO: do the same for ACK & NAK
 };
 
 struct DHCPRequestConfig {
