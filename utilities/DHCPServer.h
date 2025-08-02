@@ -111,8 +111,6 @@ class DHCPServer {
   std::unordered_map<pcpp::MacAddress, LeaseInfo> get_lease_table() const;
 
  private:
-  static void onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie);
-  void handlePacket(const pcpp::Packet& packet);
   void handleDiscover(const pcpp::Packet& dhcp_packet);
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);

@@ -65,7 +65,30 @@ void serratia::utils::DHCPServer::run() {
   if (true == server_running_) {
     return;
   }
-  device_->startCapture(DHCPServer::onPacketArrives, this);
+
+  auto onPacketArrives = [this](pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
+    const pcpp::Packet parsed_packet(packet);
+
+    const auto dhcp_layer = parsed_packet.getLayerOfType<pcpp::DhcpLayer>();
+    if (nullptr == dhcp_layer) {
+      return;
+    }
+
+    switch (dhcp_layer->getMessageType()) {
+      case pcpp::DHCP_DISCOVER:
+        handleDiscover(parsed_packet);
+        break;
+      case pcpp::DHCP_REQUEST:
+        handleRequest(parsed_packet);
+        break;
+      case pcpp::DHCP_RELEASE:
+        handleRelease(parsed_packet);
+        break;
+      default:
+        break;
+    }
+  };
+  device_->startCapture(onPacketArrives, nullptr);
   server_running_ = true;
 }
 
@@ -78,34 +101,6 @@ bool serratia::utils::DHCPServer::is_running() const { return server_running_; }
 std::set<pcpp::IPv4Address> serratia::utils::DHCPServer::get_lease_pool() const { return lease_pool_; }
 std::unordered_map<pcpp::MacAddress, serratia::utils::LeaseInfo> serratia::utils::DHCPServer::get_lease_table() const {
   return lease_table_;
-}
-
-void serratia::utils::DHCPServer::onPacketArrives(pcpp::RawPacket* packet, pcpp::PcapLiveDevice* dev, void* cookie) {
-  auto* server = static_cast<serratia::utils::DHCPServer*>(cookie);
-
-  const pcpp::Packet parsed_packet(packet);
-
-  server->handlePacket(parsed_packet);
-}
-
-void serratia::utils::DHCPServer::handlePacket(const pcpp::Packet& packet) {
-  const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-  if (nullptr == dhcp_layer) {
-    return;
-  }
-  switch (dhcp_layer->getMessageType()) {
-    case pcpp::DHCP_DISCOVER:
-      handleDiscover(packet);
-      break;
-    case pcpp::DHCP_REQUEST:
-      handleRequest(packet);
-      break;
-    case pcpp::DHCP_RELEASE:
-      handleRelease(packet);
-      break;
-    default:
-      return;
-  }
 }
 
 pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const pcpp::MacAddress& client_mac,
