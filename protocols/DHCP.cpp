@@ -208,9 +208,9 @@ serratia::protocols::DHCPAckConfig::DHCPAckConfig(
     const std::optional<pcpp::IPv4Address> server_ip, const std::optional<pcpp::IPv4Address> gateway_ip,
     const std::optional<std::array<std::uint8_t, 64>>& server_name,
     const std::optional<std::array<std::uint8_t, 128>>& boot_file_name,
-    const std::optional<pcpp::IPv4Address> subnet_mask, std::optional<std::vector<pcpp::IPv4Address>> routers,
-    std::optional<std::vector<pcpp::IPv4Address>> dns_servers, const std::optional<std::uint32_t> renewal_time,
-    const std::optional<std::uint32_t> rebind_time)
+    std::optional<std::vector<std::uint8_t>> vendor_specific_info, const std::optional<pcpp::IPv4Address> subnet_mask,
+    std::optional<std::vector<pcpp::IPv4Address>> routers, std::optional<std::vector<pcpp::IPv4Address>> dns_servers,
+    const std::optional<std::uint32_t> renewal_time, const std::optional<std::uint32_t> rebind_time)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
@@ -221,6 +221,7 @@ serratia::protocols::DHCPAckConfig::DHCPAckConfig(
       gateway_ip_(gateway_ip),
       server_name_(server_name),
       boot_file_name_(boot_file_name),
+      vendor_specific_info_(std::move(vendor_specific_info)),
       server_id_(server_id),
       lease_time_(lease_time),
       subnet_mask_(subnet_mask),
@@ -255,6 +256,9 @@ std::optional<std::array<std::uint8_t, 64>> serratia::protocols::DHCPAckConfig::
 }
 std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPAckConfig::get_boot_file_name() const {
   return boot_file_name_;
+}
+std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPAckConfig::get_vendor_specific_info() const {
+  return vendor_specific_info_;
 }
 std::optional<std::vector<pcpp::IPv4Address>> serratia::protocols::DHCPAckConfig::get_dns_servers() const {
   return dns_servers_;
@@ -372,8 +376,6 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
   }
-
-  dhcp_layer->setMessageType(pcpp::DHCP_OFFER);
 
   if (auto vendor_specific_info = config.get_vendor_specific_info(); vendor_specific_info.has_value()) {
     auto vendor_info_arr = vendor_specific_info.value().data();
@@ -539,6 +541,14 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
   } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
+  }
+
+  if (auto vendor_specific_info = config.get_vendor_specific_info(); vendor_specific_info.has_value()) {
+    auto vendor_info_arr = vendor_specific_info.value().data();
+    auto vendor_info_arr_size = vendor_specific_info.value().size();
+    pcpp::DhcpOptionBuilder vendor_specific_info_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS,
+                                                     vendor_info_arr, vendor_info_arr_size);
+    dhcp_layer->addOption(vendor_specific_info_opt);
   }
 
   pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_id());

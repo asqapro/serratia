@@ -44,7 +44,7 @@ constexpr std::size_t DISCOVER_OPTION_COUNT = 7;
 constexpr std::size_t OFFER_OPTION_COUNT = 10;
 constexpr std::size_t INITIAL_REQUEST_OPTION_COUNT = 7;
 constexpr std::size_t RENEWAL_REQUEST_OPTION_COUNT = 5;
-constexpr std::size_t ACK_OPTION_COUNT = 9;
+constexpr std::size_t ACK_OPTION_COUNT = 10;
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
 
@@ -167,18 +167,23 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_DISCOVER == dhcp_layer->getMessageType());
 
-  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).getValue();
-  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option, env.client_id.data(), env.client_id.size()));
+  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+  REQUIRE(client_id_option.getDataSize() == env.client_id.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option.getValue(), env.client_id.data(), env.client_id.size()));
 
-  auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).getValue();
-  REQUIRE(NO_DIFFERENCE == memcmp(param_request_option, env.param_request_list.data(), env.param_request_list.size()));
+  auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST);
+  REQUIRE(param_request_option.getDataSize() == env.param_request_list.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == env.client_host_name);
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
           ntohs(MAX_MESSAGE_SIZE));
 
-  auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER).getValue();
-  REQUIRE(NO_DIFFERENCE == memcmp(vendor_class_id_option, env.vendor_class_id.data(), env.vendor_class_id.size()));
+  auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
+  REQUIRE(vendor_class_id_option.getDataSize() == env.vendor_class_id.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(vendor_class_id_option.getValue(), env.vendor_class_id.data(), env.vendor_class_id.size()));
 
   REQUIRE(dhcp_layer->getOptionsCount() == DISCOVER_OPTION_COUNT);
 }
@@ -253,6 +258,7 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(env.boot_file_name == header_boot_file_name);
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType());
+
   auto vendor_specific_info_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS);
   REQUIRE(vendor_specific_info_opt.getDataSize() == env.vendor_specific_info.size());
   REQUIRE(NO_DIFFERENCE == memcmp(vendor_specific_info_opt.getValue(), env.vendor_specific_info.data(),
@@ -264,9 +270,15 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);
 
   auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
+  // Each router IP is 4 bytes long
+  auto expected_router_count = router_option.getDataSize() / 4;
+  REQUIRE(expected_router_count == env.routers.size());
   REQUIRE(serratia::utils::parseIPv4Addresses(&router_option) == env.routers);
 
   auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
+  // Each DNS IP is 4 bytes long
+  auto expected_dns_count = dns_option.getDataSize() / 4;
+  REQUIRE(expected_dns_count == env.dns_servers.size());
   REQUIRE(serratia::utils::parseIPv4Addresses(&dns_option) == env.dns_servers);
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() ==
@@ -354,11 +366,14 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
     REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).isNull() == true);
   }
 
-  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).getValue();
-  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option, env.client_id.data(), env.client_id.size()));
+  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+  REQUIRE(client_id_option.getDataSize() == env.client_id.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option.getValue(), env.client_id.data(), env.client_id.size()));
 
-  auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).getValue();
-  REQUIRE(NO_DIFFERENCE == memcmp(param_request_option, env.param_request_list.data(), env.param_request_list.size()));
+  auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST);
+  REQUIRE(param_request_option.getDataSize() == env.param_request_list.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == env.client_host_name);
   std::size_t option_count;
@@ -402,6 +417,7 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
           env.gateway_ip,
           server_name,
           boot_file_name,
+          env.vendor_specific_info,
           env.subnet_mask,
           env.routers,
           env.dns_servers,
@@ -429,6 +445,11 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
           std::string(reinterpret_cast<const char*>(dhcp_header->serverName), env.server_host_name.size()));
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_ACK == dhcp_layer->getMessageType());
+
+  auto vendor_specific_info_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS);
+  REQUIRE(vendor_specific_info_opt.getDataSize() == env.vendor_specific_info.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(vendor_specific_info_opt.getValue(), env.vendor_specific_info.data(),
+                                  env.vendor_specific_info.size()));
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
           ntohl(env.lease_time.count()));
@@ -436,9 +457,15 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);
 
   auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
+  // Each router IP is 4 bytes long
+  auto expected_router_count = router_option.getDataSize() / 4;
+  REQUIRE(expected_router_count == env.routers.size());
   REQUIRE(serratia::utils::parseIPv4Addresses(&router_option) == env.routers);
 
   auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
+  // Each DNS IP is 4 bytes long
+  auto expected_dns_count = dns_option.getDataSize() / 4;
+  REQUIRE(expected_dns_count == env.dns_servers.size());
   REQUIRE(serratia::utils::parseIPv4Addresses(&dns_option) == env.dns_servers);
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() ==
