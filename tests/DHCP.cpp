@@ -50,6 +50,11 @@ constexpr std::size_t NAK_OPTION_COUNT = 4;
 constexpr std::size_t DECLINE_OPTION_COUNT = 6;
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
+enum PacketSource {
+  INITIAL_CLIENT,
+  CLIENT,
+  SERVER,
+};
 
 // TODO: Maybe move to header, idk
 // TODO: also probably parameterize the fields
@@ -74,6 +79,7 @@ struct TestEnvironment {
         boot_file_name(BOOT_FILE_NAME),
         vendor_specific_info{VENDOR_SPECIFIC_INFO},
         client_id{HTYPE_ETHER},
+        your_ip(CLIENT_IP),
         server_id(SERVER_IP),
         param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
                            pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
@@ -115,6 +121,7 @@ struct TestEnvironment {
   std::string boot_file_name;
   std::vector<std::uint8_t> vendor_specific_info;
   std::vector<std::uint8_t> client_id;
+  pcpp::IPv4Address your_ip;
   pcpp::IPv4Address server_id;
   std::vector<std::uint8_t> vendor_class_id;
   std::vector<std::uint8_t> param_request_list;
@@ -133,9 +140,41 @@ TestEnvironment& getEnv() {
   return env;
 }
 
-serratia::protocols::DHCPCommonConfig buildCommonConfig(pcpp::MacAddress src_mac, pcpp::MacAddress dst_mac,
-                                                        pcpp::IPv4Address src_ip, pcpp::IPv4Address dst_ip,
-                                                        std::uint16_t src_port, std::uint16_t dst_port) {
+serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& env, const PacketSource source) {
+  pcpp::MacAddress src_mac;
+  pcpp::MacAddress dst_mac;
+  pcpp::IPv4Address src_ip;
+  pcpp::IPv4Address dst_ip;
+  std::uint16_t src_port;
+  std::uint16_t dst_port;
+  switch (source) {
+    case PacketSource::INITIAL_CLIENT:
+      src_mac = env.client_mac;
+      dst_mac = BROADCAST_MAC;
+      src_ip = EMPTY_IP_ADDR;
+      dst_ip = BROADCAST_IP;
+      src_port = env.client_port;
+      dst_port = env.server_port;
+      break;
+    case PacketSource::CLIENT:
+      src_mac = env.client_mac;
+      dst_mac = env.server_mac;
+      src_ip = env.client_ip;
+      dst_ip = env.server_ip;
+      src_port = env.client_port;
+      dst_port = env.server_port;
+      break;
+    case PacketSource::SERVER:
+      src_mac = env.server_mac;
+      dst_mac = env.client_mac;
+      src_ip = env.server_ip;
+      dst_ip = env.client_ip;
+      src_port = env.server_port;
+      dst_port = env.client_port;
+      break;
+    default:
+      break;
+  }
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
   const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
@@ -143,17 +182,7 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(pcpp::MacAddress src_mac
 }
 
 serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment& env) {
-  const auto src_mac = env.client_mac;
-  const auto dst_mac = env.broadcast_mac;
-  const pcpp::IPv4Address src_ip("0.0.0.0");
-  const auto dst_ip = env.broadcast_ip;
-  const auto src_port = env.client_port;
-  const auto dst_port = env.server_port;
-
-  const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
-  const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
-  const serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
 
   return {dhcp_common_config,   env.transaction_id, env.hops,           env.seconds_elapsed,
           env.bootp_flags,      env.gateway_ip,     env.client_id,      env.param_request_list,
@@ -207,19 +236,8 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
 }
 
 serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) {
-  auto src_mac = env.server_mac;
-  auto dst_mac = env.client_mac;
-  pcpp::IPv4Address src_ip = env.server_ip;
-  auto dst_ip = env.client_ip;
-  const auto src_port = env.server_port;
-  const auto dst_port = env.client_port;
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
-  const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
-  const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
-  serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
-
-  pcpp::IPv4Address your_ip = env.client_ip;
   std::array<std::uint8_t, 64> server_name{};
   // Copy server_host_name string into server_name array
   std::ranges::copy(env.server_host_name | std::ranges::views::take(server_name.size()), server_name.begin());
@@ -227,13 +245,11 @@ serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) 
   std::array<std::uint8_t, 128> boot_file_name{};
   std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
-  pcpp::IPv4Address server_id = env.server_ip;
-
   return {dhcp_common_config,
           env.hops,
           env.transaction_id,
-          your_ip,
-          server_id,
+          env.your_ip,
+          env.server_id,
           env.seconds_elapsed,
           env.bootp_flags,
           env.server_ip,
@@ -308,38 +324,18 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 }
 
 serratia::protocols::DHCPRequestConfig buildTestRequest(const TestEnvironment& env, const bool initial_request) {
-  auto src_mac = env.client_mac;
-  auto dst_mac = env.broadcast_mac;
-  pcpp::IPv4Address src_ip;
+  PacketSource source;
   if (true == initial_request) {
-    src_ip = pcpp::IPv4Address("0.0.0.0");
+    source = PacketSource::INITIAL_CLIENT;
   } else {
-    src_ip = env.client_ip;
+    source = PacketSource::CLIENT;
   }
-  auto dst_ip = env.broadcast_ip;
-  const auto src_port = env.client_port;
-  const auto dst_port = env.server_port;
-
-  const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
-  const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
-  serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
-
-  pcpp::IPv4Address server_id = env.server_ip;
+  auto dhcp_common_config = buildCommonConfig(env, source);
 
   if (true == initial_request) {
-    return {dhcp_common_config,
-            env.transaction_id,
-            env.hops,
-            env.seconds_elapsed,
-            env.bootp_flags,
-            env.gateway_ip,
-            env.client_id,
-            env.param_request_list,
-            env.client_host_name,
-            src_ip,
-            env.requested_ip,
-            server_id};
+    return {dhcp_common_config,   env.transaction_id, env.hops,         env.seconds_elapsed,
+            env.bootp_flags,      env.gateway_ip,     env.client_id,    env.param_request_list,
+            env.client_host_name, EMPTY_IP_ADDR,      env.requested_ip, env.server_id};
   }
   return {dhcp_common_config,   env.transaction_id, env.hops,      env.seconds_elapsed,
           env.bootp_flags,      env.gateway_ip,     env.client_id, env.param_request_list,
@@ -403,17 +399,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
 }
 
 serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
-  auto src_mac = env.server_mac;
-  auto dst_mac = env.client_mac;
-  auto src_ip = env.server_ip;
-  auto dst_ip = env.client_ip;
-  const auto src_port = env.client_port;
-  const auto dst_port = env.server_port;
-
-  const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
-  const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
-  serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
   std::array<std::uint8_t, MAX_SERVER_NAME_SIZE> server_name{};
   // Copy server_host_name string into server_name array
@@ -493,17 +479,7 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 }
 
 serratia::protocols::DHCPNakConfig buildTestNak(const TestEnvironment& env) {
-  auto src_mac = env.server_mac;
-  auto dst_mac = env.client_mac;
-  auto src_ip = env.server_ip;
-  auto dst_ip = env.client_ip;
-  const auto src_port = env.server_port;
-  const auto dst_port = env.client_port;
-
-  const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
-  const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
-  const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
-  serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
   return {dhcp_common_config,  env.transaction_id, env.server_ip,  env.hops,
           env.seconds_elapsed, env.bootp_flags,    env.gateway_ip, env.vendor_specific_info};
@@ -541,8 +517,7 @@ void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 }
 
 serratia::protocols::DHCPDeclineConfig buildTestDecline(const TestEnvironment& env) {
-  auto dhcp_common_config =
-      buildCommonConfig(env.client_mac, env.server_mac, env.client_ip, env.server_ip, env.client_port, env.server_port);
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
   return {dhcp_common_config, env.transaction_id, env.requested_ip, env.hops,
           env.client_id,      env.server_id,      env.message_};

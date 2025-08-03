@@ -66,7 +66,6 @@ std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPDiscoverConfig::ge
   return extra_options;
 }
 std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPDiscoverConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
 void serratia::protocols::DHCPDiscoverConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
   extra_options.push_back(option);
 }
@@ -140,7 +139,6 @@ std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPOfferConfig::get_e
   return extra_options;
 }
 std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPOfferConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
 void serratia::protocols::DHCPOfferConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
   extra_options.push_back(option);
 }
@@ -196,7 +194,6 @@ std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPRequestConfig::get
   return extra_options;
 }
 std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPRequestConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
 void serratia::protocols::DHCPRequestConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
   extra_options.push_back(option);
 }
