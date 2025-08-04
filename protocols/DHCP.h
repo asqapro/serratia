@@ -7,9 +7,7 @@
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/UdpLayer.h>
 
-#include <array>
 #include <optional>
-#include <utility>
 
 // TODO: need to add RELEASE
 // TODO: need to add INFORM
@@ -295,8 +293,10 @@ struct DHCPNakConfig {
 struct DHCPDeclineConfig {
  public:
   DHCPDeclineConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address requested_ip,
-                    std::optional<std::uint8_t> hops = std::nullopt, std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
-                    std::optional<pcpp::IPv4Address> server_id = std::nullopt, std::optional<std::string> message = std::nullopt);
+                    std::optional<std::uint8_t> hops = std::nullopt,
+                    std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                    std::optional<pcpp::IPv4Address> server_id = std::nullopt,
+                    std::optional<std::string> message = std::nullopt);
   DHCPDeclineConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;

@@ -6,7 +6,6 @@
 #include <pcapplusplus/PcapLiveDevice.h>
 
 #include <set>
-#include <utility>
 
 #include "spdlog/spdlog.h"
 

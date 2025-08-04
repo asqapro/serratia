@@ -7,11 +7,6 @@
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/UdpLayer.h>
 
-#include <array>
-#include <cstddef>
-#include <optional>
-#include <utility>
-
 std::shared_ptr<pcpp::EthLayer> serratia::protocols::DHCPCommonConfig::GetEthLayer() const { return eth_layer_; }
 std::shared_ptr<pcpp::IPv4Layer> serratia::protocols::DHCPCommonConfig::GetIPLayer() const { return ip_layer_; }
 std::shared_ptr<pcpp::UdpLayer> serratia::protocols::DHCPCommonConfig::GetUDPLayer() const { return udp_layer_; }
@@ -736,12 +731,13 @@ pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& conf
     const auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     const std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
     const pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-                                          client_id_bytes_size);
+                                                client_id_bytes_size);
     dhcp_layer->addOption(client_id_opt);
   }
 
   if (const auto server_id = config.get_server_id(); server_id.has_value()) {
-    const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
+    const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                                                server_id.value());
     dhcp_layer->addOption(server_id_opt);
   }
 
