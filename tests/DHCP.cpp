@@ -324,20 +324,17 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(dhcp_layer->getOptionsCount() == OFFER_OPTION_COUNT);
 }
 
-serratia::protocols::DHCPRequestConfig buildTestRequest(const TestEnvironment& env, const bool initial_request) {
-  PacketSource source;
-  if (true == initial_request) {
-    source = PacketSource::INITIAL_CLIENT;
-  } else {
-    source = PacketSource::CLIENT;
-  }
-  auto dhcp_common_config = buildCommonConfig(env, source);
+serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnvironment& env) {
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
 
-  if (true == initial_request) {
-    return {dhcp_common_config,   env.transaction_id, env.hops,         env.seconds_elapsed,
-            env.bootp_flags,      env.gateway_ip,     env.client_id,    env.param_request_list,
-            env.client_host_name, EMPTY_IP_ADDR,      env.requested_ip, env.server_id};
-  }
+  return {dhcp_common_config,   env.transaction_id, env.hops,         env.seconds_elapsed,
+          env.bootp_flags,      env.gateway_ip,     env.client_id,    env.param_request_list,
+          env.client_host_name, EMPTY_IP_ADDR,      env.requested_ip, env.server_id};
+}
+
+serratia::protocols::DHCPRequestConfig buildTestRenewalRequest(const TestEnvironment& env) {
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+
   return {dhcp_common_config,   env.transaction_id, env.hops,      env.seconds_elapsed,
           env.bootp_flags,      env.gateway_ip,     env.client_id, env.param_request_list,
           env.client_host_name, env.client_ip,      std::nullopt,  std::nullopt};
@@ -566,8 +563,7 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 serratia::protocols::DHCPReleaseConfig buildTestRelease(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  return {dhcp_common_config, env.transaction_id, env.client_ip,   env.hops,
-          env.client_id,      env.server_id,      env.message_};
+  return {dhcp_common_config, env.transaction_id, env.client_ip, env.hops, env.client_id, env.server_id, env.message_};
 }
 
 void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -653,20 +649,20 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP initial request") {
-    constexpr bool initial_request = true;
-    auto dhcp_request_config = buildTestRequest(env, initial_request);
+    auto dhcp_request_config = buildTestInitialRequest(env);
     auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    constexpr bool initial_request = true;
     verifyDHCPRequest(env, dhcp_layer, initial_request);
   }
 
   SECTION("DHCP renewal request") {
-    constexpr bool initial_request = false;
-    auto dhcp_request_config = buildTestRequest(env, initial_request);
+    auto dhcp_request_config = buildTestRenewalRequest(env);
     auto packet = serratia::protocols::buildDHCPRequest(dhcp_request_config);
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    constexpr bool initial_request = false;
     verifyDHCPRequest(env, dhcp_layer, initial_request);
   }
 

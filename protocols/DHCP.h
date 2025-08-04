@@ -9,7 +9,6 @@
 
 #include <optional>
 
-// TODO: need to add RELEASE
 // TODO: need to add INFORM
 
 namespace serratia::protocols {
