@@ -319,10 +319,40 @@ struct DHCPDeclineConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+struct DHCPReleaseConfig {
+ public:
+  DHCPReleaseConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
+                    std::optional<std::uint8_t> hops = std::nullopt,
+                    std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                    std::optional<pcpp::IPv4Address> server_id = std::nullopt,
+                    std::optional<std::string> message = std::nullopt);
+  DHCPReleaseConfig() = delete;
+
+  [[nodiscard]] DHCPCommonConfig get_common_config() const;
+  [[nodiscard]] std::optional<std::uint8_t> get_hops() const;
+  [[nodiscard]] std::uint32_t get_transaction_id() const;
+  [[nodiscard]] pcpp::IPv4Address get_client_ip() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_client_id() const;
+  [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_id() const;
+  [[nodiscard]] std::optional<std::string> get_message() const;
+  [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
+
+ private:
+  DHCPCommonConfig common_config_;
+  std::optional<std::uint8_t> hops_;
+  std::uint32_t transaction_id_;
+  pcpp::IPv4Address client_ip_;
+  std::optional<std::vector<std::uint8_t>> client_id_;
+  std::optional<pcpp::IPv4Address> server_id_;
+  std::optional<std::string> message_;
+  std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
+};
+
 pcpp::Packet buildDHCPDiscover(const DHCPDiscoverConfig& config);
 pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
 pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
 pcpp::Packet buildDHCPAck(const DHCPAckConfig& config);
 pcpp::Packet buildDHCPNak(const DHCPNakConfig& config);
 pcpp::Packet buildDHCPDecline(const DHCPDeclineConfig& config);
+pcpp::Packet buildDHCPRelease(const DHCPReleaseConfig& config);
 };  // namespace serratia::protocols

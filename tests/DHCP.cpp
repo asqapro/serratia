@@ -48,6 +48,7 @@ constexpr std::size_t RENEWAL_REQUEST_OPTION_COUNT = 5;
 constexpr std::size_t ACK_OPTION_COUNT = 10;
 constexpr std::size_t NAK_OPTION_COUNT = 4;
 constexpr std::size_t DECLINE_OPTION_COUNT = 6;
+constexpr std::size_t RELEASE_OPTION_COUNT = 5;
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
 enum PacketSource {
@@ -562,6 +563,50 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
   REQUIRE(dhcp_layer->getOptionsCount() == DECLINE_OPTION_COUNT);
 }
 
+serratia::protocols::DHCPReleaseConfig buildTestRelease(const TestEnvironment& env) {
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+
+  return {dhcp_common_config, env.transaction_id, env.client_ip,   env.hops,
+          env.client_id,      env.server_id,      env.message_};
+}
+
+void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
+  auto dhcp_header = dhcp_layer->getDhcpHeader();
+
+  REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode);
+  REQUIRE(HTYPE_ETHER == dhcp_header->hardwareType);
+  REQUIRE(STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength);
+  REQUIRE(env.hops == dhcp_header->hops);
+  REQUIRE(env.transaction_id == dhcp_header->transactionID);
+  REQUIRE(0 == dhcp_header->secondsElapsed);
+  REQUIRE(0 == dhcp_header->flags);
+  REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
+  REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
+  REQUIRE(EMPTY_IP_ADDR == dhcp_header->serverIpAddress);
+  REQUIRE(EMPTY_IP_ADDR == dhcp_header->gatewayIpAddress);
+
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(dhcp_header->clientHardwareAddress, env.client_hw_address.data(), STANDARD_MAC_LENGTH));
+
+  auto server_name_field = dhcp_header->serverName;
+  REQUIRE(std::all_of(server_name_field, server_name_field + sizeof(server_name_field), [](int x) { return x == 0; }));
+
+  auto boot_file_field = dhcp_header->bootFilename;
+  REQUIRE(std::all_of(boot_file_field, boot_file_field + sizeof(boot_file_field), [](int x) { return x == 0; }));
+
+  REQUIRE(pcpp::DhcpMessageType::DHCP_RELEASE == dhcp_layer->getMessageType());
+
+  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+  REQUIRE(client_id_option.getDataSize() == env.client_id.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option.getValue(), env.client_id.data(), env.client_id.size()));
+
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_id);
+
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message_);
+
+  REQUIRE(dhcp_layer->getOptionsCount() == RELEASE_OPTION_COUNT);
+}
+
 TEST_CASE("Build DHCP packets") {
   auto& env = getEnv();
 
@@ -647,6 +692,14 @@ TEST_CASE("Build DHCP packets") {
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPDecline(env, dhcp_layer);
+  }
+
+  SECTION("DHCP release") {
+    auto dhcp_release_config = buildTestRelease(env);
+    auto packet = serratia::protocols::buildDHCPRelease(dhcp_release_config);
+
+    auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPRelease(env, dhcp_layer);
   }
 }
 
