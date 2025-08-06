@@ -30,15 +30,16 @@ struct DHCPCommonConfig {
 struct DHCPDiscoverConfig {
  public:
   DHCPDiscoverConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id,
-                     std::optional<std::uint8_t> hops = std::nullopt,
-                     std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-                     std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                     std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                     std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
-                     std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
-                     std::optional<std::string> client_host_name = std::nullopt,
-                     std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt,
-                     std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt);
+                   std::optional<std::uint8_t> hops = std::nullopt,
+                   std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                   std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                   std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                   std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+                   std::optional<std::uint32_t> lease_time = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                   std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt);
   DHCPDiscoverConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
@@ -47,11 +48,12 @@ struct DHCPDiscoverConfig {
   [[nodiscard]] std::optional<std::uint16_t> get_seconds_elapsed() const;
   [[nodiscard]] std::optional<std::uint16_t> get_bootp_flags() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+  [[nodiscard]] std::optional<pcpp::IPv4Address> get_requested_ip() const;
+  [[nodiscard]] std::optional<std::uint32_t> get_lease_time() const;
   [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_client_id() const;
-  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
-  [[nodiscard]] std::optional<std::string> get_client_host_name() const;
-  [[nodiscard]] std::optional<std::uint16_t> get_max_dhcp_message_size() const;
   [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
+  [[nodiscard]] std::optional<std::uint16_t> get_max_dhcp_message_size() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
   [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
 
@@ -64,15 +66,17 @@ struct DHCPDiscoverConfig {
   std::optional<std::uint16_t> seconds_elapsed_;
   std::optional<std::uint16_t> bootp_flags_;
   std::optional<pcpp::IPv4Address> gateway_ip_;
+  std::optional<pcpp::IPv4Address> requested_ip_;
+  std::optional<std::uint32_t> lease_time_;
   std::optional<std::vector<std::uint8_t>> client_id_;
-  std::optional<std::vector<std::uint8_t>> param_request_list_;
-  std::optional<std::string> client_host_name_;
-  std::optional<std::uint16_t> max_dhcp_message_size_;
   std::optional<std::vector<std::uint8_t>> vendor_class_id_;
+  std::optional<std::vector<std::uint8_t>> param_request_list_;
+  std::optional<std::uint16_t> max_dhcp_message_size_;
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Correct fields to match RFC
 struct DHCPOfferConfig {
  public:
   DHCPOfferConfig(DHCPCommonConfig common_config, std::optional<std::uint8_t> hops, std::uint32_t transaction_id,
@@ -138,6 +142,7 @@ struct DHCPOfferConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Correct fields to match RFC
 struct DHCPRequestConfig {
  public:
   DHCPRequestConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id,
@@ -187,6 +192,7 @@ struct DHCPRequestConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Correct fields to match RFC
 struct DHCPAckConfig {
  public:
   DHCPAckConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
@@ -251,6 +257,7 @@ struct DHCPAckConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Correct fields to match RFC
 struct DHCPNakConfig {
  public:
   DHCPNakConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address server_id,
@@ -287,6 +294,7 @@ struct DHCPNakConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Double check that fields match RFC
 struct DHCPDeclineConfig {
  public:
   DHCPDeclineConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address requested_ip,
@@ -316,6 +324,7 @@ struct DHCPDeclineConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+// TODO: Double check that fields match RFC
 struct DHCPReleaseConfig {
  public:
   DHCPReleaseConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,

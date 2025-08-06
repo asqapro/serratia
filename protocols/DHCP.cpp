@@ -16,20 +16,23 @@ std::shared_ptr<pcpp::UdpLayer> serratia::protocols::DHCPCommonConfig::GetUDPLay
 serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
     DHCPCommonConfig common_config, const std::uint32_t transaction_id, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
-    const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
-    std::optional<std::vector<std::uint8_t>> param_request_list, std::optional<std::string> client_host_name,
-    const std::optional<std::uint16_t> max_dhcp_message_size, std::optional<std::vector<std::uint8_t>> vendor_class_id)
+    const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<pcpp::IPv4Address> requested_ip,
+    const std::optional<std::uint32_t> lease_time, std::optional<std::vector<std::uint8_t>> client_id,
+    std::optional<std::vector<std::uint8_t>> vendor_class_id,
+    std::optional<std::vector<std::uint8_t>> param_request_list,
+    const std::optional<std::uint16_t> max_dhcp_message_size)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
       seconds_elapsed_(seconds_elapsed),
       bootp_flags_(bootp_flags),
       gateway_ip_(gateway_ip),
+      requested_ip_(requested_ip),
+      lease_time_(lease_time),
       client_id_(std::move(client_id)),
+      vendor_class_id_(std::move(vendor_class_id)),
       param_request_list_(std::move(param_request_list)),
-      client_host_name_(std::move(client_host_name)),
-      max_dhcp_message_size_(max_dhcp_message_size),
-      vendor_class_id_(std::move(vendor_class_id)) {
+      max_dhcp_message_size_(max_dhcp_message_size) {
   auto src_mac = common_config_.GetEthLayer()->getSourceMac();
   dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
 }
@@ -44,14 +47,15 @@ std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_second
 }
 std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_bootp_flags() const { return bootp_flags_; }
 std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDiscoverConfig::get_gateway_ip() const { return gateway_ip_; }
+std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDiscoverConfig::get_requested_ip() const {
+  return requested_ip_;
+}
+std::optional<std::uint32_t> serratia::protocols::DHCPDiscoverConfig::get_lease_time() const { return lease_time_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_client_id() const {
   return client_id_;
 }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_param_request_list() const {
   return param_request_list_;
-}
-std::optional<std::string> serratia::protocols::DHCPDiscoverConfig::get_client_host_name() const {
-  return client_host_name_;
 }
 std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_dhcp_message_size() const {
   return max_dhcp_message_size_;
@@ -436,6 +440,17 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
   std::ranges::fill(dhcp_header->serverName, 0);
   std::ranges::fill(dhcp_header->bootFilename, 0);
 
+  if (auto requested_ip = config.get_requested_ip(); requested_ip.has_value()) {
+    pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
+                                             requested_ip.value());
+    dhcp_layer->addOption(requested_ip_opt);
+  }
+
+  if (auto lease_time = config.get_lease_time(); lease_time.has_value()) {
+    pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value());
+    dhcp_layer->addOption(lease_time_opt);
+  }
+
   if (auto client_id = config.get_client_id(); client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
@@ -443,6 +458,15 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
                                           client_id_bytes_size);
     dhcp_layer->addOption(client_id_opt);
+  }
+
+  if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
+    auto vendor_class_id_val = vendor_class_id.value();
+    auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
+    std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
+    pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                                                vendor_class_id_bytes, vendor_class_id_size);
+    dhcp_layer->addOption(vendor_class_id_opt);
   }
 
   if (auto param_request_list = config.get_param_request_list(); param_request_list.has_value()) {
@@ -455,24 +479,10 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  if (auto client_host_name = config.get_client_host_name(); client_host_name.has_value()) {
-    pcpp::DhcpOptionBuilder client_host_name_opt(pcpp::DhcpOptionTypes::DHCPOPT_HOST_NAME, client_host_name.value());
-    dhcp_layer->addOption(client_host_name_opt);
-  }
-
   if (auto max_dhcp_message_size = config.get_max_dhcp_message_size(); max_dhcp_message_size.has_value()) {
     pcpp::DhcpOptionBuilder max_dhcp_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
                                                       max_dhcp_message_size.value());
     dhcp_layer->addOption(max_dhcp_message_size_opt);
-  }
-
-  if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
-    auto vendor_class_id_val = vendor_class_id.value();
-    auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
-    std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
-    pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                                                vendor_class_id_bytes, vendor_class_id_size);
-    dhcp_layer->addOption(vendor_class_id_opt);
   }
 
   for (const auto& opt : config.get_extra_options()) {
