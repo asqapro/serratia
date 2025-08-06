@@ -25,6 +25,7 @@ const std::string SERVER_HOST_NAME = "skalrog";
 const std::string CLIENT_HOST_NAME = "malric";
 const std::string BOOT_FILE_NAME = "boot/fake";
 constexpr std::uint8_t VENDOR_SPECIFIC_INFO = 1;
+constexpr std::uint8_t VENDOR_CLASS_IDENTIFIER = 1;
 const std::string MESSAGE = "test error";
 const std::string SUBNET_MASK = "255.255.255.0";
 const std::string ROUTERS = "192.168.0.1";
@@ -49,8 +50,10 @@ constexpr std::size_t ACK_OPTION_COUNT = 10;
 constexpr std::size_t NAK_OPTION_COUNT = 4;
 constexpr std::size_t DECLINE_OPTION_COUNT = 6;
 constexpr std::size_t RELEASE_OPTION_COUNT = 5;
+constexpr std::size_t INFORM_OPTION_COUNT = 6;
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
+
 enum PacketSource {
   INITIAL_CLIENT,
   CLIENT,
@@ -82,6 +85,7 @@ struct TestEnvironment {
         client_id{HTYPE_ETHER},
         your_ip(CLIENT_IP),
         server_id(SERVER_IP),
+        vendor_class_id{VENDOR_CLASS_IDENTIFIER},
         param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
                            pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
         message_(MESSAGE),
@@ -603,6 +607,59 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
   REQUIRE(dhcp_layer->getOptionsCount() == RELEASE_OPTION_COUNT);
 }
 
+serratia::protocols::DHCPInformConfig buildTestInform(const TestEnvironment& env) {
+  auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+
+  return {dhcp_common_config,  env.transaction_id,     env.client_ip,   env.hops,
+          env.seconds_elapsed, env.bootp_flags,        env.gateway_ip,  env.client_id,
+          env.vendor_class_id, env.param_request_list, MAX_MESSAGE_SIZE};
+}
+
+void verifyDHCPInform(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
+  auto dhcp_header = dhcp_layer->getDhcpHeader();
+
+  REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode);
+  REQUIRE(HTYPE_ETHER == dhcp_header->hardwareType);
+  REQUIRE(STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength);
+  REQUIRE(env.hops == dhcp_header->hops);
+  REQUIRE(env.transaction_id == dhcp_header->transactionID);
+  REQUIRE(env.seconds_elapsed == dhcp_header->secondsElapsed);
+  REQUIRE(env.bootp_flags == dhcp_header->flags);
+  REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
+  REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
+  REQUIRE(EMPTY_IP_ADDR == dhcp_header->serverIpAddress);
+  REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(dhcp_header->clientHardwareAddress, env.client_hw_address.data(), STANDARD_MAC_LENGTH));
+
+  auto server_name_field = dhcp_header->bootFilename;
+  REQUIRE(std::all_of(server_name_field, server_name_field + sizeof(server_name_field), [](int x) { return x == 0; }));
+
+  auto boot_file_field = dhcp_header->bootFilename;
+  REQUIRE(std::all_of(boot_file_field, boot_file_field + sizeof(boot_file_field), [](int x) { return x == 0; }));
+
+  REQUIRE(pcpp::DhcpMessageType::DHCP_INFORM == dhcp_layer->getMessageType());
+
+  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+  REQUIRE(client_id_option.getDataSize() == env.client_id.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option.getValue(), env.client_id.data(), env.client_id.size()));
+
+  auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
+  REQUIRE(vendor_class_id_option.getDataSize() == env.vendor_class_id.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(vendor_class_id_option.getValue(), env.vendor_class_id.data(), env.vendor_class_id.size()));
+
+  auto param_request_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST);
+  REQUIRE(param_request_option.getDataSize() == env.param_request_list.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
+
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
+          ntohs(MAX_MESSAGE_SIZE));
+
+  REQUIRE(dhcp_layer->getOptionsCount() == INFORM_OPTION_COUNT);
+}
+
 TEST_CASE("Build DHCP packets") {
   auto& env = getEnv();
 
@@ -696,6 +753,14 @@ TEST_CASE("Build DHCP packets") {
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPRelease(env, dhcp_layer);
+  }
+
+  SECTION("DHCP inform") {
+    auto dhcp_inform_config = buildTestInform(env);
+    auto packet = serratia::protocols::buildDHCPInform(dhcp_inform_config);
+
+    auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPInform(env, dhcp_layer);
   }
 }
 

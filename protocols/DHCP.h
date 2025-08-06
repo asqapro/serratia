@@ -347,6 +347,51 @@ struct DHCPReleaseConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
+struct DHCPInformConfig {
+ public:
+  DHCPInformConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
+                   std::optional<std::uint8_t> hops = std::nullopt,
+                   std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                   std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                   std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> client_id = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt,
+                   std::optional<std::vector<std::uint8_t>> param_request_list = std::nullopt,
+                   std::optional<std::uint16_t> max_dhcp_message_size = std::nullopt);
+  DHCPInformConfig() = delete;
+
+  [[nodiscard]] DHCPCommonConfig get_common_config() const;
+  [[nodiscard]] std::optional<std::uint8_t> get_hops() const;
+  [[nodiscard]] std::uint32_t get_transaction_id() const;
+  [[nodiscard]] std::optional<std::uint16_t> get_seconds_elapsed() const;
+  [[nodiscard]] std::optional<std::uint16_t> get_bootp_flags() const;
+  [[nodiscard]] pcpp::IPv4Address get_client_ip() const;
+  [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_client_id() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_param_request_list() const;
+  [[nodiscard]] std::optional<std::uint16_t> get_max_dhcp_message_size() const;
+  [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
+  [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
+
+  void add_option(const pcpp::DhcpOptionBuilder& option);
+
+ private:
+  DHCPCommonConfig common_config_;
+  std::optional<std::uint8_t> hops_;
+  std::uint32_t transaction_id_;
+  std::optional<std::uint16_t> seconds_elapsed_;
+  std::optional<std::uint16_t> bootp_flags_;
+  pcpp::IPv4Address client_ip_;
+  std::optional<pcpp::IPv4Address> gateway_ip_;
+  std::optional<std::vector<std::uint8_t>> client_id_;
+  std::optional<std::vector<std::uint8_t>> vendor_class_id_;
+  std::optional<std::vector<std::uint8_t>> param_request_list_;
+  std::optional<std::uint16_t> max_dhcp_message_size_;
+  std::vector<pcpp::DhcpOptionBuilder> extra_options;
+  std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
+};
+
 pcpp::Packet buildDHCPDiscover(const DHCPDiscoverConfig& config);
 pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
 pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
@@ -354,4 +399,5 @@ pcpp::Packet buildDHCPAck(const DHCPAckConfig& config);
 pcpp::Packet buildDHCPNak(const DHCPNakConfig& config);
 pcpp::Packet buildDHCPDecline(const DHCPDeclineConfig& config);
 pcpp::Packet buildDHCPRelease(const DHCPReleaseConfig& config);
+pcpp::Packet buildDHCPInform(const DHCPInformConfig& config);
 };  // namespace serratia::protocols
