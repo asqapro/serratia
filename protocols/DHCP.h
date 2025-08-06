@@ -9,8 +9,6 @@
 
 #include <optional>
 
-// TODO: need to add INFORM
-
 namespace serratia::protocols {
 struct DHCPCommonConfig {
  public:
