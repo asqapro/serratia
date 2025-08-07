@@ -314,11 +314,13 @@ void serratia::protocols::DHCPNakConfig::add_option(const pcpp::DhcpOptionBuilde
 
 serratia::protocols::DHCPDeclineConfig::DHCPDeclineConfig(
     DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address requested_ip,
-    const std::optional<std::uint8_t> hops, std::optional<std::vector<std::uint8_t>> client_id,
-    const std::optional<pcpp::IPv4Address> server_id, std::optional<std::string> message)
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
+    std::optional<std::string> message)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
+      gateway_ip_(gateway_ip),
       requested_ip_(requested_ip),
       client_id_(std::move(client_id)),
       server_id_(server_id),
@@ -332,6 +334,7 @@ serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPDeclineConfig::ge
 }
 std::optional<std::uint8_t> serratia::protocols::DHCPDeclineConfig::get_hops() const { return hops_; }
 std::uint32_t serratia::protocols::DHCPDeclineConfig::get_transaction_id() const { return transaction_id_; }
+std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDeclineConfig::get_gateway_ip() const { return gateway_ip_; }
 pcpp::IPv4Address serratia::protocols::DHCPDeclineConfig::get_requested_ip() const { return requested_ip_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDeclineConfig::get_client_id() const {
   return client_id_;
@@ -342,12 +345,14 @@ std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPDeclineConfig::get_dhc
 
 serratia::protocols::DHCPReleaseConfig::DHCPReleaseConfig(
     DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
-    const std::optional<std::uint8_t> hops, std::optional<std::vector<std::uint8_t>> client_id,
-    const std::optional<pcpp::IPv4Address> server_id, std::optional<std::string> message)
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
+    std::optional<std::string> message)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
       client_ip_(client_ip),
+      gateway_ip_(gateway_ip),
       client_id_(std::move(client_id)),
       server_id_(server_id),
       message_(std::move(message)) {
@@ -361,10 +366,11 @@ serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPReleaseConfig::ge
 std::optional<std::uint8_t> serratia::protocols::DHCPReleaseConfig::get_hops() const { return hops_; }
 std::uint32_t serratia::protocols::DHCPReleaseConfig::get_transaction_id() const { return transaction_id_; }
 pcpp::IPv4Address serratia::protocols::DHCPReleaseConfig::get_client_ip() const { return client_ip_; }
+std::optional<pcpp::IPv4Address> serratia::protocols::DHCPReleaseConfig::get_gateway_ip() const { return gateway_ip_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPReleaseConfig::get_client_id() const {
   return client_id_;
 }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPReleaseConfig::get_server_id() const { return server_id_; }
+pcpp::IPv4Address serratia::protocols::DHCPReleaseConfig::get_server_id() const { return server_id_; }
 std::optional<std::string> serratia::protocols::DHCPReleaseConfig::get_message() const { return message_; }
 std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPReleaseConfig::get_dhcp_layer() const { return dhcp_layer_; }
 
@@ -813,7 +819,7 @@ pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& conf
   dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = 0;
+  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   const pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
                                                  config.get_requested_ip());
@@ -865,7 +871,7 @@ pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& conf
   dhcp_header->clientIpAddress = config.get_client_ip().toInt();
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = 0;
+  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   if (const auto client_id = config.get_client_id(); client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
@@ -876,11 +882,9 @@ pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& conf
     dhcp_layer->addOption(client_id_opt);
   }
 
-  if (const auto server_id = config.get_server_id(); server_id.has_value()) {
-    const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                                                server_id.value());
-    dhcp_layer->addOption(server_id_opt);
-  }
+  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                                              config.get_server_id());
+  dhcp_layer->addOption(server_id_opt);
 
   if (const auto message = config.get_message(); message.has_value()) {
     const pcpp::DhcpOptionBuilder message_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value());

@@ -88,7 +88,7 @@ struct TestEnvironment {
         vendor_class_id{VENDOR_CLASS_IDENTIFIER},
         param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
                            pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
-        message_(MESSAGE),
+        message(MESSAGE),
         subnet_mask(SUBNET_MASK),
         routers{ROUTERS},
         dns_servers{QUAD9_DNS},
@@ -130,7 +130,7 @@ struct TestEnvironment {
   pcpp::IPv4Address server_id;
   std::vector<std::uint8_t> vendor_class_id;
   std::vector<std::uint8_t> param_request_list;
-  std::string message_;
+  std::string message;
   pcpp::IPv4Address subnet_mask;
   std::vector<pcpp::IPv4Address> routers;
   std::vector<pcpp::IPv4Address> dns_servers;
@@ -525,8 +525,8 @@ void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 serratia::protocols::DHCPDeclineConfig buildTestDecline(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  return {dhcp_common_config, env.transaction_id, env.requested_ip, env.hops,
-          env.client_id,      env.server_id,      env.message_};
+  return {dhcp_common_config, env.transaction_id, env.requested_ip, env.server_id,
+          env.hops,           env.gateway_ip,     env.client_id,    env.message};
 }
 
 void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -542,7 +542,7 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->serverIpAddress);
-  REQUIRE(EMPTY_IP_ADDR == dhcp_header->gatewayIpAddress);
+  REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
 
   REQUIRE(NO_DIFFERENCE ==
           memcmp(dhcp_header->clientHardwareAddress, env.client_hw_address.data(), STANDARD_MAC_LENGTH));
@@ -563,7 +563,7 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_id);
 
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message_);
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
 
   REQUIRE(dhcp_layer->getOptionsCount() == DECLINE_OPTION_COUNT);
 }
@@ -571,7 +571,8 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 serratia::protocols::DHCPReleaseConfig buildTestRelease(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  return {dhcp_common_config, env.transaction_id, env.client_ip, env.hops, env.client_id, env.server_id, env.message_};
+  return {dhcp_common_config, env.transaction_id, env.client_ip, env.server_id,
+          env.hops,           env.gateway_ip,     env.client_id, env.message};
 }
 
 void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -587,7 +588,7 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
   REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->serverIpAddress);
-  REQUIRE(EMPTY_IP_ADDR == dhcp_header->gatewayIpAddress);
+  REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
 
   REQUIRE(NO_DIFFERENCE ==
           memcmp(dhcp_header->clientHardwareAddress, env.client_hw_address.data(), STANDARD_MAC_LENGTH));
@@ -606,7 +607,7 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_id);
 
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message_);
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
 
   REQUIRE(dhcp_layer->getOptionsCount() == RELEASE_OPTION_COUNT);
 }
