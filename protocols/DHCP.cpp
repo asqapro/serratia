@@ -19,8 +19,7 @@ serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
     const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<pcpp::IPv4Address> requested_ip,
     const std::optional<std::uint32_t> lease_time, std::optional<std::vector<std::uint8_t>> client_id,
     std::optional<std::vector<std::uint8_t>> vendor_class_id,
-    std::optional<std::vector<std::uint8_t>> param_request_list,
-    const std::optional<std::uint16_t> max_dhcp_message_size)
+    std::optional<std::vector<std::uint8_t>> param_request_list, const std::optional<std::uint16_t> max_message_size)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
@@ -32,7 +31,7 @@ serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
       client_id_(std::move(client_id)),
       vendor_class_id_(std::move(vendor_class_id)),
       param_request_list_(std::move(param_request_list)),
-      max_dhcp_message_size_(max_dhcp_message_size) {
+      max_message_size_(max_message_size) {
   auto src_mac = common_config_.GetEthLayer()->getSourceMac();
   dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
 }
@@ -57,8 +56,8 @@ std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_param_request_list() const {
   return param_request_list_;
 }
-std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_dhcp_message_size() const {
-  return max_dhcp_message_size_;
+std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_message_size() const {
+  return max_message_size_;
 }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_vendor_class_id() const {
   return vendor_class_id_;
@@ -145,12 +144,13 @@ void serratia::protocols::DHCPOfferConfig::add_option(const pcpp::DhcpOptionBuil
 }
 
 serratia::protocols::DHCPRequestConfig::DHCPRequestConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const std::optional<std::uint8_t> hops,
-    const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
-    const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
-    std::optional<std::vector<std::uint8_t>> param_request_list, std::optional<std::string> client_host_name,
-    const std::optional<pcpp::IPv4Address> client_ip, const std::optional<pcpp::IPv4Address> requested_ip,
-    const std::optional<pcpp::IPv4Address> server_id)
+    DHCPCommonConfig common_config, std::uint32_t transaction_id, std::optional<std::uint8_t> hops,
+    std::optional<std::uint16_t> seconds_elapsed, std::optional<std::uint16_t> bootp_flags,
+    std::optional<pcpp::IPv4Address> client_ip, std::optional<pcpp::IPv4Address> gateway_ip,
+    std::optional<pcpp::IPv4Address> requested_ip, std::optional<std::uint32_t> lease_time,
+    std::optional<std::vector<std::uint8_t>> client_id, std::optional<std::vector<std::uint8_t>> vendor_class_id,
+    std::optional<pcpp::IPv4Address> server_id, std::optional<std::vector<std::uint8_t>> param_request_list,
+    std::optional<std::uint16_t> max_message_size)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
@@ -159,10 +159,12 @@ serratia::protocols::DHCPRequestConfig::DHCPRequestConfig(
       client_ip_(client_ip),
       gateway_ip_(gateway_ip),
       requested_ip_(requested_ip),
-      server_id_(server_id),
+      lease_time_(lease_time),
       client_id_(std::move(client_id)),
+      vendor_class_id_(std::move(vendor_class_id)),
+      server_id_(server_id),
       param_request_list_(std::move(param_request_list)),
-      client_host_name_(std::move(client_host_name)) {
+      max_message_size_(max_message_size) {
   auto src_mac = common_config_.GetEthLayer()->getSourceMac();
   dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_REQUEST, src_mac);
 }
@@ -181,15 +183,19 @@ std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_gat
 std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_requested_ip() const {
   return requested_ip_;
 }
+std::optional<std::uint32_t> serratia::protocols::DHCPRequestConfig::get_lease_time() const { return lease_time_; }
 std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_server_id() const { return server_id_; }
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_client_id() const {
   return client_id_;
 }
+std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_vendor_class_id() const {
+  return vendor_class_id_;
+}
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_param_request_list() const {
   return param_request_list_;
 }
-std::optional<std::string> serratia::protocols::DHCPRequestConfig::get_client_host_name() const {
-  return client_host_name_;
+std::optional<std::uint16_t> serratia::protocols::DHCPRequestConfig::get_max_message_size() const {
+  return max_message_size_;
 }
 std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPRequestConfig::get_extra_options() const {
   return extra_options;
@@ -379,8 +385,7 @@ serratia::protocols::DHCPInformConfig::DHCPInformConfig(
     const std::optional<std::uint8_t> hops, const std::optional<std::uint16_t> seconds_elapsed,
     const std::optional<std::uint16_t> bootp_flags, const std::optional<pcpp::IPv4Address> gateway_ip,
     std::optional<std::vector<std::uint8_t>> client_id, std::optional<std::vector<std::uint8_t>> vendor_class_id,
-    std::optional<std::vector<std::uint8_t>> param_request_list,
-    const std::optional<std::uint16_t> max_dhcp_message_size)
+    std::optional<std::vector<std::uint8_t>> param_request_list, const std::optional<std::uint16_t> max_message_size)
     : common_config_(std::move(common_config)),
       hops_(hops),
       transaction_id_(transaction_id),
@@ -391,7 +396,7 @@ serratia::protocols::DHCPInformConfig::DHCPInformConfig(
       client_id_(std::move(client_id)),
       vendor_class_id_(std::move(vendor_class_id)),
       param_request_list_(std::move(param_request_list)),
-      max_dhcp_message_size_(max_dhcp_message_size) {
+      max_message_size_(max_message_size) {
   auto src_mac = common_config_.GetEthLayer()->getSourceMac();
   dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_INFORM, src_mac);
 }
@@ -416,8 +421,8 @@ std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPInformConfig::
 std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPInformConfig::get_param_request_list() const {
   return param_request_list_;
 }
-std::optional<std::uint16_t> serratia::protocols::DHCPInformConfig::get_max_dhcp_message_size() const {
-  return max_dhcp_message_size_;
+std::optional<std::uint16_t> serratia::protocols::DHCPInformConfig::get_max_message_size() const {
+  return max_message_size_;
 }
 std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPInformConfig::get_extra_options() const {
   return extra_options;
@@ -485,10 +490,10 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  if (auto max_dhcp_message_size = config.get_max_dhcp_message_size(); max_dhcp_message_size.has_value()) {
-    pcpp::DhcpOptionBuilder max_dhcp_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
-                                                      max_dhcp_message_size.value());
-    dhcp_layer->addOption(max_dhcp_message_size_opt);
+  if (auto max_message_size = config.get_max_message_size(); max_message_size.has_value()) {
+    pcpp::DhcpOptionBuilder max_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
+                                                 max_message_size.value());
+    dhcp_layer->addOption(max_message_size_opt);
   }
 
   for (const auto& opt : config.get_extra_options()) {
@@ -600,6 +605,7 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
 
   return offer_packet;
 }
+// TODO: make specific to init-reboot, selecting, etc
 pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DHCPRequestConfig& config) {
   auto common_config = config.get_common_config();
 
@@ -648,11 +654,6 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
     pcpp::DhcpOptionBuilder param_request_list_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
                                                    param_request_list_bytes, param_request_list_bytes_size);
     dhcp_layer->addOption(param_request_list_opt);
-  }
-
-  if (auto client_host_name = config.get_client_host_name(); client_host_name.has_value()) {
-    pcpp::DhcpOptionBuilder client_host_name_opt(pcpp::DhcpOptionTypes::DHCPOPT_HOST_NAME, client_host_name.value());
-    dhcp_layer->addOption(client_host_name_opt);
   }
 
   for (const auto& opt : config.get_extra_options()) {
@@ -951,10 +952,10 @@ pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  if (auto max_dhcp_message_size = config.get_max_dhcp_message_size(); max_dhcp_message_size.has_value()) {
-    pcpp::DhcpOptionBuilder max_dhcp_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
-                                                      max_dhcp_message_size.value());
-    dhcp_layer->addOption(max_dhcp_message_size_opt);
+  if (auto max_message_size = config.get_max_message_size(); max_message_size.has_value()) {
+    pcpp::DhcpOptionBuilder max_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
+                                                 max_message_size.value());
+    dhcp_layer->addOption(max_message_size_opt);
   }
 
   for (const auto& opt : config.get_extra_options()) {

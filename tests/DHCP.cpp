@@ -44,8 +44,8 @@ constexpr int NO_DIFFERENCE = 0;
 constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t DISCOVER_OPTION_COUNT = 8;
 constexpr std::size_t OFFER_OPTION_COUNT = 10;
-constexpr std::size_t INITIAL_REQUEST_OPTION_COUNT = 7;
-constexpr std::size_t RENEWAL_REQUEST_OPTION_COUNT = 5;
+constexpr std::size_t INITIAL_REQUEST_OPTION_COUNT = 6;
+constexpr std::size_t RENEWAL_REQUEST_OPTION_COUNT = 4;
 constexpr std::size_t ACK_OPTION_COUNT = 10;
 constexpr std::size_t NAK_OPTION_COUNT = 4;
 constexpr std::size_t DECLINE_OPTION_COUNT = 6;
@@ -95,7 +95,8 @@ struct TestEnvironment {
         lease_time(LEASE_TIME_VAL),
         renewal_time(RENEWAL_TIME_VAL),
         rebind_time(REBIND_TIME_VAL),
-        lease_pool_start(LEASE_POOL_START) {
+        lease_pool_start(LEASE_POOL_START),
+        max_message_size(MAX_MESSAGE_SIZE) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> distrib;
@@ -138,6 +139,7 @@ struct TestEnvironment {
   std::chrono::seconds renewal_time;
   std::chrono::seconds rebind_time;
   pcpp::IPv4Address lease_pool_start;
+  std::uint16_t max_message_size;
 };
 
 TestEnvironment& getEnv() {
@@ -192,7 +194,7 @@ serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment&
   return {dhcp_common_config,  env.transaction_id,     env.hops,
           env.seconds_elapsed, env.bootp_flags,        env.gateway_ip,
           env.requested_ip,    env.lease_time.count(), env.client_id,
-          env.vendor_class_id, env.param_request_list, MAX_MESSAGE_SIZE};
+          env.vendor_class_id, env.param_request_list, env.max_message_size};
 }
 
 void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -239,7 +241,7 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
           memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
-          ntohs(MAX_MESSAGE_SIZE));
+          ntohs(env.max_message_size));
 
   REQUIRE(dhcp_layer->getOptionsCount() == DISCOVER_OPTION_COUNT);
 }
@@ -335,17 +337,21 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
 
-  return {dhcp_common_config,   env.transaction_id, env.hops,         env.seconds_elapsed,
-          env.bootp_flags,      env.gateway_ip,     env.client_id,    env.param_request_list,
-          env.client_host_name, EMPTY_IP_ADDR,      env.requested_ip, env.server_id};
+  return {dhcp_common_config,     env.transaction_id,  env.hops,
+          env.seconds_elapsed,    env.bootp_flags,     std::nullopt,
+          env.gateway_ip,         env.requested_ip,    env.lease_time.count(),
+          env.client_id,          env.vendor_class_id, env.server_id,
+          env.param_request_list, env.max_message_size};
 }
 
 serratia::protocols::DHCPRequestConfig buildTestRenewalRequest(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  return {dhcp_common_config,   env.transaction_id, env.hops,      env.seconds_elapsed,
-          env.bootp_flags,      env.gateway_ip,     env.client_id, env.param_request_list,
-          env.client_host_name, env.client_ip,      std::nullopt,  std::nullopt};
+  return {dhcp_common_config,     env.transaction_id,  env.hops,
+          env.seconds_elapsed,    env.bootp_flags,     env.client_ip,
+          env.gateway_ip,         std::nullopt,        env.lease_time.count(),
+          env.client_id,          env.vendor_class_id, std::nullopt,
+          env.param_request_list, env.max_message_size};
 }
 
 void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, const bool initial_request) {
@@ -394,7 +400,6 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
   REQUIRE(NO_DIFFERENCE ==
           memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
 
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_HOST_NAME).getValueAsString() == env.client_host_name);
   std::size_t option_count;
   if (true == initial_request) {
     option_count = INITIAL_REQUEST_OPTION_COUNT;
@@ -615,9 +620,9 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 serratia::protocols::DHCPInformConfig buildTestInform(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  return {dhcp_common_config,  env.transaction_id,     env.client_ip,   env.hops,
-          env.seconds_elapsed, env.bootp_flags,        env.gateway_ip,  env.client_id,
-          env.vendor_class_id, env.param_request_list, MAX_MESSAGE_SIZE};
+  return {dhcp_common_config,  env.transaction_id,     env.client_ip,       env.hops,
+          env.seconds_elapsed, env.bootp_flags,        env.gateway_ip,      env.client_id,
+          env.vendor_class_id, env.param_request_list, env.max_message_size};
 }
 
 void verifyDHCPInform(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -660,7 +665,7 @@ void verifyDHCPInform(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
           memcmp(param_request_option.getValue(), env.param_request_list.data(), env.param_request_list.size()));
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
-          ntohs(MAX_MESSAGE_SIZE));
+          ntohs(env.max_message_size));
 
   REQUIRE(dhcp_layer->getOptionsCount() == INFORM_OPTION_COUNT);
 }
