@@ -76,44 +76,32 @@ struct DHCPDiscoverConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
 
-// TODO: Correct fields to match RFC
 struct DHCPOfferConfig {
  public:
-  DHCPOfferConfig(DHCPCommonConfig common_config, std::optional<std::uint8_t> hops, std::uint32_t transaction_id,
-                  pcpp::IPv4Address your_ip, pcpp::IPv4Address server_id,
-                  std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-                  std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                  std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
-                  std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+  DHCPOfferConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
+                  pcpp::IPv4Address server_ip, std::uint16_t bootp_flags, pcpp::IPv4Address gateway_ip,
+                  std::array<std::uint8_t, 6> client_hardware_address, std::uint32_t lease_time,
+                  pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
-                  std::optional<std::vector<std::uint8_t>> vendor_specific_info = std::nullopt,
-                  std::optional<std::uint32_t> lease_time = std::nullopt,
-                  std::optional<pcpp::IPv4Address> subnet_mask = std::nullopt,
-                  std::optional<std::vector<pcpp::IPv4Address>> routers = std::nullopt,
-                  std::optional<std::vector<pcpp::IPv4Address>> dns_servers = std::nullopt,
-                  std::optional<std::uint32_t> renewal_time = std::nullopt,
-                  std::optional<std::uint32_t> rebind_time = std::nullopt);
+                  std::optional<std::string> message = std::nullopt,
+                  std::optional<std::vector<std::uint8_t>> vendor_class_id = std::nullopt);
   DHCPOfferConfig() = delete;
 
   [[nodiscard]] DHCPCommonConfig get_common_config() const;
   [[nodiscard]] std::optional<std::uint8_t> get_hops() const;
   [[nodiscard]] std::uint32_t get_transaction_id() const;
-  [[nodiscard]] std::optional<std::uint16_t> get_seconds_elapsed() const;
-  [[nodiscard]] std::optional<std::uint16_t> get_bootp_flags() const;
   [[nodiscard]] pcpp::IPv4Address get_your_ip() const;
   [[nodiscard]] std::optional<pcpp::IPv4Address> get_server_ip() const;
-  [[nodiscard]] std::optional<pcpp::IPv4Address> get_gateway_ip() const;
+  [[nodiscard]] std::uint16_t get_bootp_flags() const;
+  [[nodiscard]] pcpp::IPv4Address get_gateway_ip() const;
+  [[nodiscard]] std::array<std::uint8_t, 6> get_client_hardware_address() const;
   [[nodiscard]] std::optional<std::array<std::uint8_t, 64>> get_server_name() const;
   [[nodiscard]] std::optional<std::array<std::uint8_t, 128>> get_boot_file_name() const;
-  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_specific_info() const;
+  [[nodiscard]] std::uint32_t get_lease_time() const;
+  [[nodiscard]] std::optional<std::string> get_message() const;
+  [[nodiscard]] std::optional<std::vector<std::uint8_t>> get_vendor_class_id() const;
   [[nodiscard]] pcpp::IPv4Address get_server_id() const;
-  [[nodiscard]] std::optional<std::uint32_t> get_lease_time() const;
-  [[nodiscard]] std::optional<pcpp::IPv4Address> get_subnet_mask() const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_routers() const;
-  [[nodiscard]] std::optional<std::vector<pcpp::IPv4Address>> get_dns_servers() const;
-  [[nodiscard]] std::optional<std::uint32_t> get_renewal_time() const;
-  [[nodiscard]] std::optional<std::uint32_t> get_rebind_time() const;
   [[nodiscard]] std::vector<pcpp::DhcpOptionBuilder> get_extra_options() const;
   [[nodiscard]] std::shared_ptr<pcpp::DhcpLayer> get_dhcp_layer() const;
 
@@ -123,21 +111,23 @@ struct DHCPOfferConfig {
   DHCPCommonConfig common_config_;
   std::optional<std::uint8_t> hops_;
   std::uint32_t transaction_id_;
-  std::optional<std::uint16_t> seconds_elapsed_;
-  std::optional<std::uint16_t> bootp_flags_;
   pcpp::IPv4Address your_ip_;
   std::optional<pcpp::IPv4Address> server_ip_;
-  std::optional<pcpp::IPv4Address> gateway_ip_;
+  std::uint16_t bootp_flags_;
+  pcpp::IPv4Address gateway_ip_;
+  // TODO: Add client_hardware_address_ field to ACK & NAK, don't just get from destination MAC
+  std::array<std::uint8_t, 6> client_hardware_address_;
+  // TODO: Potentially add support for overriding server_name_ & boot_file_name_ using options
+  // (see https://datatracker.ietf.org/doc/html/rfc2132#section-9.3)
   std::optional<std::array<std::uint8_t, 64>> server_name_;
   std::optional<std::array<std::uint8_t, 128>> boot_file_name_;
-  std::optional<std::vector<std::uint8_t>> vendor_specific_info_;
+  std::uint32_t lease_time_;
+  // TODO: Change all message_ fields to std::array<char, 255> instead of string
+  std::optional<std::string> message_;
+  // TODO: Change all vendor_class_id_ fields to std:array<std::uint8_t, 255> instead of vector
+  // TODO: Look for other instances of vector or string & apply the same fix
+  std::optional<std::vector<std::uint8_t>> vendor_class_id_;
   pcpp::IPv4Address server_id_;
-  std::optional<std::uint32_t> lease_time_;
-  std::optional<pcpp::IPv4Address> subnet_mask_;
-  std::optional<std::vector<pcpp::IPv4Address>> routers_;
-  std::optional<std::vector<pcpp::IPv4Address>> dns_servers_;
-  std::optional<std::uint32_t> renewal_time_;
-  std::optional<std::uint32_t> rebind_time_;
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
 };
@@ -198,6 +188,7 @@ struct DHCPRequestConfig {
 };
 
 // TODO: Correct fields to match RFC
+// TODO: Rearrange getters to match changes
 struct DHCPAckConfig {
  public:
   DHCPAckConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
@@ -263,6 +254,7 @@ struct DHCPAckConfig {
 };
 
 // TODO: Correct fields to match RFC
+// TODO: Rearrange getters to match changes
 struct DHCPNakConfig {
  public:
   DHCPNakConfig(DHCPCommonConfig common_config, std::uint32_t transaction_id, pcpp::IPv4Address server_id,

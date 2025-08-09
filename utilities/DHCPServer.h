@@ -57,23 +57,18 @@ struct DHCPServerConfig {
   DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip,
                    const std::uint16_t server_port, const std::uint16_t client_port,
                    const std::array<std::uint8_t, 64>& server_name, const pcpp::IPv4Address& lease_pool_start,
-                   const pcpp::IPv4Address& server_netmask, const std::vector<pcpp::IPv4Address>& dns_servers,
-                   const std::chrono::seconds lease_time, const std::chrono::seconds renewal_time,
-                   const std::chrono::seconds rebind_time, const std::array<std::uint8_t, 128>& boot_file_name = {},
-                   std::vector<std::uint8_t> vendor_specific_info = {})
+                   const pcpp::IPv4Address& server_netmask, const std::chrono::seconds lease_time,
+                   const std::array<std::uint8_t, 128>& boot_file_name = {})
       : server_mac_(server_mac),
         server_ip_(server_ip),
         server_port_(server_port),
         client_port_(client_port),
         server_name_(server_name),
         boot_file_name_(boot_file_name),
-        vendor_specific_info_(std::move(vendor_specific_info)),
         lease_pool_start_(lease_pool_start),
         server_netmask_(server_netmask),
-        dns_servers_(dns_servers),
         lease_time_(lease_time),
-        renewal_time_(renewal_time),
-        rebind_time_(rebind_time) {}
+        server_id_(server_ip) {}
 
   [[nodiscard]] pcpp::MacAddress get_server_mac() const;
   [[nodiscard]] pcpp::IPv4Address get_server_ip() const;
@@ -81,13 +76,10 @@ struct DHCPServerConfig {
   [[nodiscard]] std::uint16_t get_client_port() const;
   [[nodiscard]] std::array<std::uint8_t, 64> get_server_name() const;
   [[nodiscard]] std::array<std::uint8_t, 128> get_boot_file_name() const;
-  [[nodiscard]] std::vector<std::uint8_t> get_vendor_specific_info() const;
   [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
   [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
-  [[nodiscard]] std::vector<pcpp::IPv4Address> get_dns_servers() const;
   [[nodiscard]] std::chrono::seconds get_lease_time() const;
-  [[nodiscard]] std::chrono::seconds get_renewal_time() const;
-  [[nodiscard]] std::chrono::seconds get_rebind_time() const;
+  [[nodiscard]] pcpp::IPv4Address get_server_id() const;
 
  private:
   pcpp::MacAddress server_mac_;
@@ -96,18 +88,15 @@ struct DHCPServerConfig {
   std::uint16_t client_port_;
   std::array<std::uint8_t, 64> server_name_;
   std::array<std::uint8_t, 128> boot_file_name_;
-  std::vector<std::uint8_t> vendor_specific_info_;
   pcpp::IPv4Address lease_pool_start_;
   pcpp::IPv4Address server_netmask_;
-  std::vector<pcpp::IPv4Address> dns_servers_;
   std::chrono::seconds lease_time_;
-  std::chrono::seconds renewal_time_;
-  std::chrono::seconds rebind_time_;
+  pcpp::IPv4Address server_id_;
 };
 
 class DHCPServer {
  public:
-  DHCPServer(DHCPServerConfig config, std::shared_ptr<IPcapLiveDevice> device);
+  DHCPServer(const DHCPServerConfig& config, std::shared_ptr<IPcapLiveDevice> device);
   void run();
   void stop();
   bool is_running() const;

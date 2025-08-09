@@ -2,6 +2,8 @@
 
 #include <netinet/in.h>
 
+#include <ranges>
+
 #include "../protocols/DHCP.h"
 
 bool serratia::utils::RealPcapLiveDevice::send(const pcpp::Packet& packet) {
@@ -21,25 +23,20 @@ std::uint16_t serratia::utils::DHCPServerConfig::get_server_port() const { retur
 std::uint16_t serratia::utils::DHCPServerConfig::get_client_port() const { return client_port_; }
 std::array<std::uint8_t, 64> serratia::utils::DHCPServerConfig::get_server_name() const { return server_name_; }
 std::array<std::uint8_t, 128> serratia::utils::DHCPServerConfig::get_boot_file_name() const { return boot_file_name_; }
-std::vector<std::uint8_t> serratia::utils::DHCPServerConfig::get_vendor_specific_info() const {
-  return vendor_specific_info_;
-}
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_lease_pool_start() const { return lease_pool_start_; }
 pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_netmask() const { return server_netmask_; }
-std::vector<pcpp::IPv4Address> serratia::utils::DHCPServerConfig::get_dns_servers() const { return dns_servers_; }
 std::chrono::seconds serratia::utils::DHCPServerConfig::get_lease_time() const { return lease_time_; }
-std::chrono::seconds serratia::utils::DHCPServerConfig::get_renewal_time() const { return renewal_time_; }
-std::chrono::seconds serratia::utils::DHCPServerConfig::get_rebind_time() const { return rebind_time_; }
+pcpp::IPv4Address serratia::utils::DHCPServerConfig::get_server_id() const { return server_id_; }
 
-serratia::utils::DHCPServer::DHCPServer(DHCPServerConfig config, std::shared_ptr<IPcapLiveDevice> device)
-    : server_running_(false), config_(std::move(config)), device_(std::move(device)) {
-  auto lease_pool_start = config_.get_lease_pool_start();
+serratia::utils::DHCPServer::DHCPServer(const DHCPServerConfig& config, std::shared_ptr<IPcapLiveDevice> device)
+    : server_running_(false), config_(config), device_(std::move(device)) {
+  const auto lease_pool_start = config_.get_lease_pool_start();
   if (pcpp::IPv4Address::Zero == lease_pool_start) {
     throw std::runtime_error("Invalid lease pool start");
   }
   const auto lease_pool_start_int = ntohl(lease_pool_start.toInt());
 
-  auto server_netmask = config_.get_server_netmask();
+  const auto server_netmask = config_.get_server_netmask();
   if (pcpp::IPv4Address::Zero == server_netmask) {
     throw std::runtime_error("Invalid server netmask");
   }
@@ -185,21 +182,24 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
-  const auto server_ip = config_.get_server_ip();
+  auto transaction_id = dhcp_header->transactionID;
+  auto server_ip = config_.get_server_ip();
+  auto bootp_flags = dhcp_header->flags;
+  auto gateway_ip = dhcp_header->gatewayIpAddress;
+  std::array<std::uint8_t, 6> client_hardware_address{};
+  std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
+
+  //auto server_id = config_.get_server_id
+  constexpr auto hops = 0;
   auto server_name = config_.get_server_name();
   auto boot_file_name = config_.get_boot_file_name();
-  auto vendor_specific_info = config_.get_vendor_specific_info();
-  const auto lease_time = config_.get_lease_time();
-  const auto server_netmask = config_.get_server_netmask();
-  const std::vector<pcpp::IPv4Address> routers = {server_ip};
-  const auto dns_servers = config_.get_dns_servers();
-  const auto renewal_time = config_.get_renewal_time();
-  const auto rebind_time = config_.get_rebind_time();
+  //auto message = config_.get_message();
+  //auto vendor_class_id = config_.get_vendor_class_id();
+  //auto max_message_size = config_.get_max_message_size();
+
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
-      dhcp_common_config, dhcp_header->hops, dhcp_header->transactionID, lease.assigned_ip_, server_ip,
-      dhcp_header->secondsElapsed, dhcp_header->flags, server_ip, server_ip, server_name, boot_file_name,
-      vendor_specific_info, lease_time.count(), server_netmask, routers, dns_servers, renewal_time.count(),
-      rebind_time.count());
+      dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
+      config_.get_lease_time().count(), config_.get_server_id(), hops, server_name, boot_file_name);
   const auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
   device_->send(packet);
 }
