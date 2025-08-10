@@ -9,34 +9,8 @@
 #include "../utilities/DHCPServer.h"
 #include "../utilities/DHCPUtils.h"
 
-const std::string SERVER_MAC = "ca:5e:d7:6B:c2:7c";
-const std::string CLIENT_MAC = "a1:eb:37:7b:e9:bf";
-const std::string BROADCAST_MAC = "ff:ff:ff:ff:ff:ff";
-const std::string SERVER_IP = "192.168.0.1";
-const std::string CLIENT_IP = "192.168.0.2";
-const std::string BROADCAST_IP = "255.255.255.255";
-constexpr std::uint16_t SERVER_PORT = 67;
-constexpr std::uint16_t CLIENT_PORT = 68;
-constexpr std::uint8_t HOPS = 0;
-constexpr std::uint16_t SECONDS_ELAPSED = 0;
-constexpr std::uint16_t BOOTP_FLAGS = 0x8000;
-const std::string GATEWAY_IP = "192.168.0.1";
-const std::string SERVER_HOST_NAME = "skalrog";
-const std::string CLIENT_HOST_NAME = "malric";
-const std::string BOOT_FILE_NAME = "boot/fake";
-constexpr std::uint8_t VENDOR_SPECIFIC_INFO = 1;
-constexpr std::uint8_t VENDOR_CLASS_IDENTIFIER = 1;
-const std::string MESSAGE = "test error";
-const std::string SUBNET_MASK = "255.255.255.0";
-const std::string ROUTERS = "192.168.0.1";
-constexpr std::uint32_t LEASE_TIME_VAL = 86400;
-// 87.5% of lease time
-constexpr std::uint32_t RENEWAL_TIME_VAL = 75600;
-// 50& of lease time
-constexpr std::uint32_t REBIND_TIME_VAL = 43200;
-const std::string LEASE_POOL_START = "192.168.0.2";
-constexpr std::uint16_t MAX_MESSAGE_SIZE = 567;
-const std::string QUAD9_DNS = "9.9.9.9";
+const pcpp::IPv4Address BROADCAST_IP("255.255.255.255");
+const pcpp::MacAddress BROADCAST_MAC("FF:FF:FF:FF:FF:FF");
 constexpr std::uint8_t HTYPE_ETHER = 1;
 constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
 constexpr std::uint32_t EMPTY_IP_ADDR = 0;
@@ -55,40 +29,10 @@ enum PacketSource {
 // TODO: also probably parameterize the fields
 struct TestEnvironment {
   TestEnvironment()
-      // TODO: switch to direct member initialization (probably add initializer list back if add parameterized values)
-      : server_mac(SERVER_MAC),
-        client_mac(CLIENT_MAC),
-        broadcast_mac(BROADCAST_MAC),
-        server_ip(SERVER_IP),
-        client_ip(CLIENT_IP),
-        broadcast_ip(BROADCAST_IP),
-        server_port(SERVER_PORT),
-        client_port(CLIENT_PORT),
-        hops(HOPS),
-        seconds_elapsed(SECONDS_ELAPSED),
-        bootp_flags(BOOTP_FLAGS),
-        gateway_ip(GATEWAY_IP),
-        client_hardware_address(client_mac.toByteArray()),
-        requested_ip(CLIENT_IP),
-        server_host_name(SERVER_HOST_NAME),
-        client_host_name(CLIENT_HOST_NAME),
-        boot_file_name(BOOT_FILE_NAME),
-        vendor_specific_info{VENDOR_SPECIFIC_INFO},
-        client_id{HTYPE_ETHER},
-        your_ip(CLIENT_IP),
-        server_id(SERVER_IP),
-        vendor_class_id{VENDOR_CLASS_IDENTIFIER},
-        param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
-                           pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS},
-        message(MESSAGE),
-        subnet_mask(SUBNET_MASK),
-        routers{ROUTERS},
-        dns_servers{QUAD9_DNS},
-        lease_time(LEASE_TIME_VAL),
-        renewal_time(RENEWAL_TIME_VAL),
-        rebind_time(REBIND_TIME_VAL),
-        lease_pool_start(LEASE_POOL_START),
-        max_message_size(MAX_MESSAGE_SIZE) {
+      : client_hardware_address(client_mac.toByteArray()),
+        your_ip(client_ip),
+        requested_ip(client_ip),
+        server_id(server_ip) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> distrib;
@@ -99,39 +43,43 @@ struct TestEnvironment {
   }
 
   // TODO: rearrange or group related fields together
-  pcpp::MacAddress server_mac;
-  pcpp::MacAddress client_mac;
-  pcpp::MacAddress broadcast_mac;
-  pcpp::IPv4Address server_ip;
-  pcpp::IPv4Address client_ip;
-  pcpp::IPv4Address broadcast_ip;
-  std::uint16_t server_port;
-  std::uint16_t client_port;
-  std::uint8_t hops;
-  std::uint32_t transaction_id;
-  std::uint16_t seconds_elapsed;
-  std::uint16_t bootp_flags;
-  pcpp::IPv4Address gateway_ip;
-  std::array<std::uint8_t, 6> client_hardware_address;
-  pcpp::IPv4Address requested_ip;
-  std::string server_host_name;
-  std::string client_host_name;
-  std::string boot_file_name;
-  std::vector<std::uint8_t> vendor_specific_info;
-  std::vector<std::uint8_t> client_id;
-  pcpp::IPv4Address your_ip;
-  pcpp::IPv4Address server_id;
-  std::vector<std::uint8_t> vendor_class_id;
-  std::vector<std::uint8_t> param_request_list;
-  std::string message;
-  pcpp::IPv4Address subnet_mask;
-  std::vector<pcpp::IPv4Address> routers;
-  std::vector<pcpp::IPv4Address> dns_servers;
-  std::chrono::seconds lease_time;
-  std::chrono::seconds renewal_time;
-  std::chrono::seconds rebind_time;
-  pcpp::IPv4Address lease_pool_start;
-  std::uint16_t max_message_size;
+  pcpp::MacAddress server_mac{"ca:5e:d7:6B:c2:7c"};
+  pcpp::MacAddress client_mac{"a1:eb:37:7b:e9:bf"};
+  pcpp::IPv4Address server_ip{"192.168.0.1"};
+  pcpp::IPv4Address client_ip{"192.168.0.2"};
+  // Typical DHCP server port
+  std::uint16_t server_port = 67;
+  // Typical DHCP client port
+  std::uint16_t client_port = 68;
+  std::uint8_t hops = 0;
+  std::uint16_t seconds_elapsed = 0;
+  // Broadcast flag is set
+  std::uint16_t bootp_flags = 0x8000;
+  pcpp::IPv4Address gateway_ip{"192.168.0.1"};
+  std::string server_host_name{"skalrog"};
+  std::string client_host_name{"malric"};
+  std::string boot_file_name{"boot/fake"};
+  // Notional data
+  std::vector<std::uint8_t> vendor_specific_info{1};
+  std::vector<std::uint8_t> client_id{HTYPE_ETHER};
+  // Notional data
+  std::vector<std::uint8_t> vendor_class_id{1};
+  std::vector<std::uint8_t> param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK,
+                                               pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
+                                               pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS};
+  std::string message{"test error"};
+  pcpp::IPv4Address subnet_mask{"255.255.255.0"};
+  std::vector<pcpp::IPv4Address> routers{pcpp::IPv4Address("192.168.0.1")};
+  // Quad9 DNS
+  std::vector<pcpp::IPv4Address> dns_servers{pcpp::IPv4Address("9.9.9.9")};
+  // 24 hours
+  std::chrono::seconds lease_time{86400};
+  // 87.5% of lease time
+  std::chrono::seconds renewal_time{75600};
+  // 50& of lease time
+  std::chrono::seconds rebind_time{43200};
+  pcpp::IPv4Address lease_pool_start{"192.168.0.2"};
+  std::uint16_t max_message_size = 567;
   std::size_t discover_option_count = 8;
   std::size_t offer_option_count = 6;
   std::size_t initial_request_option_count = 6;
@@ -141,6 +89,11 @@ struct TestEnvironment {
   std::size_t decline_option_count = 6;
   std::size_t release_option_count = 5;
   std::size_t inform_option_count = 6;
+  std::uint32_t transaction_id;
+  std::array<std::uint8_t, 6> client_hardware_address;
+  pcpp::IPv4Address your_ip;
+  pcpp::IPv4Address requested_ip;
+  pcpp::IPv4Address server_id;
 };
 
 TestEnvironment& getEnv() {
@@ -661,9 +614,9 @@ TEST_CASE("Build DHCP packets") {
 
   SECTION("DHCP Common Config") {
     auto src_mac = env.client_mac;
-    auto dst_mac = env.broadcast_mac;
+    auto dst_mac = BROADCAST_MAC;
     pcpp::IPv4Address src_ip("0.0.0.0");
-    auto dst_ip = env.broadcast_ip;
+    auto dst_ip = BROADCAST_IP;
     const auto src_port = env.client_port;
     const auto dst_port = env.server_port;
 
