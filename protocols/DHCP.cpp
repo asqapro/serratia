@@ -9,439 +9,213 @@
 
 #include <utility>
 
-std::shared_ptr<pcpp::EthLayer> serratia::protocols::DHCPCommonConfig::GetEthLayer() const { return eth_layer_; }
-std::shared_ptr<pcpp::IPv4Layer> serratia::protocols::DHCPCommonConfig::GetIPLayer() const { return ip_layer_; }
-std::shared_ptr<pcpp::UdpLayer> serratia::protocols::DHCPCommonConfig::GetUDPLayer() const { return udp_layer_; }
-
 serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const std::optional<std::uint8_t> hops,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
     const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<pcpp::IPv4Address> requested_ip,
     const std::optional<std::uint32_t> lease_time, std::optional<std::vector<std::uint8_t>> client_id,
     std::optional<std::vector<std::uint8_t>> vendor_class_id,
     std::optional<std::vector<std::uint8_t>> param_request_list, const std::optional<std::uint16_t> max_message_size)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      seconds_elapsed_(seconds_elapsed),
-      bootp_flags_(bootp_flags),
-      gateway_ip_(gateway_ip),
-      requested_ip_(requested_ip),
-      lease_time_(lease_time),
-      client_id_(std::move(client_id)),
-      vendor_class_id_(std::move(vendor_class_id)),
-      param_request_list_(std::move(param_request_list)),
-      max_message_size_(max_message_size) {
-  auto src_mac = common_config_.GetEthLayer()->getSourceMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
-}
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPDiscoverConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPDiscoverConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPDiscoverConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_seconds_elapsed() const {
-  return seconds_elapsed_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_bootp_flags() const { return bootp_flags_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDiscoverConfig::get_gateway_ip() const { return gateway_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDiscoverConfig::get_requested_ip() const {
-  return requested_ip_;
-}
-std::optional<std::uint32_t> serratia::protocols::DHCPDiscoverConfig::get_lease_time() const { return lease_time_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_client_id() const {
-  return client_id_;
-}
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_vendor_class_id() const {
-  return vendor_class_id_;
-}
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDiscoverConfig::get_param_request_list() const {
-  return param_request_list_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPDiscoverConfig::get_max_message_size() const {
-  return max_message_size_;
-}
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPDiscoverConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPDiscoverConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPDiscoverConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      seconds_elapsed(seconds_elapsed),
+      bootp_flags(bootp_flags),
+      gateway_ip(gateway_ip),
+      requested_ip(requested_ip),
+      lease_time(lease_time),
+      client_id(std::move(client_id)),
+      vendor_class_id(std::move(vendor_class_id)),
+      param_request_list(std::move(param_request_list)),
+      max_message_size(max_message_size) {
+  auto src_mac = common_config.eth_layer->getSourceMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DISCOVER, src_mac);
 }
 
 serratia::protocols::DHCPOfferConfig::DHCPOfferConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address your_ip,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address your_ip,
     const pcpp::IPv4Address server_ip, const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::uint32_t lease_time,
     const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
     const std::optional<std::array<std::uint8_t, 64>>& server_name,
     const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, std::optional<std::string> message,
     std::optional<std::vector<std::uint8_t>> vendor_class_id)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      your_ip_(your_ip),
-      server_ip_(server_ip),
-      bootp_flags_(bootp_flags),
-      gateway_ip_(gateway_ip),
-      client_hardware_address_(client_hardware_address),
-      server_name_(server_name),
-      boot_file_name_(boot_file_name),
-      lease_time_(lease_time),
-      message_(std::move(message)),
-      vendor_class_id_(std::move(vendor_class_id)),
-      server_id_(server_id) {
-  auto dst_mac = common_config_.GetEthLayer()->getDestMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_OFFER, dst_mac);
-}
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPOfferConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPOfferConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPOfferConfig::get_transaction_id() const { return transaction_id_; }
-pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_your_ip() const { return your_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPOfferConfig::get_server_ip() const { return server_ip_; }
-std::uint16_t serratia::protocols::DHCPOfferConfig::get_bootp_flags() const { return bootp_flags_; }
-pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_gateway_ip() const { return gateway_ip_; }
-std::array<std::uint8_t, 16> serratia::protocols::DHCPOfferConfig::get_client_hardware_address() const {
-  return client_hardware_address_;
-}
-std::optional<std::array<std::uint8_t, 64>> serratia::protocols::DHCPOfferConfig::get_server_name() const {
-  return server_name_;
-}
-std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPOfferConfig::get_boot_file_name() const {
-  return boot_file_name_;
-}
-std::uint32_t serratia::protocols::DHCPOfferConfig::get_lease_time() const { return lease_time_; }
-std::optional<std::string> serratia::protocols::DHCPOfferConfig::get_message() const { return message_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPOfferConfig::get_vendor_class_id() const {
-  return vendor_class_id_;
-}
-pcpp::IPv4Address serratia::protocols::DHCPOfferConfig::get_server_id() const { return server_id_; }
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPOfferConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPOfferConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPOfferConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      your_ip(your_ip),
+      server_ip(server_ip),
+      bootp_flags(bootp_flags),
+      gateway_ip(gateway_ip),
+      client_hardware_address(client_hardware_address),
+      server_name(server_name),
+      boot_file_name(boot_file_name),
+      lease_time(lease_time),
+      message(std::move(message)),
+      vendor_class_id(std::move(vendor_class_id)),
+      server_id(server_id) {
+  auto dst_mac = common_config.eth_layer->getDestMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_OFFER, dst_mac);
 }
 
 serratia::protocols::DHCPRequestConfig::DHCPRequestConfig(
-    DHCPCommonConfig common_config, std::uint32_t transaction_id, std::optional<std::uint8_t> hops,
+    const DHCPCommonConfig& common_config, std::uint32_t transaction_id, std::optional<std::uint8_t> hops,
     std::optional<std::uint16_t> seconds_elapsed, std::optional<std::uint16_t> bootp_flags,
     std::optional<pcpp::IPv4Address> client_ip, std::optional<pcpp::IPv4Address> gateway_ip,
     std::optional<pcpp::IPv4Address> requested_ip, std::optional<std::uint32_t> lease_time,
     std::optional<std::vector<std::uint8_t>> client_id, std::optional<std::vector<std::uint8_t>> vendor_class_id,
     std::optional<pcpp::IPv4Address> server_id, std::optional<std::vector<std::uint8_t>> param_request_list,
     std::optional<std::uint16_t> max_message_size)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      seconds_elapsed_(seconds_elapsed),
-      bootp_flags_(bootp_flags),
-      client_ip_(client_ip),
-      gateway_ip_(gateway_ip),
-      requested_ip_(requested_ip),
-      lease_time_(lease_time),
-      client_id_(std::move(client_id)),
-      vendor_class_id_(std::move(vendor_class_id)),
-      server_id_(server_id),
-      param_request_list_(std::move(param_request_list)),
-      max_message_size_(max_message_size) {
-  auto src_mac = common_config_.GetEthLayer()->getSourceMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_REQUEST, src_mac);
-}
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPRequestConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPRequestConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPRequestConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<std::uint16_t> serratia::protocols::DHCPRequestConfig::get_seconds_elapsed() const {
-  return seconds_elapsed_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPRequestConfig::get_bootp_flags() const { return bootp_flags_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_client_ip() const { return client_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_gateway_ip() const { return gateway_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_requested_ip() const {
-  return requested_ip_;
-}
-std::optional<std::uint32_t> serratia::protocols::DHCPRequestConfig::get_lease_time() const { return lease_time_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_client_id() const {
-  return client_id_;
-}
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_vendor_class_id() const {
-  return vendor_class_id_;
-}
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPRequestConfig::get_server_id() const { return server_id_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPRequestConfig::get_param_request_list() const {
-  return param_request_list_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPRequestConfig::get_max_message_size() const {
-  return max_message_size_;
-}
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPRequestConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPRequestConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPRequestConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      seconds_elapsed(seconds_elapsed),
+      bootp_flags(bootp_flags),
+      client_ip(client_ip),
+      gateway_ip(gateway_ip),
+      requested_ip(requested_ip),
+      lease_time(lease_time),
+      client_id(std::move(client_id)),
+      vendor_class_id(std::move(vendor_class_id)),
+      server_id(server_id),
+      param_request_list(std::move(param_request_list)),
+      max_message_size(max_message_size) {
+  auto src_mac = common_config.eth_layer->getSourceMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_REQUEST, src_mac);
 }
 
 serratia::protocols::DHCPAckConfig::DHCPAckConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id,
-    const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
-    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
-    const std::optional<std::uint8_t> hops, const std::optional<pcpp::IPv4Address> client_ip, const std::optional<pcpp::IPv4Address> your_ip,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const std::uint16_t bootp_flags,
+    const pcpp::IPv4Address gateway_ip, const std::array<std::uint8_t, 16> client_hardware_address,
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<pcpp::IPv4Address> client_ip, const std::optional<pcpp::IPv4Address> your_ip,
     const std::optional<pcpp::IPv4Address> server_ip, const std::optional<std::array<std::uint8_t, 64>>& server_name,
     const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, const std::optional<std::uint32_t> lease_time,
     std::optional<std::string> message, const std::optional<std::vector<std::uint8_t>>& vendor_class_id)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      client_ip_(client_ip),
-      your_ip_(your_ip),
-      server_ip_(server_ip),
-      bootp_flags_(bootp_flags),
-      gateway_ip_(gateway_ip),
-      client_hardware_address_(client_hardware_address),
-      server_name_(server_name),
-      boot_file_name_(boot_file_name),
-      lease_time_(lease_time),
-      message_(std::move(message)),
-      vendor_class_id_(vendor_class_id),
-      server_id_(server_id) {
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      client_ip(client_ip),
+      your_ip(your_ip),
+      server_ip(server_ip),
+      bootp_flags(bootp_flags),
+      gateway_ip(gateway_ip),
+      client_hardware_address(client_hardware_address),
+      server_name(server_name),
+      boot_file_name(boot_file_name),
+      lease_time(lease_time),
+      message(std::move(message)),
+      vendor_class_id(vendor_class_id),
+      server_id(server_id) {
   // TODO: Potentially change dst_mac to be client_hardware_address instead
-  auto dst_mac = common_config_.GetEthLayer()->getDestMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
+  auto dst_mac = common_config.eth_layer->getDestMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
 }
 
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPAckConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_your_ip() const { return your_ip_; }
-std::optional<std::uint8_t> serratia::protocols::DHCPAckConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPAckConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_client_ip() const { return client_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPAckConfig::get_server_ip() const { return server_ip_; }
-std::uint16_t serratia::protocols::DHCPAckConfig::get_bootp_flags() const { return bootp_flags_; }
-pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_gateway_ip() const { return gateway_ip_; }
-std::array<std::uint8_t, 16> serratia::protocols::DHCPAckConfig::get_client_hardware_address() const {
-  return client_hardware_address_;
-}
-pcpp::IPv4Address serratia::protocols::DHCPAckConfig::get_server_id() const { return server_id_; }
-std::optional<std::array<std::uint8_t, 64>> serratia::protocols::DHCPAckConfig::get_server_name() const {
-  return server_name_;
-}
-std::optional<std::array<std::uint8_t, 128>> serratia::protocols::DHCPAckConfig::get_boot_file_name() const {
-  return boot_file_name_;
-}
-std::optional<std::uint32_t> serratia::protocols::DHCPAckConfig::get_lease_time() const { return lease_time_; }
-std::optional<std::string> serratia::protocols::DHCPAckConfig::get_message() const { return message_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPAckConfig::get_vendor_class_id() const {
-  return vendor_class_id_;
-}
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPAckConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPAckConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPAckConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
-}
-
-serratia::protocols::DHCPNakConfig::DHCPNakConfig(DHCPCommonConfig common_config, const std::uint32_t transaction_id,
-                                                  const pcpp::IPv4Address server_id,
+serratia::protocols::DHCPNakConfig::DHCPNakConfig(const DHCPCommonConfig& common_config,
+                                                  const std::uint32_t transaction_id, const pcpp::IPv4Address server_id,
                                                   const std::optional<std::uint8_t> hops,
                                                   const std::optional<std::uint16_t> seconds_elapsed,
                                                   const std::optional<std::uint16_t> bootp_flags,
                                                   const std::optional<pcpp::IPv4Address> gateway_ip,
                                                   std::optional<std::vector<std::uint8_t>> vendor_specific_info)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      seconds_elapsed_(seconds_elapsed),
-      bootp_flags_(bootp_flags),
-      gateway_ip_(gateway_ip),
-      vendor_specific_info_(std::move(vendor_specific_info)),
-      server_id_(server_id) {
-  auto dst_mac = common_config_.GetEthLayer()->getDestMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_NAK, dst_mac);
-}
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPNakConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPNakConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPNakConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<std::uint16_t> serratia::protocols::DHCPNakConfig::get_seconds_elapsed() const {
-  return seconds_elapsed_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPNakConfig::get_bootp_flags() const { return bootp_flags_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPNakConfig::get_gateway_ip() const { return gateway_ip_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPNakConfig::get_vendor_specific_info() const {
-  return vendor_specific_info_;
-}
-pcpp::IPv4Address serratia::protocols::DHCPNakConfig::get_server_id() const { return server_id_; }
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPNakConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPNakConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPNakConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      seconds_elapsed(seconds_elapsed),
+      bootp_flags(bootp_flags),
+      gateway_ip(gateway_ip),
+      vendor_specific_info(std::move(vendor_specific_info)),
+      server_id(server_id) {
+  auto dst_mac = common_config.eth_layer->getDestMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_NAK, dst_mac);
 }
 
 serratia::protocols::DHCPDeclineConfig::DHCPDeclineConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address requested_ip,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address requested_ip,
     const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
     const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
     std::optional<std::string> message)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      gateway_ip_(gateway_ip),
-      requested_ip_(requested_ip),
-      client_id_(std::move(client_id)),
-      server_id_(server_id),
-      message_(std::move(message)) {
-  auto src_mac = common_config_.GetEthLayer()->getSourceMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DECLINE, src_mac);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      gateway_ip(gateway_ip),
+      requested_ip(requested_ip),
+      client_id(std::move(client_id)),
+      server_id(server_id),
+      message(std::move(message)) {
+  auto src_mac = common_config.eth_layer->getSourceMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DECLINE, src_mac);
 }
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPDeclineConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPDeclineConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPDeclineConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDeclineConfig::get_gateway_ip() const { return gateway_ip_; }
-pcpp::IPv4Address serratia::protocols::DHCPDeclineConfig::get_requested_ip() const { return requested_ip_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPDeclineConfig::get_client_id() const {
-  return client_id_;
-}
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPDeclineConfig::get_server_id() const { return server_id_; }
-std::optional<std::string> serratia::protocols::DHCPDeclineConfig::get_message() const { return message_; }
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPDeclineConfig::get_dhcp_layer() const { return dhcp_layer_; }
 
 serratia::protocols::DHCPReleaseConfig::DHCPReleaseConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
     const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
     const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<std::vector<std::uint8_t>> client_id,
     std::optional<std::string> message)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      client_ip_(client_ip),
-      gateway_ip_(gateway_ip),
-      client_id_(std::move(client_id)),
-      server_id_(server_id),
-      message_(std::move(message)) {
-  auto src_mac = common_config_.GetEthLayer()->getSourceMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_RELEASE, src_mac);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      client_ip(client_ip),
+      gateway_ip(gateway_ip),
+      client_id(std::move(client_id)),
+      server_id(server_id),
+      message(std::move(message)) {
+  auto src_mac = common_config.eth_layer->getSourceMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_RELEASE, src_mac);
 }
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPReleaseConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPReleaseConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPReleaseConfig::get_transaction_id() const { return transaction_id_; }
-pcpp::IPv4Address serratia::protocols::DHCPReleaseConfig::get_client_ip() const { return client_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPReleaseConfig::get_gateway_ip() const { return gateway_ip_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPReleaseConfig::get_client_id() const {
-  return client_id_;
-}
-pcpp::IPv4Address serratia::protocols::DHCPReleaseConfig::get_server_id() const { return server_id_; }
-std::optional<std::string> serratia::protocols::DHCPReleaseConfig::get_message() const { return message_; }
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPReleaseConfig::get_dhcp_layer() const { return dhcp_layer_; }
 
 serratia::protocols::DHCPInformConfig::DHCPInformConfig(
-    DHCPCommonConfig common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
+    const DHCPCommonConfig& common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
     const std::optional<std::uint8_t> hops, const std::optional<std::uint16_t> seconds_elapsed,
     const std::optional<std::uint16_t> bootp_flags, const std::optional<pcpp::IPv4Address> gateway_ip,
     std::optional<std::vector<std::uint8_t>> client_id, std::optional<std::vector<std::uint8_t>> vendor_class_id,
     std::optional<std::vector<std::uint8_t>> param_request_list, const std::optional<std::uint16_t> max_message_size)
-    : common_config_(std::move(common_config)),
-      hops_(hops),
-      transaction_id_(transaction_id),
-      seconds_elapsed_(seconds_elapsed),
-      bootp_flags_(bootp_flags),
-      client_ip_(client_ip),
-      gateway_ip_(gateway_ip),
-      client_id_(std::move(client_id)),
-      vendor_class_id_(std::move(vendor_class_id)),
-      param_request_list_(std::move(param_request_list)),
-      max_message_size_(max_message_size) {
-  auto src_mac = common_config_.GetEthLayer()->getSourceMac();
-  dhcp_layer_ = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_INFORM, src_mac);
-}
-
-serratia::protocols::DHCPCommonConfig serratia::protocols::DHCPInformConfig::get_common_config() const {
-  return common_config_;
-}
-std::optional<std::uint8_t> serratia::protocols::DHCPInformConfig::get_hops() const { return hops_; }
-std::uint32_t serratia::protocols::DHCPInformConfig::get_transaction_id() const { return transaction_id_; }
-std::optional<std::uint16_t> serratia::protocols::DHCPInformConfig::get_seconds_elapsed() const {
-  return seconds_elapsed_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPInformConfig::get_bootp_flags() const { return bootp_flags_; }
-pcpp::IPv4Address serratia::protocols::DHCPInformConfig::get_client_ip() const { return client_ip_; }
-std::optional<pcpp::IPv4Address> serratia::protocols::DHCPInformConfig::get_gateway_ip() const { return gateway_ip_; }
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPInformConfig::get_client_id() const {
-  return client_id_;
-}
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPInformConfig::get_vendor_class_id() const {
-  return vendor_class_id_;
-}
-std::optional<std::vector<std::uint8_t>> serratia::protocols::DHCPInformConfig::get_param_request_list() const {
-  return param_request_list_;
-}
-std::optional<std::uint16_t> serratia::protocols::DHCPInformConfig::get_max_message_size() const {
-  return max_message_size_;
-}
-std::vector<pcpp::DhcpOptionBuilder> serratia::protocols::DHCPInformConfig::get_extra_options() const {
-  return extra_options_;
-}
-std::shared_ptr<pcpp::DhcpLayer> serratia::protocols::DHCPInformConfig::get_dhcp_layer() const { return dhcp_layer_; }
-
-void serratia::protocols::DHCPInformConfig::add_option(const pcpp::DhcpOptionBuilder& option) {
-  extra_options_.push_back(option);
+    : common_config(common_config),
+      hops(hops),
+      transaction_id(transaction_id),
+      seconds_elapsed(seconds_elapsed),
+      bootp_flags(bootp_flags),
+      client_ip(client_ip),
+      gateway_ip(gateway_ip),
+      client_id(std::move(client_id)),
+      vendor_class_id(std::move(vendor_class_id)),
+      param_request_list(std::move(param_request_list)),
+      max_message_size(max_message_size) {
+  auto src_mac = common_config.eth_layer->getSourceMac();
+  dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_INFORM, src_mac);
 }
 
 pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::DHCPDiscoverConfig& config) {
-  auto common_config = config.get_common_config();
+  auto common_config = config.common_config;
 
-  auto dhcp_layer = config.get_dhcp_layer();
+  auto dhcp_layer = config.dhcp_layer;
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
-  dhcp_header->secondsElapsed = config.get_seconds_elapsed().value_or(0);
-  dhcp_header->flags = config.get_bootp_flags().value_or(0);
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
+  dhcp_header->secondsElapsed = config.seconds_elapsed.value_or(0);
+  dhcp_header->flags = config.bootp_flags.value_or(0);
   dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   std::ranges::fill(dhcp_header->serverName, 0);
   std::ranges::fill(dhcp_header->bootFilename, 0);
 
-  if (auto requested_ip = config.get_requested_ip(); requested_ip.has_value()) {
+  if (auto requested_ip = config.requested_ip; requested_ip.has_value()) {
     pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
                                              requested_ip.value());
     dhcp_layer->addOption(requested_ip_opt);
   }
 
-  if (auto lease_time = config.get_lease_time(); lease_time.has_value()) {
+  if (auto lease_time = config.lease_time; lease_time.has_value()) {
     pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value());
     dhcp_layer->addOption(lease_time_opt);
   }
 
-  if (auto client_id = config.get_client_id(); client_id.has_value()) {
+  if (auto client_id = config.client_id; client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -450,7 +224,7 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(client_id_opt);
   }
 
-  if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
+  if (auto vendor_class_id = config.vendor_class_id; vendor_class_id.has_value()) {
     auto vendor_class_id_val = vendor_class_id.value();
     auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
     std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
@@ -459,7 +233,7 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(vendor_class_id_opt);
   }
 
-  if (auto param_request_list = config.get_param_request_list(); param_request_list.has_value()) {
+  if (auto param_request_list = config.param_request_list; param_request_list.has_value()) {
     auto param_request_list_vec_val = param_request_list.value();
     auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
     std::size_t param_request_list_bytes_size =
@@ -469,20 +243,20 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  if (auto max_message_size = config.get_max_message_size(); max_message_size.has_value()) {
+  if (auto max_message_size = config.max_message_size; max_message_size.has_value()) {
     pcpp::DhcpOptionBuilder max_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
                                                  max_message_size.value());
     dhcp_layer->addOption(max_message_size_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   pcpp::Packet request_packet;
-  auto eth_layer = common_config.GetEthLayer();
-  auto ip_layer = common_config.GetIPLayer();
-  auto udp_layer = common_config.GetUDPLayer();
+  auto eth_layer = common_config.eth_layer;
+  auto ip_layer = common_config.ip_layer;
+  auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -493,37 +267,37 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
   return request_packet;
 }
 pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCPOfferConfig& config) {
-  const auto common_config = config.get_common_config();
+  const auto common_config = config.common_config;
 
-  const auto dhcp_layer = config.get_dhcp_layer();
+  const auto dhcp_layer = config.dhcp_layer;
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
   dhcp_header->secondsElapsed = 0;
   // TODO: Move flags underneath server IP (same in other functions)
-  dhcp_header->flags = config.get_bootp_flags();
+  dhcp_header->flags = config.bootp_flags;
   dhcp_header->clientIpAddress = 0;
-  dhcp_header->yourIpAddress = config.get_your_ip().toInt();
-  dhcp_header->serverIpAddress = config.get_server_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().toInt();
+  dhcp_header->yourIpAddress = config.your_ip.toInt();
+  dhcp_header->serverIpAddress = config.server_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.toInt();
 
-  if (auto server_arr = config.get_server_name(); server_arr.has_value()) {
+  if (auto server_arr = config.server_name; server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
   } else {
     std::ranges::fill(dhcp_header->serverName, 0);
   }
 
-  if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value()) {
+  if (auto boot_file_arr = config.boot_file_name; boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
   } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
   }
 
-  const pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, config.get_lease_time());
+  const pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, config.lease_time);
   dhcp_layer->addOption(lease_time_opt);
 
-  if (const auto message = config.get_message(); message.has_value()) {
+  if (const auto message = config.message; message.has_value()) {
     const pcpp::DhcpOptionBuilder message_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value());
     dhcp_layer->addOption(message_opt);
   }
@@ -531,8 +305,8 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   // TODO: Remove dead code
   // TODO: switch other instances of if(...; ...has_value()) to value_or
   // TODO: Undo the switch. The if statement is necessary because the option itself has some data
-  // if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
-  auto vendor_class_id_val = config.get_vendor_class_id().value_or(std::vector<std::uint8_t>());
+  // if (auto vendor_class_id = config.vendor_class_id; vendor_class_id.has_value()) {
+  auto vendor_class_id_val = config.vendor_class_id.value_or(std::vector<std::uint8_t>());
   const auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
   const std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
   const pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
@@ -540,19 +314,18 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   dhcp_layer->addOption(vendor_class_id_opt);
   //}
 
-  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                                              config.get_server_id());
+  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.server_id);
   dhcp_layer->addOption(server_id_opt);
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   // TODO: move this into a function somewhere and switch other functions to use that
   pcpp::Packet offer_packet;
-  const auto eth_layer = common_config.GetEthLayer();
-  const auto ip_layer = common_config.GetIPLayer();
-  const auto udp_layer = common_config.GetUDPLayer();
+  const auto eth_layer = common_config.eth_layer;
+  const auto ip_layer = common_config.ip_layer;
+  const auto udp_layer = common_config.udp_layer;
   offer_packet.addLayer(eth_layer.get());
   offer_packet.addLayer(ip_layer.get());
   offer_packet.addLayer(udp_layer.get());
@@ -564,36 +337,36 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
 }
 // TODO: make specific to init-reboot, selecting, etc
 pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DHCPRequestConfig& config) {
-  auto common_config = config.get_common_config();
+  auto common_config = config.common_config;
 
-  auto dhcp_layer = config.get_dhcp_layer();
+  auto dhcp_layer = config.dhcp_layer;
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
-  dhcp_header->secondsElapsed = config.get_seconds_elapsed().value_or(0);
-  dhcp_header->flags = config.get_bootp_flags().value_or(0);
-  dhcp_header->clientIpAddress = config.get_client_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
+  dhcp_header->secondsElapsed = config.seconds_elapsed.value_or(0);
+  dhcp_header->flags = config.bootp_flags.value_or(0);
+  dhcp_header->clientIpAddress = config.client_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   std::ranges::fill(dhcp_header->serverName, 0);
 
   std::ranges::fill(dhcp_header->bootFilename, 0);
 
-  if (auto requested_ip = config.get_requested_ip(); requested_ip.has_value()) {
+  if (auto requested_ip = config.requested_ip; requested_ip.has_value()) {
     pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
                                              requested_ip.value());
     dhcp_layer->addOption(requested_ip_opt);
   }
 
-  if (auto server_id = config.get_server_id(); server_id.has_value()) {
+  if (auto server_id = config.server_id; server_id.has_value()) {
     pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
     dhcp_layer->addOption(server_id_opt);
   }
 
-  if (auto client_id = config.get_client_id(); client_id.has_value()) {
+  if (auto client_id = config.client_id; client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -602,7 +375,7 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
     dhcp_layer->addOption(client_id_opt);
   }
 
-  if (auto param_request_list = config.get_param_request_list(); param_request_list.has_value()) {
+  if (auto param_request_list = config.param_request_list; param_request_list.has_value()) {
     auto param_request_list_vec_val = param_request_list.value();
     auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
     std::size_t param_request_list_bytes_size =
@@ -612,14 +385,14 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   pcpp::Packet request_packet;
-  auto eth_layer = common_config.GetEthLayer();
-  auto ip_layer = common_config.GetIPLayer();
-  auto udp_layer = common_config.GetUDPLayer();
+  auto eth_layer = common_config.eth_layer;
+  auto ip_layer = common_config.ip_layer;
+  auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -632,38 +405,37 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
 
 // TODO: Add const where possible, probably a lot of places (not just in this function)
 pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAckConfig& config, DHCPState state) {
-  auto common_config = config.get_common_config();
+  auto common_config = config.common_config;
 
-  auto dhcp_layer = config.get_dhcp_layer();
+  auto dhcp_layer = config.dhcp_layer;
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   // TODO: rearrange these (and in other functions) to match RFC ordering
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
   dhcp_header->secondsElapsed = 0;
   if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
-    dhcp_header->clientIpAddress = config.get_client_ip().value().toInt();
-    dhcp_header->yourIpAddress = config.get_your_ip().value().toInt();
-  }
-  else {
+    dhcp_header->clientIpAddress = config.client_ip.value().toInt();
+    dhcp_header->yourIpAddress = config.your_ip.value().toInt();
+  } else {
     dhcp_header->clientIpAddress = 0;
     dhcp_header->yourIpAddress = 0;
   }
-  dhcp_header->serverIpAddress = config.get_server_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  dhcp_header->flags = config.get_bootp_flags();
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().toInt();
+  dhcp_header->serverIpAddress = config.server_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->flags = config.bootp_flags;
+  dhcp_header->gatewayIpAddress = config.gateway_ip.toInt();
   // TODO: Add this in other functions
-  std::ranges::copy(config.get_client_hardware_address(), dhcp_header->clientHardwareAddress);
+  std::ranges::copy(config.client_hardware_address, dhcp_header->clientHardwareAddress);
 
   // TODO: Check if Pcpp zero-initializes serverName, maybe the fill is unnecessary
-  if (auto server_arr = config.get_server_name(); server_arr.has_value()) {
+  if (auto server_arr = config.server_name; server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
   } else {
     std::ranges::fill(dhcp_header->serverName, 0);
   }
 
   // TODO: Check if Pcpp zero-initializes bootFilename, maybe fill is unnecessary
-  if (auto boot_file_arr = config.get_boot_file_name(); boot_file_arr.has_value()) {
+  if (auto boot_file_arr = config.boot_file_name; boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
   } else {
     std::ranges::fill(dhcp_header->bootFilename, 0);
@@ -671,15 +443,15 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
 
   if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
     // Intentionally throw error if lease_time isn't set after DHCPREQUEST (refer to RFC 2131 table 3)
-    dhcp_layer->addOption({pcpp::DHCPOPT_DHCP_LEASE_TIME, config.get_lease_time().value()});
+    dhcp_layer->addOption({pcpp::DHCPOPT_DHCP_LEASE_TIME, config.lease_time.value()});
   }
 
-  if (const auto message = config.get_message(); message.has_value()) {
+  if (const auto message = config.message; message.has_value()) {
     dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
   }
 
   // TODO: Come back & clean this up after vectors are turned into arrays
-  if (const auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
+  if (const auto vendor_class_id = config.vendor_class_id; vendor_class_id.has_value()) {
     auto vendor_class_id_vec_val = vendor_class_id.value();
     auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_vec_val.data());
     pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
@@ -687,16 +459,16 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     dhcp_layer->addOption(vendor_class_id_opt);
   }
 
-  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.get_server_id()});
+  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.server_id});
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   pcpp::Packet request_packet;
-  auto eth_layer = common_config.GetEthLayer();
-  auto ip_layer = common_config.GetIPLayer();
-  auto udp_layer = common_config.GetUDPLayer();
+  auto eth_layer = common_config.eth_layer;
+  auto ip_layer = common_config.ip_layer;
+  auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -707,21 +479,21 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
   return request_packet;
 }
 pcpp::Packet serratia::protocols::buildDHCPNak(const DHCPNakConfig& config) {
-  const auto common_config = config.get_common_config();
+  const auto common_config = config.common_config;
 
-  const auto dhcp_layer = config.get_dhcp_layer();
+  const auto dhcp_layer = config.dhcp_layer;
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
-  dhcp_header->secondsElapsed = config.get_seconds_elapsed().value_or(0);
-  dhcp_header->flags = config.get_bootp_flags().value_or(0);
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
+  dhcp_header->secondsElapsed = config.seconds_elapsed.value_or(0);
+  dhcp_header->flags = config.bootp_flags.value_or(0);
   dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
-  if (const auto vendor_specific_info = config.get_vendor_specific_info(); vendor_specific_info.has_value()) {
+  if (const auto vendor_specific_info = config.vendor_specific_info; vendor_specific_info.has_value()) {
     const auto vendor_info_arr = vendor_specific_info.value().data();
     const auto vendor_info_arr_size = vendor_specific_info.value().size();
     const pcpp::DhcpOptionBuilder vendor_specific_info_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS,
@@ -729,18 +501,17 @@ pcpp::Packet serratia::protocols::buildDHCPNak(const DHCPNakConfig& config) {
     dhcp_layer->addOption(vendor_specific_info_opt);
   }
 
-  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                                              config.get_server_id());
+  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.server_id);
   dhcp_layer->addOption(server_id_opt);
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   pcpp::Packet request_packet;
-  const auto eth_layer = common_config.GetEthLayer();
-  const auto ip_layer = common_config.GetIPLayer();
-  const auto udp_layer = common_config.GetUDPLayer();
+  const auto eth_layer = common_config.eth_layer;
+  const auto ip_layer = common_config.ip_layer;
+  const auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -751,25 +522,25 @@ pcpp::Packet serratia::protocols::buildDHCPNak(const DHCPNakConfig& config) {
   return request_packet;
 }
 pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& config) {
-  const auto common_config = config.get_common_config();
+  const auto common_config = config.common_config;
 
-  const auto dhcp_layer = config.get_dhcp_layer();
+  const auto dhcp_layer = config.dhcp_layer;
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
   dhcp_header->secondsElapsed = 0;
   dhcp_header->flags = 0;
   dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   const pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                                                 config.get_requested_ip());
+                                                 config.requested_ip);
   dhcp_layer->addOption(requested_ip_opt);
 
-  if (const auto client_id = config.get_client_id(); client_id.has_value()) {
+  if (const auto client_id = config.client_id; client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     const auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     const std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -778,21 +549,17 @@ pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& conf
     dhcp_layer->addOption(client_id_opt);
   }
 
-  if (const auto server_id = config.get_server_id(); server_id.has_value()) {
-    const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                                                server_id.value());
-    dhcp_layer->addOption(server_id_opt);
-  }
+  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.server_id});
 
-  if (const auto message = config.get_message(); message.has_value()) {
+  if (const auto message = config.message; message.has_value()) {
     const pcpp::DhcpOptionBuilder message_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value());
     dhcp_layer->addOption(message_opt);
   }
 
   pcpp::Packet request_packet;
-  const auto eth_layer = common_config.GetEthLayer();
-  const auto ip_layer = common_config.GetIPLayer();
-  const auto udp_layer = common_config.GetUDPLayer();
+  const auto eth_layer = common_config.eth_layer;
+  const auto ip_layer = common_config.ip_layer;
+  const auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -803,21 +570,21 @@ pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& conf
   return request_packet;
 }
 pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& config) {
-  const auto common_config = config.get_common_config();
+  const auto common_config = config.common_config;
 
-  const auto dhcp_layer = config.get_dhcp_layer();
+  const auto dhcp_layer = config.dhcp_layer;
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
   dhcp_header->secondsElapsed = 0;
   dhcp_header->flags = 0;
-  dhcp_header->clientIpAddress = config.get_client_ip().toInt();
+  dhcp_header->clientIpAddress = config.client_ip.toInt();
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
-  if (const auto client_id = config.get_client_id(); client_id.has_value()) {
+  if (const auto client_id = config.client_id; client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     const auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     const std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -826,19 +593,18 @@ pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& conf
     dhcp_layer->addOption(client_id_opt);
   }
 
-  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                                              config.get_server_id());
+  const pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, config.server_id);
   dhcp_layer->addOption(server_id_opt);
 
-  if (const auto message = config.get_message(); message.has_value()) {
+  if (const auto message = config.message; message.has_value()) {
     const pcpp::DhcpOptionBuilder message_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value());
     dhcp_layer->addOption(message_opt);
   }
 
   pcpp::Packet request_packet;
-  const auto eth_layer = common_config.GetEthLayer();
-  const auto ip_layer = common_config.GetIPLayer();
-  const auto udp_layer = common_config.GetUDPLayer();
+  const auto eth_layer = common_config.eth_layer;
+  const auto ip_layer = common_config.ip_layer;
+  const auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());
@@ -849,25 +615,25 @@ pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& conf
   return request_packet;
 }
 pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config) {
-  auto common_config = config.get_common_config();
+  auto common_config = config.common_config;
 
-  auto dhcp_layer = config.get_dhcp_layer();
+  auto dhcp_layer = config.dhcp_layer;
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
 
-  dhcp_header->hops = config.get_hops().value_or(0);
-  dhcp_header->transactionID = config.get_transaction_id();
-  dhcp_header->secondsElapsed = config.get_seconds_elapsed().value_or(0);
-  dhcp_header->flags = config.get_bootp_flags().value_or(0);
-  dhcp_header->clientIpAddress = config.get_client_ip().toInt();
+  dhcp_header->hops = config.hops.value_or(0);
+  dhcp_header->transactionID = config.transaction_id;
+  dhcp_header->secondsElapsed = config.seconds_elapsed.value_or(0);
+  dhcp_header->flags = config.bootp_flags.value_or(0);
+  dhcp_header->clientIpAddress = config.client_ip.toInt();
   dhcp_header->yourIpAddress = 0;
   dhcp_header->serverIpAddress = 0;
-  dhcp_header->gatewayIpAddress = config.get_gateway_ip().value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  dhcp_header->gatewayIpAddress = config.gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
 
   std::ranges::fill(dhcp_header->serverName, 0);
   std::ranges::fill(dhcp_header->bootFilename, 0);
 
-  if (auto client_id = config.get_client_id(); client_id.has_value()) {
+  if (auto client_id = config.client_id; client_id.has_value()) {
     auto client_id_vec_val = client_id.value();
     auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
     std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
@@ -876,7 +642,7 @@ pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config
     dhcp_layer->addOption(client_id_opt);
   }
 
-  if (auto vendor_class_id = config.get_vendor_class_id(); vendor_class_id.has_value()) {
+  if (auto vendor_class_id = config.vendor_class_id; vendor_class_id.has_value()) {
     auto vendor_class_id_val = vendor_class_id.value();
     auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
     std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
@@ -885,7 +651,7 @@ pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config
     dhcp_layer->addOption(vendor_class_id_opt);
   }
 
-  if (auto param_request_list = config.get_param_request_list(); param_request_list.has_value()) {
+  if (auto param_request_list = config.param_request_list; param_request_list.has_value()) {
     auto param_request_list_vec_val = param_request_list.value();
     auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
     std::size_t param_request_list_bytes_size =
@@ -895,20 +661,20 @@ pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config
     dhcp_layer->addOption(param_request_list_opt);
   }
 
-  if (auto max_message_size = config.get_max_message_size(); max_message_size.has_value()) {
+  if (auto max_message_size = config.max_message_size; max_message_size.has_value()) {
     pcpp::DhcpOptionBuilder max_message_size_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
                                                  max_message_size.value());
     dhcp_layer->addOption(max_message_size_opt);
   }
 
-  for (const auto& opt : config.get_extra_options()) {
+  for (const auto& opt : config.extra_options) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
   pcpp::Packet request_packet;
-  auto eth_layer = common_config.GetEthLayer();
-  auto ip_layer = common_config.GetIPLayer();
-  auto udp_layer = common_config.GetUDPLayer();
+  auto eth_layer = common_config.eth_layer;
+  auto ip_layer = common_config.ip_layer;
+  auto udp_layer = common_config.udp_layer;
   request_packet.addLayer(eth_layer.get());
   request_packet.addLayer(ip_layer.get());
   request_packet.addLayer(udp_layer.get());

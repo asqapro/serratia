@@ -637,15 +637,15 @@ TEST_CASE("Build DHCP packets") {
     const auto udp_layer = std::make_shared<pcpp::UdpLayer>(src_port, dst_port);
     serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
-    auto config_eth_layer = dhcp_common_config.GetEthLayer();
+    auto config_eth_layer = dhcp_common_config.eth_layer;
     REQUIRE(config_eth_layer->getSourceMac() == src_mac);
     REQUIRE(config_eth_layer->getDestMac() == dst_mac);
 
-    auto config_ip_layer = dhcp_common_config.GetIPLayer();
+    auto config_ip_layer = dhcp_common_config.ip_layer;
     REQUIRE(config_ip_layer->getSrcIPAddress() == src_ip);
     REQUIRE(config_ip_layer->getDstIPAddress() == dst_ip);
 
-    auto config_udp_layer = dhcp_common_config.GetUDPLayer();
+    auto config_udp_layer = dhcp_common_config.udp_layer;
     REQUIRE(config_udp_layer->getSrcPort() == src_port);
     REQUIRE(config_udp_layer->getDstPort() == dst_port);
   }
