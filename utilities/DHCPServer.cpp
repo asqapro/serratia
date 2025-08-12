@@ -186,7 +186,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   auto server_ip = config_.get_server_ip();
   auto bootp_flags = dhcp_header->flags;
   auto gateway_ip = dhcp_header->gatewayIpAddress;
-  std::array<std::uint8_t, 6> client_hardware_address{};
+  std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
   //auto server_id = config_.get_server_id

@@ -28,15 +28,13 @@ enum PacketSource {
 // TODO: Maybe move to header, idk
 // TODO: also probably parameterize the fields
 struct TestEnvironment {
-  TestEnvironment()
-      : client_hardware_address(client_mac.toByteArray()),
-        your_ip(client_ip),
-        requested_ip(client_ip),
-        server_id(server_ip) {
+  TestEnvironment() : your_ip(client_ip), requested_ip(client_ip), server_id(server_ip) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<uint32_t> distrib;
     transaction_id = distrib(gen);
+    // client_hardware_address(client_mac.toByteArray())
+    std::ranges::copy(client_mac.toByteArray(), client_hardware_address.begin());
     for (const auto octet : client_mac.toByteArray()) {
       client_id.push_back(octet);
     }
@@ -53,7 +51,8 @@ struct TestEnvironment {
   std::uint16_t client_port = 68;
   std::uint8_t hops = 0;
   std::uint16_t seconds_elapsed = 0;
-  // Broadcast flag is set
+  // Set broadcast flag for initial request
+  // TODO: Probably 0 initialize this and set it to 0x8000 for initial requests only
   std::uint16_t bootp_flags = 0x8000;
   pcpp::IPv4Address gateway_ip{"192.168.0.1"};
   std::string server_host_name{"skalrog"};
@@ -84,13 +83,15 @@ struct TestEnvironment {
   std::size_t offer_option_count = 6;
   std::size_t initial_request_option_count = 6;
   std::size_t renewal_request_option_count = 4;
-  std::size_t ack_option_count = 10;
+  std::size_t ack_request_option_count = 6;
+  std::size_t ack_inform_option_count = 5;
   std::size_t nak_option_count = 4;
   std::size_t decline_option_count = 6;
   std::size_t release_option_count = 5;
   std::size_t inform_option_count = 6;
   std::uint32_t transaction_id;
-  std::array<std::uint8_t, 6> client_hardware_address;
+  // TODO: Make this different from the client MAC to properly test that it's getting set
+  std::array<std::uint8_t, 16> client_hardware_address{};
   pcpp::IPv4Address your_ip;
   pcpp::IPv4Address requested_ip;
   pcpp::IPv4Address server_id;
@@ -360,25 +361,22 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
 
   return {dhcp_common_config,
           env.transaction_id,
-          env.client_ip,
-          env.server_ip,
-          static_cast<std::uint32_t>(env.lease_time.count()),
-          env.hops,
-          env.seconds_elapsed,
           env.bootp_flags,
-          env.server_ip,
           env.gateway_ip,
+          env.client_hardware_address,
+          env.server_id,
+          env.hops,
+          env.client_ip,
+    env.your_ip,
+          env.server_ip,
           server_name,
           boot_file_name,
-          env.vendor_specific_info,
-          env.subnet_mask,
-          env.routers,
-          env.dns_servers,
-          env.renewal_time.count(),
-          static_cast<std::uint32_t>(env.rebind_time.count())};
+          static_cast<std::uint32_t>(env.lease_time.count()),
+          env.message,
+          env.vendor_class_id};
 }
 
-void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
+void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serratia::protocols::DHCPState state) {
   auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode);
@@ -386,46 +384,60 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(STANDARD_MAC_LENGTH == dhcp_header->hardwareAddressLength);
   REQUIRE(env.hops == dhcp_header->hops);
   REQUIRE(env.transaction_id == dhcp_header->transactionID);
-  REQUIRE(env.seconds_elapsed == dhcp_header->secondsElapsed);
-  REQUIRE(env.bootp_flags == dhcp_header->flags);
-  REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
-  REQUIRE(env.client_ip == dhcp_header->yourIpAddress);
+  REQUIRE(0 == dhcp_header->secondsElapsed);
+  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
+    REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
+    REQUIRE(env.your_ip == dhcp_header->yourIpAddress);
+  }
+  else {
+    REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
+    REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
+  }
+
   REQUIRE(env.server_ip == dhcp_header->serverIpAddress);
+  REQUIRE(env.bootp_flags == dhcp_header->flags);
   REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
   REQUIRE(NO_DIFFERENCE ==
           memcmp(dhcp_header->clientHardwareAddress, env.client_hardware_address.data(), STANDARD_MAC_LENGTH));
   REQUIRE(env.server_host_name ==
           std::string(reinterpret_cast<const char*>(dhcp_header->serverName), env.server_host_name.size()));
+  REQUIRE(env.boot_file_name ==
+          std::string(reinterpret_cast<const char*>(dhcp_header->bootFilename), env.boot_file_name.size()));
+
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).isNull());
+
+  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
+    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
+              ntohl(env.lease_time.count()));
+  }
+  else {
+    REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).isNull());
+  }
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_ACK == dhcp_layer->getMessageType());
 
-  auto vendor_specific_info_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS);
-  REQUIRE(vendor_specific_info_opt.getDataSize() == env.vendor_specific_info.size());
-  REQUIRE(NO_DIFFERENCE == memcmp(vendor_specific_info_opt.getValue(), env.vendor_specific_info.data(),
-                                  env.vendor_specific_info.size()));
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).isNull());
+
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
+
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).isNull());
+
+  auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
+  REQUIRE(vendor_class_id_option.getDataSize() == env.vendor_class_id.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(vendor_class_id_option.getValue(), env.vendor_class_id.data(), env.vendor_class_id.size()));
+
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
-          ntohl(env.lease_time.count()));
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_SUBNET_MASK).getValueAsIpAddr() == env.subnet_mask);
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS).getValueAsIpAddr() == env.server_ip);
 
-  auto router_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_ROUTERS);
-  // Each router IP is 4 bytes long
-  auto expected_router_count = router_option.getDataSize() / 4;
-  REQUIRE(expected_router_count == env.routers.size());
-  REQUIRE(serratia::utils::parseIPv4Addresses(&router_option) == env.routers);
+  // TODO: add this isNull() check to other places where "MUST NOT" is stated in RFC
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).isNull());
 
-  auto dns_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DOMAIN_NAME_SERVERS);
-  // Each DNS IP is 4 bytes long
-  auto expected_dns_count = dns_option.getDataSize() / 4;
-  REQUIRE(expected_dns_count == env.dns_servers.size());
-  REQUIRE(serratia::utils::parseIPv4Addresses(&dns_option) == env.dns_servers);
-
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_RENEWAL_TIME).getValueAs<std::uint32_t>() ==
-          ntohl(env.renewal_time.count()));
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REBINDING_TIME).getValueAs<std::uint32_t>() ==
-          ntohl(env.rebind_time.count()));
-  REQUIRE(dhcp_layer->getOptionsCount() == env.ack_option_count);
+  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
+    REQUIRE(dhcp_layer->getOptionsCount() == env.ack_request_option_count);
+  }
+  else {
+    REQUIRE(dhcp_layer->getOptionsCount() == env.ack_inform_option_count);
+  }
 }
 
 serratia::protocols::DHCPNakConfig buildTestNak(const TestEnvironment& env) {
@@ -672,12 +684,12 @@ TEST_CASE("Build DHCP packets") {
     verifyDHCPRequest(env, dhcp_layer, initial_request);
   }
 
-  SECTION("DHCP ACK") {
+  SECTION("DHCP ACK (after request)") {
     auto dhcp_ack_config = buildTestAck(env);
-    auto packet = serratia::protocols::buildDHCPAck(dhcp_ack_config);
+    auto packet = serratia::protocols::buildDHCPAck(dhcp_ack_config, serratia::protocols::DHCPState::REQUESTING);
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-    verifyDHCPAck(env, dhcp_layer);
+    verifyDHCPAck(env, dhcp_layer, serratia::protocols::DHCPState::REQUESTING);
   }
 
   SECTION("DHCP NAK") {
@@ -710,6 +722,14 @@ TEST_CASE("Build DHCP packets") {
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPInform(env, dhcp_layer);
+  }
+
+  SECTION("DHCP ACK (after inform)") {
+    auto dhcp_ack_config = buildTestAck(env);
+    auto packet = serratia::protocols::buildDHCPAck(dhcp_ack_config, serratia::protocols::DHCPState::STATELESS);
+
+    auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPAck(env, dhcp_layer, serratia::protocols::DHCPState::STATELESS);
   }
 }
 
