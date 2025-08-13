@@ -53,45 +53,32 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
 };
 
 struct DHCPServerConfig {
- public:
   DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip,
                    const std::uint16_t server_port, const std::uint16_t client_port,
                    const std::array<std::uint8_t, 64>& server_name, const pcpp::IPv4Address& lease_pool_start,
                    const pcpp::IPv4Address& server_netmask, const std::chrono::seconds lease_time,
                    const std::array<std::uint8_t, 128>& boot_file_name = {})
-      : server_mac_(server_mac),
-        server_ip_(server_ip),
-        server_port_(server_port),
-        client_port_(client_port),
-        server_name_(server_name),
-        boot_file_name_(boot_file_name),
-        lease_pool_start_(lease_pool_start),
-        server_netmask_(server_netmask),
-        lease_time_(lease_time),
-        server_id_(server_ip) {}
+      : server_mac(server_mac),
+        server_ip(server_ip),
+        server_port(server_port),
+        client_port(client_port),
+        server_name(server_name),
+        boot_file_name(boot_file_name),
+        lease_pool_start(lease_pool_start),
+        server_netmask(server_netmask),
+        lease_time(lease_time),
+        server_id(server_ip) {}
 
-  [[nodiscard]] pcpp::MacAddress get_server_mac() const;
-  [[nodiscard]] pcpp::IPv4Address get_server_ip() const;
-  [[nodiscard]] std::uint16_t get_server_port() const;
-  [[nodiscard]] std::uint16_t get_client_port() const;
-  [[nodiscard]] std::array<std::uint8_t, 64> get_server_name() const;
-  [[nodiscard]] std::array<std::uint8_t, 128> get_boot_file_name() const;
-  [[nodiscard]] pcpp::IPv4Address get_lease_pool_start() const;
-  [[nodiscard]] pcpp::IPv4Address get_server_netmask() const;
-  [[nodiscard]] std::chrono::seconds get_lease_time() const;
-  [[nodiscard]] pcpp::IPv4Address get_server_id() const;
-
- private:
-  pcpp::MacAddress server_mac_;
-  pcpp::IPv4Address server_ip_;
-  std::uint16_t server_port_;
-  std::uint16_t client_port_;
-  std::array<std::uint8_t, 64> server_name_;
-  std::array<std::uint8_t, 128> boot_file_name_;
-  pcpp::IPv4Address lease_pool_start_;
-  pcpp::IPv4Address server_netmask_;
-  std::chrono::seconds lease_time_;
-  pcpp::IPv4Address server_id_;
+  pcpp::MacAddress server_mac;
+  pcpp::IPv4Address server_ip;
+  std::uint16_t server_port;
+  std::uint16_t client_port;
+  std::array<std::uint8_t, 64> server_name;
+  std::array<std::uint8_t, 128> boot_file_name;
+  pcpp::IPv4Address lease_pool_start;
+  pcpp::IPv4Address server_netmask;
+  std::chrono::seconds lease_time;
+  pcpp::IPv4Address server_id;
 };
 
 class DHCPServer {
