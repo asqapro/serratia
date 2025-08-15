@@ -225,30 +225,14 @@ pcpp::Packet serratia::protocols::buildDHCPDiscover(const serratia::protocols::D
   }
 
   if (config.client_id.has_value()) {
-    //auto client_id_vec_val = client_id.value();
-    //auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
-    //std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-    //                                      client_id_bytes_size);
     dhcp_layer->addOption(config.client_id.value());
   }
 
   if (config.vendor_class_id.has_value()) {
-    //auto vendor_class_id_val = vendor_class_id.value();
-    //auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
-    //std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
-    //pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-    //                                            vendor_class_id_bytes, vendor_class_id_size);
     dhcp_layer->addOption(config.vendor_class_id.value());
   }
 
   if (config.param_request_list.has_value()) {
-    //auto param_request_list_vec_val = param_request_list.value();
-    //auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
-    //std::size_t param_request_list_bytes_size =
-    //    param_request_list_vec_val.size() * sizeof(param_request_list_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder param_request_list_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-    //                                               param_request_list_bytes, param_request_list_bytes_size);
     dhcp_layer->addOption(config.param_request_list.value());
   }
 
@@ -313,8 +297,6 @@ pcpp::Packet serratia::protocols::buildDHCPOffer(const serratia::protocols::DHCP
   }
 
   if (config.vendor_class_id.has_value()) {
-    //dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, config.vendor_class_id->data(),
-    //                       static_cast<std::uint8_t>(config.vendor_class_id->size())});
     dhcp_layer->addOption(config.vendor_class_id.value());
   }
 
@@ -372,21 +354,10 @@ pcpp::Packet serratia::protocols::buildDHCPRequest(const serratia::protocols::DH
   }
 
   if (config.client_id.has_value()) {
-    //auto client_id_vec_val = client_id.value();
-    //auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
-    //std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-    //                                      client_id_bytes_size);
     dhcp_layer->addOption(config.client_id.value());
   }
 
   if (config.param_request_list.has_value()) {
-    //auto param_request_list_vec_val = param_request_list.value();
-    //auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
-    //std::size_t param_request_list_bytes_size =
-    //    param_request_list_vec_val.size() * sizeof(param_request_list_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder param_request_list_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-    //                                               param_request_list_bytes, param_request_list_bytes_size);
     dhcp_layer->addOption(config.param_request_list.value());
   }
 
@@ -454,12 +425,7 @@ pcpp::Packet serratia::protocols::buildDHCPAck(const serratia::protocols::DHCPAc
     dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
   }
 
-  // TODO: Come back & clean this up after vectors are turned into arrays
   if (config.vendor_class_id.has_value()) {
-    //auto vendor_class_id_vec_val = vendor_class_id.value();
-    //auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_vec_val.data());
-    //pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-    //                                            vendor_class_id_bytes, vendor_class_id_vec_val.size());
     dhcp_layer->addOption(config.vendor_class_id.value());
   }
 
@@ -499,10 +465,6 @@ pcpp::Packet serratia::protocols::buildDHCPNak(const DHCPNakConfig& config) {
   std::ranges::copy(config.client_hardware_address, dhcp_header->clientHardwareAddress);
 
   if (config.vendor_specific_info.has_value()) {
-    //const auto vendor_info_arr = vendor_specific_info.value().data();
-    //const auto vendor_info_arr_size = vendor_specific_info.value().size();
-    //const pcpp::DhcpOptionBuilder vendor_specific_info_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS,
-    //                                                       vendor_info_arr, vendor_info_arr_size);
     dhcp_layer->addOption(config.vendor_specific_info.value());
   }
 
@@ -547,11 +509,6 @@ pcpp::Packet serratia::protocols::buildDHCPDecline(const DHCPDeclineConfig& conf
   dhcp_layer->addOption(requested_ip_opt);
 
   if (config.client_id.has_value()) {
-    //auto client_id_vec_val = client_id.value();
-    //const auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
-    //const std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
-    //const pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-    //                                            client_id_bytes_size);
     dhcp_layer->addOption(config.client_id.value());
   }
 
@@ -592,11 +549,6 @@ pcpp::Packet serratia::protocols::buildDHCPRelease(const DHCPReleaseConfig& conf
   std::ranges::copy(config.client_hardware_address, dhcp_header->clientHardwareAddress);
 
   if (config.client_id.has_value()) {
-    //auto client_id_vec_val = client_id.value();
-    //const auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
-    //const std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
-    //const pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-    //                                            client_id_bytes_size);
     dhcp_layer->addOption(config.client_id.value());
   }
 
@@ -642,30 +594,14 @@ pcpp::Packet serratia::protocols::buildDHCPInform(const DHCPInformConfig& config
   std::ranges::fill(dhcp_header->bootFilename, 0);
 
   if (config.client_id.has_value()) {
-    //auto client_id_vec_val = client_id.value();
-    //auto client_id_bytes = reinterpret_cast<uint8_t*>(client_id_vec_val.data());
-    //std::size_t client_id_bytes_size = client_id_vec_val.size() * sizeof(client_id_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id_bytes,
-    //                                      client_id_bytes_size);
     dhcp_layer->addOption(config.client_id.value());
   }
 
   if (config.vendor_class_id.has_value()) {
-    //auto vendor_class_id_val = vendor_class_id.value();
-    //auto vendor_class_id_bytes = reinterpret_cast<uint8_t*>(vendor_class_id_val.data());
-    //std::size_t vendor_class_id_size = vendor_class_id_val.size() * sizeof(vendor_class_id_val.at(0));
-    //pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-    //                                            vendor_class_id_bytes, vendor_class_id_size);
     dhcp_layer->addOption(config.vendor_class_id.value());
   }
 
   if (config.param_request_list.has_value()) {
-    //auto param_request_list_vec_val = param_request_list.value();
-    //auto param_request_list_bytes = reinterpret_cast<uint8_t*>(param_request_list_vec_val.data());
-    //std::size_t param_request_list_bytes_size =
-    //    param_request_list_vec_val.size() * sizeof(param_request_list_vec_val.at(0));
-    //pcpp::DhcpOptionBuilder param_request_list_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-    //                                               param_request_list_bytes, param_request_list_bytes_size);
     dhcp_layer->addOption(config.param_request_list.value());
   }
 
