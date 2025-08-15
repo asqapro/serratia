@@ -285,7 +285,7 @@ serratia::protocols::DHCPAckConfig::DHCPAckConfig(
   dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_ACK, dst_mac);
 }
 
-pcpp::Packet serratia::protocols::DHCPAckConfig::build(DHCPState state) {
+pcpp::Packet serratia::protocols::DHCPAckConfig::build(DHCPState state) const {
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   // TODO: rearrange these (and in other functions) to match RFC ordering
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
@@ -364,7 +364,7 @@ serratia::protocols::DHCPNakConfig::DHCPNakConfig(
   dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_NAK, dst_mac);
 }
 
-pcpp::Packet serratia::protocols::DHCPNakConfig::build() {
+pcpp::Packet serratia::protocols::DHCPNakConfig::build() const {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
   dhcp_header->hops = hops.value_or(0);
@@ -415,7 +415,7 @@ serratia::protocols::DHCPDeclineConfig::DHCPDeclineConfig(
   dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_DECLINE, src_mac);
 }
 
-pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() {
+pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() const {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
   dhcp_header->hops = hops.value_or(0);
@@ -468,7 +468,7 @@ serratia::protocols::DHCPReleaseConfig::DHCPReleaseConfig(
   dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_RELEASE, src_mac);
 }
 
-pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() {
+pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() const {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
   dhcp_header->hops = hops.value_or(0);
@@ -524,7 +524,7 @@ serratia::protocols::DHCPInformConfig::DHCPInformConfig(
   dhcp_layer = std::make_shared<pcpp::DhcpLayer>(pcpp::DhcpMessageType::DHCP_INFORM, src_mac);
 }
 
-pcpp::Packet serratia::protocols::DHCPInformConfig::build() {
+pcpp::Packet serratia::protocols::DHCPInformConfig::build() const {
   auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
 

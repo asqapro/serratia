@@ -150,7 +150,7 @@ struct DHCPAckConfig {
                 std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt);
   DHCPAckConfig() = delete;
 
-  pcpp::Packet build(DHCPState state);
+  [[nodiscard]] pcpp::Packet build(DHCPState state) const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -183,7 +183,7 @@ struct DHCPNakConfig {
                 std::optional<pcpp::DhcpOptionBuilder> vendor_specific_info = std::nullopt);
   DHCPNakConfig() = delete;
 
-  pcpp::Packet build();
+  [[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -207,7 +207,7 @@ struct DHCPDeclineConfig {
                     std::optional<std::string> message = std::nullopt);
   DHCPDeclineConfig() = delete;
 
-  pcpp::Packet build();
+  [[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -230,7 +230,7 @@ struct DHCPReleaseConfig {
                     std::optional<std::string> message = std::nullopt);
   DHCPReleaseConfig() = delete;
 
-  pcpp::Packet build();
+  [[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -257,7 +257,7 @@ struct DHCPInformConfig {
                    std::optional<std::uint16_t> max_message_size = std::nullopt);
   DHCPInformConfig() = delete;
 
-  pcpp::Packet build();
+  [[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
