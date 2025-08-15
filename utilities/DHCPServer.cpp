@@ -190,7 +190,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
       dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
       config_.lease_time.count(), config_.server_id, hops, server_name, boot_file_name);
-  const auto packet = serratia::protocols::buildDHCPOffer(dhcp_offer_config);
+  const auto packet = dhcp_offer_config.build();
   device_->send(packet);
 }
 

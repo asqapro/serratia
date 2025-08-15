@@ -41,6 +41,8 @@ struct DHCPDiscoverConfig {
                      std::optional<std::uint16_t> max_message_size = std::nullopt);
   DHCPDiscoverConfig() = delete;
 
+  [[nodiscard]] pcpp::Packet build() const;
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -69,6 +71,8 @@ struct DHCPOfferConfig {
                   std::optional<std::string> message = std::nullopt,
                   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt);
   DHCPOfferConfig() = delete;
+
+  [[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -108,6 +112,9 @@ struct DHCPRequestConfig {
                     std::optional<std::uint16_t> max_message_size = std::nullopt);
   DHCPRequestConfig() = delete;
 
+  // TODO: Add functions for selecting, init-reboot, etc
+  [[nodiscard]] pcpp::Packet build() const;
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -141,6 +148,8 @@ struct DHCPAckConfig {
                 std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt);
   DHCPAckConfig() = delete;
 
+  pcpp::Packet build(DHCPState state);
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -172,6 +181,8 @@ struct DHCPNakConfig {
                 std::optional<pcpp::DhcpOptionBuilder> vendor_specific_info = std::nullopt);
   DHCPNakConfig() = delete;
 
+  pcpp::Packet build();
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -194,6 +205,8 @@ struct DHCPDeclineConfig {
                     std::optional<std::string> message = std::nullopt);
   DHCPDeclineConfig() = delete;
 
+  pcpp::Packet build();
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -214,6 +227,8 @@ struct DHCPReleaseConfig {
                     std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
                     std::optional<std::string> message = std::nullopt);
   DHCPReleaseConfig() = delete;
+
+  pcpp::Packet build();
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
@@ -240,6 +255,8 @@ struct DHCPInformConfig {
                    std::optional<std::uint16_t> max_message_size = std::nullopt);
   DHCPInformConfig() = delete;
 
+  pcpp::Packet build();
+
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;
   std::uint32_t transaction_id;
@@ -256,13 +273,7 @@ struct DHCPInformConfig {
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
 };
 
-pcpp::Packet buildDHCPDiscover(const DHCPDiscoverConfig& config);
-pcpp::Packet buildDHCPOffer(const DHCPOfferConfig& config);
-// TODO: Add functions for selecting, init-reboot, etc
-pcpp::Packet buildDHCPRequest(const DHCPRequestConfig& config);
-pcpp::Packet buildDHCPAck(const DHCPAckConfig& config, DHCPState state);
-pcpp::Packet buildDHCPNak(const DHCPNakConfig& config);
-pcpp::Packet buildDHCPDecline(const DHCPDeclineConfig& config);
-pcpp::Packet buildDHCPRelease(const DHCPReleaseConfig& config);
-pcpp::Packet buildDHCPInform(const DHCPInformConfig& config);
+// TODO: Move build functions into classes
+
+
 };  // namespace serratia::protocols
