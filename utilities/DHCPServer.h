@@ -23,12 +23,12 @@ struct std::hash<pcpp::MacAddress> {
 
 namespace serratia::utils {
 struct LeaseInfo {
-  LeaseInfo(std::vector<std::uint8_t> client_id, const pcpp::IPv4Address assigned_ip,
+  LeaseInfo(const std::array<std::uint8_t, 255>& client_id, const pcpp::IPv4Address assigned_ip,
             const std::chrono::steady_clock::time_point expiry_time)
-      : client_id_(std::move(client_id)), assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
+      : client_id_(client_id), assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
   LeaseInfo() = default;
 
-  std::vector<std::uint8_t> client_id_;
+  std::array<std::uint8_t, 255> client_id_{};
   pcpp::IPv4Address assigned_ip_;
   std::chrono::steady_clock::time_point expiry_time_;
 };

@@ -146,16 +146,17 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   const auto udp_layer = std::make_shared<pcpp::UdpLayer>(config_.server_port, config_.client_port);
 
-  std::vector<std::uint8_t> client_id;
+  std::array<std::uint8_t, 255> client_id{};
   // Client ID is either client MAC or set in DHCP discover
   if (const auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
       client_id_option.isNotNull()) {
-    const auto id_size = client_id_option.getDataSize();
-    const auto id_data = client_id_option.getValue();
-    client_id.assign(id_data, id_data + id_size);
+    const size_t count = std::min(client_id_option.getDataSize(), client_id.size());
+    std::copy_n(client_id_option.getValue(), count, client_id.begin());
   } else {
+    constexpr std::uint8_t HTYPE_ETHER = 1;
+    client_id[0] = HTYPE_ETHER;
     const auto client_id_mac = dhcp_layer->getClientHardwareAddress();
-    client_id.assign(client_id_mac.getRawData(), client_id_mac.getRawData() + 6);
+    client_id_mac.copyTo(client_id.data()+1);
   }
 
   auto lease_expiry = std::chrono::steady_clock::now() + config_.lease_time;
