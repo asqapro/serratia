@@ -26,8 +26,8 @@ serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
     const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<pcpp::IPv4Address> requested_ip,
     const std::optional<std::uint32_t> lease_time, std::optional<pcpp::DhcpOptionBuilder> client_id,
-    std::optional<pcpp::DhcpOptionBuilder> vendor_class_id,
-    std::optional<pcpp::DhcpOptionBuilder> param_request_list, const std::optional<std::uint16_t> max_message_size)
+    std::optional<pcpp::DhcpOptionBuilder> vendor_class_id, std::optional<pcpp::DhcpOptionBuilder> param_request_list,
+    const std::optional<std::uint16_t> max_message_size)
     : common_config(common_config),
       hops(hops),
       transaction_id(transaction_id),
@@ -428,8 +428,7 @@ pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() {
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
-  const pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                                                 requested_ip);
+  const pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip);
   dhcp_layer->addOption(requested_ip_opt);
 
   if (client_id.has_value()) {
@@ -507,8 +506,8 @@ serratia::protocols::DHCPInformConfig::DHCPInformConfig(
     std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
     const std::optional<pcpp::IPv4Address> gateway_ip, std::optional<pcpp::DhcpOptionBuilder> client_id,
-    std::optional<pcpp::DhcpOptionBuilder> vendor_class_id,
-    std::optional<pcpp::DhcpOptionBuilder> param_request_list, const std::optional<std::uint16_t> max_message_size)
+    std::optional<pcpp::DhcpOptionBuilder> vendor_class_id, std::optional<pcpp::DhcpOptionBuilder> param_request_list,
+    const std::optional<std::uint16_t> max_message_size)
     : common_config(common_config),
       hops(hops),
       transaction_id(transaction_id),

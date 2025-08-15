@@ -156,7 +156,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
     constexpr std::uint8_t HTYPE_ETHER = 1;
     client_id[0] = HTYPE_ETHER;
     const auto client_id_mac = dhcp_layer->getClientHardwareAddress();
-    client_id_mac.copyTo(client_id.data()+1);
+    client_id_mac.copyTo(client_id.data() + 1);
   }
 
   auto lease_expiry = std::chrono::steady_clock::now() + config_.lease_time;
@@ -179,13 +179,13 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
-  //auto server_id = config_.get_server_id
+  // auto server_id = config_.get_server_id
   constexpr auto hops = 0;
   auto server_name = config_.server_name;
   auto boot_file_name = config_.boot_file_name;
-  //auto message = config_.message;
-  //auto vendor_class_id = config_.vendor_class_id;
-  //auto max_message_size = config_.max_message_size;
+  // auto message = config_.message;
+  // auto vendor_class_id = config_.vendor_class_id;
+  // auto max_message_size = config_.max_message_size;
 
   const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
       dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
