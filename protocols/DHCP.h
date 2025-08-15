@@ -21,6 +21,8 @@ struct DHCPCommonConfig {
       : eth_layer(std::move(eth_layer)), ip_layer(std::move(ip_layer)), udp_layer(std::move(udp_layer)) {}
   DHCPCommonConfig() = delete;
 
+  [[nodiscard]] pcpp::Packet build() const;
+
   std::shared_ptr<pcpp::EthLayer> eth_layer;
   std::shared_ptr<pcpp::IPv4Layer> ip_layer;
   std::shared_ptr<pcpp::UdpLayer> udp_layer;
@@ -272,8 +274,4 @@ struct DHCPInformConfig {
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
 };
-
-// TODO: Move build functions into classes
-
-
 };  // namespace serratia::protocols

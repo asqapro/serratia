@@ -9,6 +9,17 @@
 
 #include <utility>
 
+pcpp::Packet serratia::protocols::DHCPCommonConfig::build() const {
+  pcpp::Packet packet;
+  packet.addLayer(eth_layer.get());
+  packet.addLayer(ip_layer.get());
+  packet.addLayer(udp_layer.get());
+
+  packet.computeCalculateFields();
+
+  return packet;
+}
+
 serratia::protocols::DHCPDiscoverConfig::DHCPDiscoverConfig(
     const DHCPCommonConfig& common_config, const std::uint32_t transaction_id,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
@@ -82,18 +93,12 @@ pcpp::Packet serratia::protocols::DHCPDiscoverConfig::build() const {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  pcpp::Packet request_packet;
-  auto eth_layer = common_config.eth_layer;
-  auto ip_layer = common_config.ip_layer;
-  auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPOfferConfig::DHCPOfferConfig(
@@ -167,19 +172,12 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  // TODO: move this into a function somewhere and switch other functions to use that
-  pcpp::Packet offer_packet;
-  const auto eth_layer = common_config.eth_layer;
-  const auto ip_layer = common_config.ip_layer;
-  const auto udp_layer = common_config.udp_layer;
-  offer_packet.addLayer(eth_layer.get());
-  offer_packet.addLayer(ip_layer.get());
-  offer_packet.addLayer(udp_layer.get());
-  offer_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  offer_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return offer_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPRequestConfig::DHCPRequestConfig(
@@ -251,19 +249,12 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  // TODO: Create dhcp_common_config build function (might have made this comment elsewhere too)
-  pcpp::Packet request_packet;
-  auto eth_layer = common_config.eth_layer;
-  auto ip_layer = common_config.ip_layer;
-  auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPAckConfig::DHCPAckConfig(
@@ -346,18 +337,12 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(DHCPState state) {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  pcpp::Packet request_packet;
-  auto eth_layer = common_config.eth_layer;
-  auto ip_layer = common_config.ip_layer;
-  auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPNakConfig::DHCPNakConfig(
@@ -403,18 +388,12 @@ pcpp::Packet serratia::protocols::DHCPNakConfig::build() {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  pcpp::Packet request_packet;
-  const auto eth_layer = common_config.eth_layer;
-  const auto ip_layer = common_config.ip_layer;
-  const auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPDeclineConfig::DHCPDeclineConfig(
@@ -464,18 +443,12 @@ pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() {
     dhcp_layer->addOption(message_opt);
   }
 
-  pcpp::Packet request_packet;
-  const auto eth_layer = common_config.eth_layer;
-  const auto ip_layer = common_config.ip_layer;
-  const auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPReleaseConfig::DHCPReleaseConfig(
@@ -521,18 +494,12 @@ pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() {
     dhcp_layer->addOption(message_opt);
   }
 
-  pcpp::Packet request_packet;
-  const auto eth_layer = common_config.eth_layer;
-  const auto ip_layer = common_config.ip_layer;
-  const auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
 
 serratia::protocols::DHCPInformConfig::DHCPInformConfig(
@@ -597,16 +564,10 @@ pcpp::Packet serratia::protocols::DHCPInformConfig::build() {
     dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
   }
 
-  pcpp::Packet request_packet;
-  auto eth_layer = common_config.eth_layer;
-  auto ip_layer = common_config.ip_layer;
-  auto udp_layer = common_config.udp_layer;
-  request_packet.addLayer(eth_layer.get());
-  request_packet.addLayer(ip_layer.get());
-  request_packet.addLayer(udp_layer.get());
-  request_packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config.build();
+  packet.addLayer(dhcp_layer.get());
 
-  request_packet.computeCalculateFields();
+  packet.computeCalculateFields();
 
-  return request_packet;
+  return packet;
 }
