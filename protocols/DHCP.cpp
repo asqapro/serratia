@@ -52,13 +52,7 @@ pcpp::Packet serratia::protocols::DHCPDiscoverConfig::build() const {
   dhcp_header->transactionID = transaction_id;
   dhcp_header->secondsElapsed = seconds_elapsed.value_or(0);
   dhcp_header->flags = bootp_flags.value_or(0);
-  dhcp_header->clientIpAddress = 0;
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-
-  std::ranges::fill(dhcp_header->serverName, 0);
-  std::ranges::fill(dhcp_header->bootFilename, 0);
 
   if (requested_ip.has_value()) {
     pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
@@ -132,10 +126,8 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
-  dhcp_header->secondsElapsed = 0;
   // TODO: Move flags underneath server IP (same in other functions)
   dhcp_header->flags = bootp_flags;
-  dhcp_header->clientIpAddress = 0;
   dhcp_header->yourIpAddress = your_ip.toInt();
   dhcp_header->serverIpAddress = server_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   dhcp_header->gatewayIpAddress = gateway_ip.toInt();
@@ -143,14 +135,10 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
 
   if (auto server_arr = server_name; server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
-  } else {
-    std::ranges::fill(dhcp_header->serverName, 0);
   }
 
   if (auto boot_file_arr = boot_file_name; boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
-  } else {
-    std::ranges::fill(dhcp_header->bootFilename, 0);
   }
 
   const pcpp::DhcpOptionBuilder lease_time_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time);
@@ -217,14 +205,8 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   dhcp_header->secondsElapsed = seconds_elapsed.value_or(0);
   dhcp_header->flags = bootp_flags.value_or(0);
   dhcp_header->clientIpAddress = client_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
-
-  std::ranges::fill(dhcp_header->serverName, 0);
-
-  std::ranges::fill(dhcp_header->bootFilename, 0);
 
   if (requested_ip.has_value()) {
     pcpp::DhcpOptionBuilder requested_ip_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
@@ -291,31 +273,21 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(DHCPState state) const {
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
-  dhcp_header->secondsElapsed = 0;
   if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
     dhcp_header->clientIpAddress = client_ip.value().toInt();
     dhcp_header->yourIpAddress = your_ip.value().toInt();
-  } else {
-    dhcp_header->clientIpAddress = 0;
-    dhcp_header->yourIpAddress = 0;
   }
   dhcp_header->serverIpAddress = server_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   dhcp_header->flags = bootp_flags;
   dhcp_header->gatewayIpAddress = gateway_ip.toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
-  // TODO: Check if Pcpp zero-initializes serverName, maybe the fill is unnecessary
   if (auto server_arr = server_name; server_arr.has_value()) {
     std::ranges::copy(server_arr.value(), dhcp_header->serverName);
-  } else {
-    std::ranges::fill(dhcp_header->serverName, 0);
   }
 
-  // TODO: Check if Pcpp zero-initializes bootFilename, maybe fill is unnecessary
   if (auto boot_file_arr = boot_file_name; boot_file_arr.has_value()) {
     std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
-  } else {
-    std::ranges::fill(dhcp_header->bootFilename, 0);
   }
 
   if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
@@ -371,9 +343,6 @@ pcpp::Packet serratia::protocols::DHCPNakConfig::build() const {
   dhcp_header->transactionID = transaction_id;
   dhcp_header->secondsElapsed = seconds_elapsed.value_or(0);
   dhcp_header->flags = bootp_flags.value_or(0);
-  dhcp_header->clientIpAddress = 0;
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
@@ -420,11 +389,6 @@ pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() const {
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
-  dhcp_header->secondsElapsed = 0;
-  dhcp_header->flags = 0;
-  dhcp_header->clientIpAddress = 0;
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
@@ -473,11 +437,7 @@ pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() const {
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
-  dhcp_header->secondsElapsed = 0;
-  dhcp_header->flags = 0;
   dhcp_header->clientIpAddress = client_ip.toInt();
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
@@ -533,13 +493,8 @@ pcpp::Packet serratia::protocols::DHCPInformConfig::build() const {
   dhcp_header->secondsElapsed = seconds_elapsed.value_or(0);
   dhcp_header->flags = bootp_flags.value_or(0);
   dhcp_header->clientIpAddress = client_ip.toInt();
-  dhcp_header->yourIpAddress = 0;
-  dhcp_header->serverIpAddress = 0;
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
-
-  std::ranges::fill(dhcp_header->serverName, 0);
-  std::ranges::fill(dhcp_header->bootFilename, 0);
 
   if (client_id.has_value()) {
     dhcp_layer->addOption(client_id.value());
