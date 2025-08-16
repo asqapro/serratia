@@ -77,13 +77,13 @@ struct TestEnvironment {
   std::chrono::seconds rebind_time{43200};
   pcpp::IPv4Address lease_pool_start{"192.168.0.2"};
   std::uint16_t max_message_size = 567;
-  std::size_t discover_option_count = 8;
-  std::size_t offer_option_count = 6;
-  std::size_t initial_request_option_count = 6;
-  std::size_t renewal_request_option_count = 4;
-  std::size_t ack_request_option_count = 6;
-  std::size_t ack_inform_option_count = 5;
-  std::size_t nak_option_count = 4;
+  std::size_t discover_option_count = 7;
+  std::size_t offer_option_count = 5;
+  std::size_t initial_request_option_count = 8;
+  std::size_t renewal_request_option_count = 6;
+  std::size_t ack_request_option_count = 5;
+  std::size_t ack_inform_option_count = 4;
+  std::size_t nak_option_count = 5;
   std::size_t decline_option_count = 6;
   std::size_t release_option_count = 5;
   std::size_t inform_option_count = 6;
@@ -505,13 +505,16 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
 serratia::protocols::DHCPNakConfig buildTestNak(const TestEnvironment& env) {
   auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
-  pcpp::DhcpOptionBuilder vendor_specific_info_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS,
-                                                   env.vendor_specific_info.data(),
-                                                   static_cast<std::uint8_t>(env.vendor_specific_info.size()));
+  pcpp::DhcpOptionBuilder client_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, env.client_id.data(),
+                                        static_cast<std::uint8_t>(env.client_id.size()));
+  pcpp::DhcpOptionBuilder vendor_class_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                                              env.vendor_class_id.data(),
+                                              static_cast<std::uint8_t>(env.vendor_class_id.size()));
 
   return {dhcp_common_config, env.transaction_id, env.client_hardware_address,
-          env.server_id,      env.hops,           env.seconds_elapsed,
-          env.bootp_flags,    env.gateway_ip,     vendor_specific_info_opt};
+          env.server_id,      env.hops,           env.bootp_flags,
+          env.gateway_ip,     env.message,        client_id_opt,
+          vendor_class_id_opt};
 }
 
 void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -534,12 +537,22 @@ void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   auto server_name_field = dhcp_header->serverName;
   REQUIRE(std::all_of(server_name_field, server_name_field + sizeof(server_name_field), [](int x) { return x == 0; }));
 
+  auto boot_file_field = dhcp_header->bootFilename;
+  REQUIRE(std::all_of(boot_file_field, boot_file_field + sizeof(boot_file_field), [](int x) { return x == 0; }));
+
   REQUIRE(pcpp::DhcpMessageType::DHCP_NAK == dhcp_layer->getMessageType());
 
-  auto vendor_specific_info_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_ENCAPSULATED_OPTIONS);
-  REQUIRE(vendor_specific_info_opt.getDataSize() == env.vendor_specific_info.size());
-  REQUIRE(NO_DIFFERENCE == memcmp(vendor_specific_info_opt.getValue(), env.vendor_specific_info.data(),
-                                  env.vendor_specific_info.size()));
+  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
+
+  auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+  REQUIRE(client_id_option.getDataSize() == env.client_id.size());
+  REQUIRE(NO_DIFFERENCE == memcmp(client_id_option.getValue(), env.client_id.data(), env.client_id.size()));
+
+  auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
+  REQUIRE(vendor_class_id_option.getDataSize() == env.vendor_class_id.size());
+  REQUIRE(NO_DIFFERENCE ==
+          memcmp(vendor_class_id_option.getValue(), env.vendor_class_id.data(), env.vendor_class_id.size()));
+
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
 
   REQUIRE(dhcp_layer->getOptionsCount() == env.nak_option_count);
@@ -852,7 +865,7 @@ TEST_CASE("Interact with DHCP server") {
   // Change environment to match real-world scenario
   env.message = "";
   env.vendor_class_id = {};
-  env.offer_option_count = 4;
+  env.offer_option_count = 3;
 
   auto device = std::make_shared<MockPcapLiveDevice>();
 
