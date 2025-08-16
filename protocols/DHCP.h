@@ -273,12 +273,22 @@ struct DHCPNakConfig {
 };
 
 struct DHCPDeclineConfig {
-  DHCPDeclineConfig(const DHCPCommonConfig& common_config, std::uint32_t transaction_id,
-                    std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address requested_ip,
-                    pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
-                    std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+  DHCPDeclineConfig(DHCPCommonConfig common_config, const std::uint32_t transaction_id,
+                    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address requested_ip,
+                    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops = std::nullopt,
+                    const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                     std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
-                    std::optional<std::string> message = std::nullopt);
+                    std::optional<std::string> message = std::nullopt)
+      : common_config(std::move(common_config)),
+        hops(hops),
+        transaction_id(transaction_id),
+        gateway_ip(gateway_ip),
+        client_hardware_address(client_hardware_address),
+        requested_ip(requested_ip),
+        client_id(std::move(client_id)),
+        server_id(server_id),
+        message(std::move(message)),
+        dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPDeclineConfig() = delete;
 
   [[nodiscard]] pcpp::Packet build() const;
@@ -296,12 +306,22 @@ struct DHCPDeclineConfig {
 };
 
 struct DHCPReleaseConfig {
-  DHCPReleaseConfig(const DHCPCommonConfig& common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
-                    std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address server_id,
-                    std::optional<std::uint8_t> hops = std::nullopt,
-                    std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+  DHCPReleaseConfig(DHCPCommonConfig common_config, const std::uint32_t transaction_id,
+                    const pcpp::IPv4Address client_ip, const std::array<std::uint8_t, 16> client_hardware_address,
+                    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops = std::nullopt,
+                    const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                     std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
-                    std::optional<std::string> message = std::nullopt);
+                    std::optional<std::string> message = std::nullopt)
+      : common_config(std::move(common_config)),
+        hops(hops),
+        transaction_id(transaction_id),
+        client_ip(client_ip),
+        gateway_ip(gateway_ip),
+        client_hardware_address(client_hardware_address),
+        client_id(std::move(client_id)),
+        server_id(server_id),
+        message(std::move(message)),
+        dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPReleaseConfig() = delete;
 
   [[nodiscard]] pcpp::Packet build() const;
@@ -319,16 +339,29 @@ struct DHCPReleaseConfig {
 };
 
 struct DHCPInformConfig {
-  DHCPInformConfig(const DHCPCommonConfig& common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
-                   std::array<std::uint8_t, 16> client_hardware_address,
-                   std::optional<std::uint8_t> hops = std::nullopt,
-                   std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-                   std::optional<std::uint16_t> bootp_flags = std::nullopt,
-                   std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+  DHCPInformConfig(DHCPCommonConfig common_config, const std::uint32_t transaction_id,
+                   const pcpp::IPv4Address client_ip, const std::array<std::uint8_t, 16> client_hardware_address,
+                   const std::optional<std::uint8_t> hops = std::nullopt,
+                   const std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                   const std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                   const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                    std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
                    std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt,
                    std::optional<pcpp::DhcpOptionBuilder> param_request_list = std::nullopt,
-                   std::optional<std::uint16_t> max_message_size = std::nullopt);
+                   const std::optional<std::uint16_t> max_message_size = std::nullopt)
+      : common_config(std::move(common_config)),
+        hops(hops),
+        transaction_id(transaction_id),
+        seconds_elapsed(seconds_elapsed),
+        bootp_flags(bootp_flags),
+        client_ip(client_ip),
+        gateway_ip(gateway_ip),
+        client_hardware_address(client_hardware_address),
+        client_id(std::move(client_id)),
+        vendor_class_id(std::move(vendor_class_id)),
+        param_request_list(std::move(param_request_list)),
+        max_message_size(max_message_size),
+        dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPInformConfig() = delete;
 
   [[nodiscard]] pcpp::Packet build() const;

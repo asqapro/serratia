@@ -84,9 +84,9 @@ struct TestEnvironment {
   std::size_t ack_request_option_count = 5;
   std::size_t ack_inform_option_count = 4;
   std::size_t nak_option_count = 5;
-  std::size_t decline_option_count = 6;
-  std::size_t release_option_count = 5;
-  std::size_t inform_option_count = 6;
+  std::size_t decline_option_count = 5;
+  std::size_t release_option_count = 4;
+  std::size_t inform_option_count = 5;
   std::uint32_t transaction_id;
   // TODO: Make this different from the client MAC to properly test that it's getting set
   std::array<std::uint8_t, 16> client_hardware_address{};
