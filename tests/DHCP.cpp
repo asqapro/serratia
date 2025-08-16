@@ -19,6 +19,7 @@ constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
 
+// TODO: Use serratia:protocols::DHCPState instead
 enum PacketSource {
   INITIAL_CLIENT,
   CLIENT,
@@ -38,8 +39,9 @@ struct TestEnvironment {
     client_mac.copyTo(client_id.data() + 1);
   }
 
-  // TODO: rearrange or group related fields together
+  // Notional MAC address
   pcpp::MacAddress server_mac{"ca:5e:d7:6B:c2:7c"};
+  // Notional MAC address
   pcpp::MacAddress client_mac{"a1:eb:37:7b:e9:bf"};
   pcpp::IPv4Address server_ip{"192.168.0.1"};
   pcpp::IPv4Address client_ip{"192.168.0.2"};
@@ -48,35 +50,39 @@ struct TestEnvironment {
   // Typical DHCP client port
   std::uint16_t client_port = 68;
   std::uint8_t hops = 0;
+  std::uint32_t transaction_id;
   std::uint16_t seconds_elapsed = 0;
-  // Set broadcast flag for initial request
-  // TODO: Probably 0 initialize this and set it to 0x8000 for initial requests only
-  std::uint16_t bootp_flags = 0x8000;
+  std::uint16_t bootp_flags = 0;
+  pcpp::IPv4Address your_ip;
   pcpp::IPv4Address gateway_ip{"192.168.0.1"};
+  // Notional MAC address
+  std::array<std::uint8_t, 16> client_hardware_address{0xcb, 0xc7, 0x4d, 0x54, 0x98, 0xd1};
   std::string server_host_name{"skalrog"};
-  std::string client_host_name{"malric"};
   std::string boot_file_name{"boot/fake"};
-  // Notional data
-  std::vector<std::uint8_t> vendor_specific_info{1};
-  std::array<std::uint8_t, 7> client_id{HTYPE_ETHER};
-  // Notional data
-  std::array<std::uint8_t, 10> vendor_class_id{1};
-  std::vector<std::uint8_t> param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK,
-                                               pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
-                                               pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS};
-  std::string message{"test error"};
-  pcpp::IPv4Address subnet_mask{"255.255.255.0"};
-  std::vector<pcpp::IPv4Address> routers{pcpp::IPv4Address("192.168.0.1")};
-  // Quad9 DNS
-  std::vector<pcpp::IPv4Address> dns_servers{pcpp::IPv4Address("9.9.9.9")};
+  pcpp::IPv4Address requested_ip;
   // 24 hours
   std::chrono::seconds lease_time{86400};
   // 87.5% of lease time
   std::chrono::seconds renewal_time{75600};
   // 50& of lease time
   std::chrono::seconds rebind_time{43200};
-  pcpp::IPv4Address lease_pool_start{"192.168.0.2"};
+  std::array<std::uint8_t, 7> client_id{HTYPE_ETHER};
+  // Notional data
+  std::array<std::uint8_t, 10> vendor_class_id{1};
+  pcpp::IPv4Address server_id;
+  std::vector<std::uint8_t> param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK,
+                                               pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
+                                               pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS};
   std::uint16_t max_message_size = 567;
+  std::string message{"test error"};
+
+  pcpp::IPv4Address subnet_mask{"255.255.255.0"};
+  pcpp::IPv4Address lease_pool_start{"192.168.0.2"};
+
+  std::vector<pcpp::IPv4Address> routers{pcpp::IPv4Address("192.168.0.1")};
+  // Quad9 DNS
+  std::vector<pcpp::IPv4Address> dns_servers{pcpp::IPv4Address("9.9.9.9")};
+
   std::size_t discover_option_count = 7;
   std::size_t offer_option_count = 5;
   std::size_t initial_request_option_count = 8;
@@ -87,12 +93,6 @@ struct TestEnvironment {
   std::size_t decline_option_count = 5;
   std::size_t release_option_count = 4;
   std::size_t inform_option_count = 5;
-  std::uint32_t transaction_id;
-  // TODO: Make this different from the client MAC to properly test that it's getting set
-  std::array<std::uint8_t, 16> client_hardware_address{};
-  pcpp::IPv4Address your_ip;
-  pcpp::IPv4Address requested_ip;
-  pcpp::IPv4Address server_id;
 };
 
 TestEnvironment& getEnv() {
@@ -747,15 +747,22 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP discover") {
+    // Set broadcast flag
+    env.bootp_flags = 0x8000;
+
     auto dhcp_discover_config = buildTestDiscover(env);
     auto packet = dhcp_discover_config.build();
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPDiscover(env, dhcp_layer);
+
+    // Clear broadcast flag
+    env.bootp_flags = 0;
   }
 
   SECTION("DHCP offer") {
     auto dhcp_offer_config = buildTestOffer(env);
+
     auto packet = dhcp_offer_config.build();
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
@@ -763,12 +770,18 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP initial request") {
+    // Set broadcast flag
+    env.bootp_flags = 0x8000;
+
     auto dhcp_request_config = buildTestInitialRequest(env);
     auto packet = dhcp_request_config.build();
 
     auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     constexpr bool initial_request = true;
     verifyDHCPRequest(env, dhcp_layer, initial_request);
+
+    // Clear broadcast flag
+    env.bootp_flags = 0;
   }
 
   SECTION("DHCP renewal request") {
@@ -909,6 +922,7 @@ TEST_CASE("Interact with DHCP server") {
     serratia::utils::DHCPServer server(config, device);
     server.run();
 
+    env.bootp_flags = 0x8000;
     auto dhcp_discover_config = buildTestDiscover(env);
     auto packet = dhcp_discover_config.build();
 
@@ -918,6 +932,7 @@ TEST_CASE("Interact with DHCP server") {
 
     auto& dhcp_layer = device->sent_dhcp_packets.back();
     verifyDHCPOffer(env, &dhcp_layer);
+    env.bootp_flags = 0;
     // TODO: Complete request of process
 
     auto lease_table = server.get_lease_table();
@@ -933,4 +948,32 @@ TEST_CASE("Interact with DHCP server") {
     auto expiry_difference = std::chrono::steady_clock::now() - estimated_expiry_time;
     REQUIRE(expiry_difference.count() < 5);
   }
+
+  /* Saving this code for later, needs to be used when sending DISCOVER & verify options when get back OFFER
+    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, env.subnet_mask);
+
+    std::vector<std::uint8_t> routers;
+    // Each router IP address is 4 bytes
+    routers.reserve(env.routers.size() * 4);
+
+    for (const auto& router : env.routers) {
+      auto router_bytes = router.toByteArray();
+      routers.insert(routers.end(), router_bytes.begin(), router_bytes.end());
+    }
+
+    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS, routers.data(),
+                                                  static_cast<std::uint8_t>(env.routers.size()));
+
+    std::vector<std::uint8_t> dns_servers;
+    // Each DNS server IP address is 4 bytes
+    dns_servers.reserve(env.routers.size() * 4);
+
+    for (const auto& server : env.dns_servers) {
+      auto server_bytes = server.toByteArray();
+      dns_servers.insert(routers.end(), server_bytes.begin(), server_bytes.end());
+    }
+
+    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS, dns_servers.data(),
+                                                  static_cast<std::uint8_t>(env.dns_servers.size()));
+   */
 }
