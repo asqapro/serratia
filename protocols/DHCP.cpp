@@ -33,15 +33,15 @@ pcpp::Packet serratia::protocols::DHCPDiscoverConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_DISCOVER);
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   if (param_request_list.has_value()) {
-    dhcp_layer->addOption(param_request_list.value());
+    dhcp_layer->addOption(param_request_list.value().build(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST));
   }
 
   if (max_message_size.has_value()) {
@@ -75,11 +75,11 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time});
 
   if (message.has_value()) {
-    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
+    dhcp_layer->addOption(message.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
@@ -127,11 +127,11 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_REQUEST);
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   if (server_id.has_value()) {
@@ -139,7 +139,7 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   }
 
   if (param_request_list.has_value()) {
-    dhcp_layer->addOption(param_request_list.value());
+    dhcp_layer->addOption(param_request_list.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST));
   }
 
   if (max_message_size.has_value()) {
@@ -177,11 +177,11 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) co
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_ACK);
 
   if (message.has_value()) {
-    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
+    dhcp_layer->addOption(message.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
@@ -224,15 +224,15 @@ pcpp::Packet serratia::protocols::DHCPNakConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_NAK);
 
   if (message.has_value()) {
-    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
+    dhcp_layer->addOption(message.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
@@ -263,13 +263,13 @@ pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_DECLINE);
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   if (message.has_value()) {
-    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
+    dhcp_layer->addOption(message.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -291,13 +291,13 @@ pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_RELEASE);
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   if (message.has_value()) {
-    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
+    dhcp_layer->addOption(message.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -320,15 +320,15 @@ pcpp::Packet serratia::protocols::DHCPInformConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_INFORM);
 
   if (client_id.has_value()) {
-    dhcp_layer->addOption(client_id.value());
+    dhcp_layer->addOption(client_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER));
   }
 
   if (vendor_class_id.has_value()) {
-    dhcp_layer->addOption(vendor_class_id.value());
+    dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
   }
 
   if (param_request_list.has_value()) {
-    dhcp_layer->addOption(param_request_list.value());
+    dhcp_layer->addOption(param_request_list.value().build(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST));
   }
 
   if (max_message_size.has_value()) {
