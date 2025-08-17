@@ -16,6 +16,29 @@ namespace serratia::protocols {
 
 enum DHCPState { INIT, SELECTING, REQUESTING, INIT_REBOOT, REBOOTING, BOUND, RENEWING, REBINDING, STATELESS };
 
+struct DhcpOption {
+  std::uint8_t size{};
+  std::array<std::uint8_t, 255> data{};
+
+  DhcpOption(const std::initializer_list<std::uint8_t> init) {
+    if (init.size() > 255) throw std::length_error("DHCP options must be 255 bytes or less");
+    size = static_cast<std::uint8_t>(init.size());
+    std::ranges::copy(init, data.begin());
+  }
+
+  explicit DhcpOption(const std::vector<std::uint8_t>& init) {
+    if (init.size() > 255) throw std::length_error("DHCP options must be 255 bytes or less");
+    size = static_cast<std::uint8_t>(init.size());
+    std::ranges::copy(init, data.begin());
+  }
+
+  DhcpOption() = delete;
+
+  [[nodiscard]] pcpp::DhcpOptionBuilder toBuilder(const pcpp::DhcpOptionTypes code) const {
+    return {code, data.data(), size};
+  }
+};
+
 struct DHCPCommonConfig {
   DHCPCommonConfig(std::shared_ptr<pcpp::EthLayer> eth_layer, std::shared_ptr<pcpp::IPv4Layer> ip_layer,
                    std::shared_ptr<pcpp::UdpLayer> udp_layer)
@@ -86,7 +109,7 @@ struct DHCPOfferConfig {
                   const std::optional<std::uint8_t> hops = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
                   const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
-                  std::optional<std::string> message = std::nullopt,
+                  const std::optional<DhcpOption>& message = std::nullopt,
                   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt)
       : common_config(std::move(common_config)),
         hops(hops),
@@ -99,7 +122,7 @@ struct DHCPOfferConfig {
         server_name(server_name),
         boot_file_name(boot_file_name),
         lease_time(lease_time),
-        message(std::move(message)),
+        message(message),
         vendor_class_id(std::move(vendor_class_id)),
         server_id(server_id),
         dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
@@ -121,7 +144,7 @@ struct DHCPOfferConfig {
   std::optional<std::array<std::uint8_t, 128>> boot_file_name;
   std::uint32_t lease_time;
   // TODO: Change all message_ fields to std::array<char, 255> instead of string
-  std::optional<std::string> message;
+  std::optional<DhcpOption> message;
   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id;
   pcpp::IPv4Address server_id;
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
@@ -174,6 +197,7 @@ struct DHCPRequestConfig {
   std::array<std::uint8_t, 16> client_hardware_address;
   std::optional<pcpp::IPv4Address> requested_ip;
   std::optional<std::uint32_t> lease_time;
+  // TODO: switch all DhcpOptionBuilder options to DhcpOption style instead
   std::optional<pcpp::DhcpOptionBuilder> client_id;
   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id;
   std::optional<pcpp::IPv4Address> server_id;
@@ -193,7 +217,7 @@ struct DHCPAckConfig {
                 const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
                 const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
                 const std::optional<std::uint32_t> lease_time = std::nullopt,
-                std::optional<std::string> message = std::nullopt,
+                const std::optional<DhcpOption>& message = std::nullopt,
                 std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt)
       : common_config(std::move(common_config)),
         hops(hops),
@@ -207,7 +231,7 @@ struct DHCPAckConfig {
         server_name(server_name),
         boot_file_name(boot_file_name),
         lease_time(lease_time),
-        message(std::move(message)),
+        message(message),
         vendor_class_id(std::move(vendor_class_id)),
         server_id(server_id),
         dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
@@ -227,7 +251,7 @@ struct DHCPAckConfig {
   std::optional<std::array<std::uint8_t, 64>> server_name;
   std::optional<std::array<std::uint8_t, 128>> boot_file_name;
   std::optional<std::uint32_t> lease_time;
-  std::optional<std::string> message;
+  std::optional<DhcpOption> message;
   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id;
   pcpp::IPv4Address server_id;
   std::vector<pcpp::DhcpOptionBuilder> extra_options;
@@ -240,7 +264,7 @@ struct DHCPNakConfig {
                 const std::optional<std::uint8_t> hops = std::nullopt,
                 const std::optional<std::uint16_t> bootp_flags = std::nullopt,
                 const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                std::optional<std::string> message = std::nullopt,
+                const std::optional<DhcpOption>& message = std::nullopt,
                 std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
                 std::optional<pcpp::DhcpOptionBuilder> vendor_class_id = std::nullopt)
       : common_config(std::move(common_config)),
@@ -249,7 +273,7 @@ struct DHCPNakConfig {
         bootp_flags(bootp_flags),
         gateway_ip(gateway_ip),
         client_hardware_address(client_hardware_address),
-        message(std::move(message)),
+        message(message),
         client_id(std::move(client_id)),
         vendor_class_id(std::move(vendor_class_id)),
         server_id(server_id),
@@ -264,7 +288,7 @@ struct DHCPNakConfig {
   std::optional<std::uint16_t> bootp_flags;
   std::optional<pcpp::IPv4Address> gateway_ip;
   std::array<std::uint8_t, 16> client_hardware_address;
-  std::optional<std::string> message;
+  std::optional<DhcpOption> message;
   std::optional<pcpp::DhcpOptionBuilder> client_id;
   std::optional<pcpp::DhcpOptionBuilder> vendor_class_id;
   pcpp::IPv4Address server_id;
@@ -278,7 +302,7 @@ struct DHCPDeclineConfig {
                     const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops = std::nullopt,
                     const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                     std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
-                    std::optional<std::string> message = std::nullopt)
+                    const std::optional<DhcpOption>& message = std::nullopt)
       : common_config(std::move(common_config)),
         hops(hops),
         transaction_id(transaction_id),
@@ -287,7 +311,7 @@ struct DHCPDeclineConfig {
         requested_ip(requested_ip),
         client_id(std::move(client_id)),
         server_id(server_id),
-        message(std::move(message)),
+        message(message),
         dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPDeclineConfig() = delete;
 
@@ -301,7 +325,7 @@ struct DHCPDeclineConfig {
   pcpp::IPv4Address requested_ip;
   std::optional<pcpp::DhcpOptionBuilder> client_id;
   pcpp::IPv4Address server_id;
-  std::optional<std::string> message;
+  std::optional<DhcpOption> message;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
 };
 
@@ -311,7 +335,7 @@ struct DHCPReleaseConfig {
                     const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops = std::nullopt,
                     const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
                     std::optional<pcpp::DhcpOptionBuilder> client_id = std::nullopt,
-                    std::optional<std::string> message = std::nullopt)
+                    const std::optional<DhcpOption>& message = std::nullopt)
       : common_config(std::move(common_config)),
         hops(hops),
         transaction_id(transaction_id),
@@ -320,7 +344,7 @@ struct DHCPReleaseConfig {
         client_hardware_address(client_hardware_address),
         client_id(std::move(client_id)),
         server_id(server_id),
-        message(std::move(message)),
+        message(message),
         dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPReleaseConfig() = delete;
 
@@ -334,7 +358,7 @@ struct DHCPReleaseConfig {
   std::array<std::uint8_t, 16> client_hardware_address;
   std::optional<pcpp::DhcpOptionBuilder> client_id;
   pcpp::IPv4Address server_id;
-  std::optional<std::string> message;
+  std::optional<DhcpOption> message;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
 };
 

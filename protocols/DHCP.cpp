@@ -75,7 +75,7 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time});
 
   if (message.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
+    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (vendor_class_id.has_value()) {
@@ -177,7 +177,7 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) co
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_ACK);
 
   if (message.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
+    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (vendor_class_id.has_value()) {
@@ -224,7 +224,7 @@ pcpp::Packet serratia::protocols::DHCPNakConfig::build() const {
   dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_NAK);
 
   if (message.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
+    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   if (client_id.has_value()) {
@@ -269,7 +269,7 @@ pcpp::Packet serratia::protocols::DHCPDeclineConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   if (message.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
+    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -297,7 +297,7 @@ pcpp::Packet serratia::protocols::DHCPReleaseConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   if (message.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message.value()});
+    dhcp_layer->addOption(message.value().toBuilder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE));
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();

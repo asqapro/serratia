@@ -3,4 +3,5 @@ add_library(protocols
         DHCP.cpp
 )
 
-target_link_libraries(protocols PUBLIC -lpcap -lPcap++ -lPacket++ -lCommon++)
+find_package(PcapPlusPlus REQUIRED)
+target_link_libraries(protocols PRIVATE PcapPlusPlus::Pcap++ PcapPlusPlus::Packet++ PcapPlusPlus::Common++)

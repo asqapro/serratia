@@ -7,4 +7,5 @@ add_library(utilities
         DHCPServer.cpp
 )
 
-target_link_libraries(utilities PUBLIC -lpcap -lPcap++ -lPacket++ -lCommon++)
+find_package(PcapPlusPlus REQUIRED)
+target_link_libraries(utilities PRIVATE PcapPlusPlus::Pcap++ PcapPlusPlus::Packet++ PcapPlusPlus::Common++)

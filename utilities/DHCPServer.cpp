@@ -172,6 +172,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
+  // TODO: Remove these since no longer have getters
   const auto transaction_id = dhcp_header->transactionID;
   const auto server_ip = config_.server_ip;
   const auto bootp_flags = dhcp_header->flags;
