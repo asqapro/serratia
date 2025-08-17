@@ -7,8 +7,6 @@
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/UdpLayer.h>
 
-#include <utility>
-
 // NOTE: Pcap++ shuffles memory around when adding options & can cause a bug if serverName and bootFilename are set
 // before adding options. Easy fix is to just add any options first in build() functions.
 
@@ -51,10 +49,10 @@ pcpp::Packet serratia::protocols::DHCPDiscoverConfig::build() const {
   }
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
-  auto dhcp_header = dhcp_layer->getDhcpHeader();
+  const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
@@ -87,7 +85,7 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -105,8 +103,8 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
     std::ranges::copy(server_name.value(), dhcp_header->serverName);
   }
 
-  if (auto boot_file_arr = boot_file_name; boot_file_arr.has_value()) {
-    std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
+  if (boot_file_name.has_value()) {
+    std::ranges::copy(boot_file_name.value(), dhcp_header->bootFilename);
   }
 
   pcpp::Packet packet = common_config.build();
@@ -117,7 +115,6 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   return packet;
 }
 
-// TODO: add const where possible, not just this function
 pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   if (requested_ip.has_value()) {
     dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value()});
@@ -138,9 +135,7 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   }
 
   if (server_id.has_value()) {
-    // TODO: streamline option creation using brace creation (might have already made this comment)
-    pcpp::DhcpOptionBuilder server_id_opt(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
-    dhcp_layer->addOption(server_id_opt);
+    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value()});
   }
 
   if (param_request_list.has_value()) {
@@ -152,7 +147,7 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   }
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -192,10 +187,10 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) co
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
-  auto dhcp_header = dhcp_layer->getDhcpHeader();
+  const auto dhcp_header = dhcp_layer->getDhcpHeader();
   // TODO: rearrange these (and in other functions) to match RFC ordering
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
   dhcp_header->hops = hops.value_or(0);
@@ -209,12 +204,12 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) co
   dhcp_header->gatewayIpAddress = gateway_ip.toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
-  if (auto server_arr = server_name; server_arr.has_value()) {
-    std::ranges::copy(server_arr.value(), dhcp_header->serverName);
+  if (server_name.has_value()) {
+    std::ranges::copy(server_name.value(), dhcp_header->serverName);
   }
 
-  if (auto boot_file_arr = boot_file_name; boot_file_arr.has_value()) {
-    std::ranges::copy(boot_file_arr.value(), dhcp_header->bootFilename);
+  if (boot_file_name.has_value()) {
+    std::ranges::copy(boot_file_name.value(), dhcp_header->bootFilename);
   }
 
   pcpp::Packet packet = common_config.build();
@@ -243,7 +238,7 @@ pcpp::Packet serratia::protocols::DHCPNakConfig::build() const {
   dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
@@ -341,10 +336,10 @@ pcpp::Packet serratia::protocols::DHCPInformConfig::build() const {
   }
 
   for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(pcpp::DhcpOptionBuilder(opt));
+    dhcp_layer->addOption(opt);
   }
 
-  auto dhcp_header = dhcp_layer->getDhcpHeader();
+  const auto dhcp_header = dhcp_layer->getDhcpHeader();
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
 
   dhcp_header->hops = hops.value_or(0);

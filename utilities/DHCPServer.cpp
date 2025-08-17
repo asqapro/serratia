@@ -159,10 +159,10 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
     client_id_mac.copyTo(client_id.data() + 1);
   }
 
-  auto lease_expiry = std::chrono::steady_clock::now() + config_.lease_time;
+  const auto lease_expiry = std::chrono::steady_clock::now() + config_.lease_time;
 
   // record the lease
-  LeaseInfo lease(client_id, offered_ip, lease_expiry);
+  const LeaseInfo lease(client_id, offered_ip, lease_expiry);
 
   lease_table_[client_mac] = lease;
 
@@ -172,17 +172,17 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
-  auto transaction_id = dhcp_header->transactionID;
-  auto server_ip = config_.server_ip;
-  auto bootp_flags = dhcp_header->flags;
-  auto gateway_ip = dhcp_header->gatewayIpAddress;
+  const auto transaction_id = dhcp_header->transactionID;
+  const auto server_ip = config_.server_ip;
+  const auto bootp_flags = dhcp_header->flags;
+  const auto gateway_ip = dhcp_header->gatewayIpAddress;
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
   // auto server_id = config_.get_server_id
   constexpr auto hops = 0;
-  auto server_name = config_.server_name;
-  auto boot_file_name = config_.boot_file_name;
+  const auto server_name = config_.server_name;
+  const auto boot_file_name = config_.boot_file_name;
   // auto message = config_.message;
   // auto vendor_class_id = config_.vendor_class_id;
   // auto max_message_size = config_.max_message_size;
