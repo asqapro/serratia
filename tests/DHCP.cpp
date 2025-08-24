@@ -85,8 +85,9 @@ struct TestEnvironment {
 
   std::size_t discover_option_count = 7;
   std::size_t offer_option_count = 5;
-  std::size_t initial_request_option_count = 8;
-  std::size_t renewal_request_option_count = 6;
+  std::size_t request_selecting_option_count = 8;
+  std::size_t request_init_reboot_option_count = 7;
+  std::size_t request_bound_renew_rebind_option_count = 6;
   std::size_t ack_request_option_count = 5;
   std::size_t ack_inform_option_count = 4;
   std::size_t nak_option_count = 5;
@@ -351,7 +352,8 @@ serratia::protocols::DHCPRequestConfig buildTestRenewalRequest(const TestEnviron
           env.max_message_size};
 }
 
-void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, const bool initial_request) {
+void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer,
+                       const serratia::protocols::DHCPState state) {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREQUEST == dhcp_header->opCode);
@@ -361,11 +363,6 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
   REQUIRE(env.transaction_id == dhcp_header->transactionID);
   REQUIRE(env.seconds_elapsed == dhcp_header->secondsElapsed);
   REQUIRE(env.bootp_flags == dhcp_header->flags);
-  if (true == initial_request) {
-    REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
-  } else {
-    REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
-  }
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
   REQUIRE(EMPTY_IP_ADDR == dhcp_header->serverIpAddress);
   REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
@@ -382,14 +379,6 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_REQUEST == dhcp_layer->getMessageType());
 
-  if (true == initial_request) {
-    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == env.client_ip);
-    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
-  } else {
-    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).isNull() == true);
-    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).isNull() == true);
-  }
-
   const auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
   const auto client_id = client_id_option.getValue();
   const auto client_id_size = client_id_option.getDataSize();
@@ -401,10 +390,31 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, 
   REQUIRE(true == std::equal(param_request_list, param_request_list + param_request_list_size,
                              env.param_request_list.begin(), env.param_request_list.end()));
 
-  if (true == initial_request) {
-    REQUIRE(dhcp_layer->getOptionsCount() == env.initial_request_option_count);
-  } else {
-    REQUIRE(dhcp_layer->getOptionsCount() == env.renewal_request_option_count);
+  switch (state) {
+    case serratia::protocols::BOUND:
+    case serratia::protocols::RENEWING:
+    case serratia::protocols::REBINDING:
+      REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
+      REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).isNull());
+      REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).isNull());
+      REQUIRE(dhcp_layer->getOptionsCount() == env.request_bound_renew_rebind_option_count);
+      break;
+    case serratia::protocols::SELECTING:
+      REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
+      REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == env.your_ip);
+      REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_id);
+      REQUIRE(dhcp_layer->getOptionsCount() == env.request_selecting_option_count);
+      break;
+    case serratia::protocols::INIT_REBOOT:
+      REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
+      REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValueAsIpAddr() == env.your_ip);
+      REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).isNull());
+      REQUIRE(dhcp_layer->getOptionsCount() == env.request_init_reboot_option_count);
+      break;
+    default:
+      INFO("Invalid state for DHCPREQUEST");
+      REQUIRE(false);
+      break;
   }
 }
 
@@ -792,28 +802,61 @@ TEST_CASE("Build DHCP packets") {
     verifyDHCPOffer(env, dhcp_layer);
   }
 
-  SECTION("DHCP initial request") {
+  SECTION("DHCP request - INIT-REBOOT") {
     // Set broadcast flag
     env.bootp_flags = 0x8000;
 
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::INIT_REBOOT};
     const auto dhcp_request_config = buildTestInitialRequest(env);
-    const auto packet = dhcp_request_config.build();
+    const auto packet = dhcp_request_config.build(state);
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-    constexpr bool initial_request = true;
-    verifyDHCPRequest(env, dhcp_layer, initial_request);
+    verifyDHCPRequest(env, dhcp_layer, state);
 
     // Clear broadcast flag
     env.bootp_flags = 0;
   }
 
-  SECTION("DHCP renewal request") {
-    const auto dhcp_request_config = buildTestRenewalRequest(env);
-    const auto packet = dhcp_request_config.build();
+  SECTION("DHCP request - SELECTING") {
+    // Set broadcast flag
+    env.bootp_flags = 0x8000;
+
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::SELECTING};
+    const auto dhcp_request_config = buildTestInitialRequest(env);
+    const auto packet = dhcp_request_config.build(state);
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-    constexpr bool initial_request = false;
-    verifyDHCPRequest(env, dhcp_layer, initial_request);
+    verifyDHCPRequest(env, dhcp_layer, state);
+
+    // Clear broadcast flag
+    env.bootp_flags = 0;
+  }
+
+  SECTION("DHCP request - BOUND") {
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::BOUND};
+    const auto dhcp_request_config = buildTestRenewalRequest(env);
+    const auto packet = dhcp_request_config.build(state);
+
+    const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPRequest(env, dhcp_layer, serratia::protocols::BOUND);
+  }
+
+  SECTION("DHCP request - RENEWING") {
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::RENEWING};
+    const auto dhcp_request_config = buildTestRenewalRequest(env);
+    const auto packet = dhcp_request_config.build(state);
+
+    const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPRequest(env, dhcp_layer, serratia::protocols::RENEWING);
+  }
+
+  SECTION("DHCP request - REBINDING") {
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::REBINDING};
+    const auto dhcp_request_config = buildTestRenewalRequest(env);
+    const auto packet = dhcp_request_config.build(state);
+
+    const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPRequest(env, dhcp_layer, serratia::protocols::REBINDING);
   }
 
   SECTION("DHCP ACK (after request)") {

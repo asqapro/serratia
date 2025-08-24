@@ -191,7 +191,7 @@ struct DHCPRequestConfig {
   DHCPRequestConfig() = delete;
 
   // TODO: Add functions for selecting, init-reboot, etc
-  [[nodiscard]] pcpp::Packet build() const;
+  [[nodiscard]] pcpp::Packet build(DHCPState state) const;
 
   DHCPCommonConfig common_config;
   std::optional<std::uint8_t> hops;

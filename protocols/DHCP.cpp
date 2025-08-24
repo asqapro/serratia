@@ -115,10 +115,24 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
   return packet;
 }
 
-pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
-  if (requested_ip.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value()});
+pcpp::Packet serratia::protocols::DHCPRequestConfig::build(const DHCPState state) const {
+
+  switch (state) {
+    case BOUND:
+    case RENEWING:
+    case REBINDING:
+      break;
+    case SELECTING:
+      dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value()});
+      dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value()});
+      break;
+    case INIT_REBOOT:
+      dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value()});
+      break;
+    default:
+      throw std::runtime_error("DHCPRequestConfig: invalid state");
   }
+
 
   if (lease_time.has_value()) {
     dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value()});
@@ -132,10 +146,6 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
 
   if (vendor_class_id.has_value()) {
     dhcp_layer->addOption(vendor_class_id.value().build(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER));
-  }
-
-  if (server_id.has_value()) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value()});
   }
 
   if (param_request_list.has_value()) {
@@ -157,6 +167,19 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build() const {
   dhcp_header->secondsElapsed = seconds_elapsed.value_or(0);
   dhcp_header->flags = bootp_flags.value_or(0);
   dhcp_header->clientIpAddress = client_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
+  switch (state) {
+    case BOUND:
+    case RENEWING:
+    case REBINDING:
+      dhcp_header->clientIpAddress = client_ip.value().toInt();
+      break;
+    case SELECTING:
+    case INIT_REBOOT:
+      dhcp_header->clientIpAddress = 0;
+      break;
+    // Default is handled above with thrown exception
+    default:;
+  }
   dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
   std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
 
