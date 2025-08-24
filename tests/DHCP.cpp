@@ -146,13 +146,13 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& e
 serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
-  const serratia::protocols::DhcpOption param_request_list{
+  const serratia::protocols::DHCPOption param_request_list{
       std::vector<std::uint8_t>(env.param_request_list.begin(), env.param_request_list.end())};
 
   return {dhcp_common_config,
@@ -226,9 +226,9 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
 serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
-  const serratia::protocols::DhcpOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
+  const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
   return {dhcp_common_config,
@@ -297,13 +297,13 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
-  const serratia::protocols::DhcpOption param_request_list{
+  const serratia::protocols::DHCPOption param_request_list{
       std::vector<std::uint8_t>(env.param_request_list.begin(), env.param_request_list.end())};
 
   return {dhcp_common_config,
@@ -326,13 +326,13 @@ serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnviron
 serratia::protocols::DHCPRequestConfig buildTestRenewalRequest(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
-  const serratia::protocols::DhcpOption param_request_list{
+  const serratia::protocols::DHCPOption param_request_list{
       std::vector<std::uint8_t>(env.param_request_list.begin(), env.param_request_list.end())};
 
   return {dhcp_common_config,
@@ -428,9 +428,9 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
   std::array<std::uint8_t, MAX_BOOT_FILE_NAME_SIZE> boot_file_name = {0};
   std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
-  const serratia::protocols::DhcpOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
+  const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
   return {dhcp_common_config,
@@ -450,7 +450,7 @@ serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
           vendor_class_id};
 }
 
-void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serratia::protocols::DHCPState state) {
+void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serratia::protocols::DHCPQuery query) {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode);
@@ -459,14 +459,6 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
   REQUIRE(env.hops == dhcp_header->hops);
   REQUIRE(env.transaction_id == dhcp_header->transactionID);
   REQUIRE(0 == dhcp_header->secondsElapsed);
-  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
-    REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
-    REQUIRE(env.your_ip == dhcp_header->yourIpAddress);
-  } else {
-    REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
-    REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
-  }
-
   REQUIRE(env.server_ip == dhcp_header->serverIpAddress);
   REQUIRE(env.bootp_flags == dhcp_header->flags);
   REQUIRE(env.gateway_ip == dhcp_header->gatewayIpAddress);
@@ -480,13 +472,6 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
                              env.boot_file_name.begin(), env.boot_file_name.end()));
 
   REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).isNull());
-
-  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
-    REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
-            ntohl(env.lease_time.count()));
-  } else {
-    REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).isNull());
-  }
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_ACK == dhcp_layer->getMessageType());
 
@@ -507,22 +492,36 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
   // TODO: add this isNull() check to other places where "MUST NOT" is stated in RFC
   REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).isNull());
 
-  if (serratia::protocols::DHCPState::REQUESTING == state || serratia::protocols::DHCPState::REBOOTING == state) {
-    REQUIRE(dhcp_layer->getOptionsCount() == env.ack_request_option_count);
-  } else {
-    REQUIRE(dhcp_layer->getOptionsCount() == env.ack_inform_option_count);
+  switch (query) {
+    case serratia::protocols::REQUEST:
+      REQUIRE(env.client_ip == dhcp_header->clientIpAddress);
+      REQUIRE(env.your_ip == dhcp_header->yourIpAddress);
+      REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
+              ntohl(env.lease_time.count()));
+      REQUIRE(dhcp_layer->getOptionsCount() == env.ack_request_option_count);
+      break;
+    case serratia::protocols::INFORM:
+      REQUIRE(EMPTY_IP_ADDR == dhcp_header->clientIpAddress);
+      REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
+      REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).isNull());
+      REQUIRE(dhcp_layer->getOptionsCount() == env.ack_inform_option_count);
+      break;
+    default:
+      INFO("Invalid state for DHCPACK");
+      REQUIRE(false);
+      break;
   }
 }
 
 serratia::protocols::DHCPNakConfig buildTestNak(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
 
-  const serratia::protocols::DhcpOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
+  const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
   return {dhcp_common_config,
@@ -584,10 +583,10 @@ void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 serratia::protocols::DHCPDeclineConfig buildTestDecline(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
+  const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
   return {dhcp_common_config, env.transaction_id, env.client_hardware_address,
           env.requested_ip,   env.server_id,      env.hops,
@@ -637,10 +636,10 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 serratia::protocols::DHCPReleaseConfig buildTestRelease(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
+  const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
   return {dhcp_common_config, env.transaction_id, env.client_ip, env.client_hardware_address, env.server_id, env.hops,
           env.gateway_ip,     client_id,          message};
@@ -687,13 +686,13 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 serratia::protocols::DHCPInformConfig buildTestInform(const TestEnvironment& env) {
   const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
 
-  const serratia::protocols::DhcpOption client_id{
+  const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
 
-  const serratia::protocols::DhcpOption vendor_class_id{
+  const serratia::protocols::DHCPOption vendor_class_id{
       std::vector<std::uint8_t>(env.vendor_class_id.begin(), env.vendor_class_id.end())};
 
-  const serratia::protocols::DhcpOption param_request_list{
+  const serratia::protocols::DHCPOption param_request_list{
       std::vector<std::uint8_t>(env.param_request_list.begin(), env.param_request_list.end())};
 
   return {dhcp_common_config, env.transaction_id,  env.client_ip,      env.client_hardware_address,
@@ -860,11 +859,21 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP ACK (after request)") {
+    constexpr serratia::protocols::DHCPQuery query{serratia::protocols::REQUEST};
     const auto dhcp_ack_config = buildTestAck(env);
-    const auto packet = dhcp_ack_config.build(serratia::protocols::DHCPState::REQUESTING);
+    const auto packet = dhcp_ack_config.build(query);
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-    verifyDHCPAck(env, dhcp_layer, serratia::protocols::DHCPState::REQUESTING);
+    verifyDHCPAck(env, dhcp_layer, query);
+  }
+
+  SECTION("DHCP ACK (after inform)") {
+    constexpr serratia::protocols::DHCPQuery query{serratia::protocols::INFORM};
+    const auto dhcp_ack_config = buildTestAck(env);
+    const auto packet = dhcp_ack_config.build(query);
+
+    const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
+    verifyDHCPAck(env, dhcp_layer, query);
   }
 
   SECTION("DHCP NAK") {
@@ -897,14 +906,6 @@ TEST_CASE("Build DHCP packets") {
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPInform(env, dhcp_layer);
-  }
-
-  SECTION("DHCP ACK (after inform)") {
-    const auto dhcp_ack_config = buildTestAck(env);
-    const auto packet = dhcp_ack_config.build(serratia::protocols::DHCPState::STATELESS);
-
-    const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
-    verifyDHCPAck(env, dhcp_layer, serratia::protocols::DHCPState::STATELESS);
   }
 }
 

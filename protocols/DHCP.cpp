@@ -116,7 +116,6 @@ pcpp::Packet serratia::protocols::DHCPOfferConfig::build() const {
 }
 
 pcpp::Packet serratia::protocols::DHCPRequestConfig::build(const DHCPState state) const {
-
   switch (state) {
     case BOUND:
     case RENEWING:
@@ -132,7 +131,6 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build(const DHCPState state
     default:
       throw std::runtime_error("DHCPRequestConfig: invalid state");
   }
-
 
   if (lease_time.has_value()) {
     dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value()});
@@ -191,8 +189,8 @@ pcpp::Packet serratia::protocols::DHCPRequestConfig::build(const DHCPState state
   return packet;
 }
 
-pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) const {
-  if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
+pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPQuery query) const {
+  if (REQUEST == query) {
     // Intentionally throw error if lease_time isn't set after DHCPREQUEST (refer to RFC 2131 table 3)
     dhcp_layer->addOption({pcpp::DHCPOPT_DHCP_LEASE_TIME, lease_time.value()});
   }
@@ -218,7 +216,7 @@ pcpp::Packet serratia::protocols::DHCPAckConfig::build(const DHCPState state) co
   dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
   dhcp_header->hops = hops.value_or(0);
   dhcp_header->transactionID = transaction_id;
-  if (DHCPState::REQUESTING == state || DHCPState::REBOOTING == state) {
+  if (REQUEST == query) {
     dhcp_header->clientIpAddress = client_ip.value().toInt();
     dhcp_header->yourIpAddress = your_ip.value().toInt();
   }
