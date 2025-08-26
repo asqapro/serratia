@@ -19,7 +19,6 @@ constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
 
-// TODO: Use serratia:protocols::DHCPState instead
 enum PacketSource {
   INITIAL_CLIENT,
   CLIENT,
@@ -110,7 +109,7 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& e
   std::uint16_t src_port;
   std::uint16_t dst_port;
   switch (source) {
-    case PacketSource::INITIAL_CLIENT:
+    case INITIAL_CLIENT:
       src_mac = env.client_mac;
       dst_mac = BROADCAST_MAC;
       src_ip = EMPTY_IP_ADDR;
@@ -118,7 +117,7 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& e
       src_port = env.client_port;
       dst_port = env.server_port;
       break;
-    case PacketSource::CLIENT:
+    case CLIENT:
       src_mac = env.client_mac;
       dst_mac = env.server_mac;
       src_ip = env.client_ip;
@@ -126,7 +125,7 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& e
       src_port = env.client_port;
       dst_port = env.server_port;
       break;
-    case PacketSource::SERVER:
+    case SERVER:
       src_mac = env.server_mac;
       dst_mac = env.client_mac;
       src_ip = env.server_ip;
@@ -144,7 +143,7 @@ serratia::protocols::DHCPCommonConfig buildCommonConfig(const TestEnvironment& e
 }
 
 serratia::protocols::DHCPDiscoverConfig buildTestDiscover(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, INITIAL_CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
@@ -224,7 +223,7 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
 }
 
 serratia::protocols::DHCPOfferConfig buildTestOffer(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
+  const auto dhcp_common_config = buildCommonConfig(env, SERVER);
 
   const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
@@ -295,7 +294,7 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 }
 
 serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::INITIAL_CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, INITIAL_CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
@@ -324,7 +323,7 @@ serratia::protocols::DHCPRequestConfig buildTestInitialRequest(const TestEnviron
 }
 
 serratia::protocols::DHCPRequestConfig buildTestRenewalRequest(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
@@ -419,7 +418,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer,
 }
 
 serratia::protocols::DHCPAckConfig buildTestAck(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
+  const auto dhcp_common_config = buildCommonConfig(env, SERVER);
 
   std::array<std::uint8_t, MAX_SERVER_NAME_SIZE> server_name{};
   // Copy server_host_name string into server_name array
@@ -514,7 +513,7 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
 }
 
 serratia::protocols::DHCPNakConfig buildTestNak(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::SERVER);
+  const auto dhcp_common_config = buildCommonConfig(env, SERVER);
 
   const serratia::protocols::DHCPOption message{std::vector<std::uint8_t>(env.message.begin(), env.message.end())};
 
@@ -581,7 +580,7 @@ void verifyDHCPNak(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 }
 
 serratia::protocols::DHCPDeclineConfig buildTestDecline(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
@@ -634,7 +633,7 @@ void verifyDHCPDecline(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 }
 
 serratia::protocols::DHCPReleaseConfig buildTestRelease(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
@@ -684,7 +683,7 @@ void verifyDHCPRelease(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) 
 }
 
 serratia::protocols::DHCPInformConfig buildTestInform(const TestEnvironment& env) {
-  const auto dhcp_common_config = buildCommonConfig(env, PacketSource::CLIENT);
+  const auto dhcp_common_config = buildCommonConfig(env, CLIENT);
 
   const serratia::protocols::DHCPOption client_id{
       std::vector<std::uint8_t>(env.client_id.begin(), env.client_id.end())};
