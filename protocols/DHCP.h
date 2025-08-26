@@ -10,7 +10,6 @@
 #include <optional>
 #include <utility>
 
-// TODO: NVT ASCII options in DHCP don't have null terminators, need to adjust (doesn't apply to server & file name)
 // TODO: Add doxygen comments & use @note for extra_options explanation
 // TODO: Add doxygen comments & use @note to explain when to use DhcpOption (versus pcpp::IPv4Address or std::uintX_t)
 
@@ -19,31 +18,17 @@ namespace serratia::protocols {
 enum DHCPState { INIT, SELECTING, REQUESTING, INIT_REBOOT, REBOOTING, BOUND, RENEWING, REBINDING, STATELESS };
 enum DHCPQuery { DISCOVER, INFORM, REQUEST, DECLINE, RELEASE };
 
+// Represents an option using a chunk of bytes. Each message type builder interprets the bytes based on the field
+// this option is assigned to
 struct DHCPOption {
-  std::uint8_t size{};
-  std::array<std::uint8_t, 255> data{};
-
-  DHCPOption(const std::initializer_list<std::uint8_t> init) {
-    if (init.size() > 255) {
-      throw std::length_error("DHCP options must be 255 bytes or less");
-    }
-    size = static_cast<std::uint8_t>(init.size());
-    std::ranges::copy(init, data.begin());
-  }
-
-  explicit DHCPOption(const std::vector<std::uint8_t>& init) {
-    if (init.size() > 255) {
-      throw std::length_error("DHCP options must be 255 bytes or less");
-    }
-    size = static_cast<std::uint8_t>(init.size());
-    std::ranges::copy(init, data.begin());
-  }
-
+  DHCPOption(std::initializer_list<std::uint8_t> init);
+  explicit DHCPOption(const std::vector<std::uint8_t>& init);
   DHCPOption() = delete;
 
-  [[nodiscard]] pcpp::DhcpOptionBuilder build(const pcpp::DhcpOptionTypes code) const {
-    return {code, data.data(), size};
-  }
+  [[nodiscard]] pcpp::DhcpOptionBuilder build(pcpp::DhcpOptionTypes code) const;
+
+  std::uint8_t size{};
+  std::array<std::uint8_t, 255> data{};
 };
 
 struct DHCPCommonConfig {
@@ -191,7 +176,6 @@ struct DHCPRequestConfig {
         dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
   DHCPRequestConfig() = delete;
 
-  // TODO: Add functions for selecting, init-reboot, etc
   [[nodiscard]] pcpp::Packet build(DHCPState state) const;
 
   DHCPCommonConfig common_config;
