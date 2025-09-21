@@ -168,7 +168,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   // TODO: process DHCP options somewhere here
 
-  const serratia::protocols::DHCPCommonConfig dhcp_common_config(eth_layer, ip_layer, udp_layer);
+  const serratia::protocols::DHCPCommon dhcp_common_config(eth_layer, ip_layer, udp_layer);
 
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
@@ -188,7 +188,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   // auto vendor_class_id = config_.vendor_class_id;
   // auto max_message_size = config_.max_message_size;
 
-  const serratia::protocols::DHCPOfferConfig dhcp_offer_config(
+  const serratia::protocols::DHCPOffer dhcp_offer_config(
       dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
       config_.lease_time.count(), config_.server_id, hops, server_name, boot_file_name);
   const auto packet = dhcp_offer_config.build();
