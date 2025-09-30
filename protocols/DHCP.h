@@ -176,59 +176,26 @@ struct DHCPNak final : DHCPMessage {
   DHCPNak() = delete;
 };
 
-struct DHCPDecline {
-  DHCPDecline(DHCPCommon common_config, const std::uint32_t transaction_id,
-              const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address requested_ip,
-              const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops = std::nullopt,
-              const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+struct DHCPDecline final : DHCPMessage {
+  DHCPDecline(DHCPCommon common_config, std::uint32_t transaction_id,
+              std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address requested_ip,
+              pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
+              std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
               const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt)
-      : common_config(std::move(common_config)),
-        hops(hops),
-        transaction_id(transaction_id),
-        gateway_ip(gateway_ip),
-        client_hardware_address(client_hardware_address),
-        requested_ip(requested_ip),
-        client_id(client_id),
-        server_id(server_id),
-        message(message),
-        dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
+              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
   DHCPDecline() = delete;
-
-  [[nodiscard]] pcpp::Packet build() const;
-
-  DHCPCommon common_config;
-  std::optional<std::uint8_t> hops;
-  std::uint32_t transaction_id;
-  std::optional<pcpp::IPv4Address> gateway_ip;
-  std::array<std::uint8_t, 16> client_hardware_address;
-  pcpp::IPv4Address requested_ip;
-  std::optional<std::vector<std::uint8_t>> client_id;
-  pcpp::IPv4Address server_id;
-  std::optional<std::vector<std::uint8_t>> message;
-  std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
 };
 
-struct DHCPRelease {
-  DHCPRelease(DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
-              const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
-              const std::optional<std::uint8_t> hops = std::nullopt,
-              const std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+struct DHCPRelease final : DHCPMessage {
+  DHCPRelease(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
+              std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address server_id,
+              std::optional<std::uint8_t> hops = std::nullopt,
+              std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
               const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt)
-      : common_config(std::move(common_config)),
-        hops(hops),
-        transaction_id(transaction_id),
-        client_ip(client_ip),
-        gateway_ip(gateway_ip),
-        client_hardware_address(client_hardware_address),
-        client_id(client_id),
-        server_id(server_id),
-        message(message),
-        dhcp_layer(std::make_shared<pcpp::DhcpLayer>()) {}
+              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
   DHCPRelease() = delete;
 
-  [[nodiscard]] pcpp::Packet build() const;
+  /*[[nodiscard]] pcpp::Packet build() const;
 
   DHCPCommon common_config;
   std::optional<std::uint8_t> hops;
@@ -239,6 +206,6 @@ struct DHCPRelease {
   std::optional<std::vector<std::uint8_t>> client_id;
   pcpp::IPv4Address server_id;
   std::optional<std::vector<std::uint8_t>> message;
-  std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;
+  std::shared_ptr<pcpp::DhcpLayer> dhcp_layer;*/
 };
 };  // namespace serratia::protocols

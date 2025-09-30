@@ -10,7 +10,7 @@
 #include <utility>
 
 // NOTE: Pcap++ shuffles memory around when adding options & can cause a bug if serverName and bootFilename are set
-// before adding options. Easy fix is to just add any options first in build() functions.
+// before adding options. Easy fix is to just add any options first in build() function.
 
 pcpp::Packet serratia::protocols::DHCPCommon::build() const {
   pcpp::Packet packet;
@@ -420,112 +420,55 @@ serratia::protocols::DHCPNak::DHCPNak(DHCPCommon common_config, const std::uint3
   options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
 }
 
-/*pcpp::Packet serratia::protocols::DHCPNak::build() const {
-  dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_NAK);
-
-  if (message.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(),
-                                          message->size());
-    dhcp_layer->addOption(builder);
-  }
-
+serratia::protocols::DHCPDecline::DHCPDecline(DHCPCommon common_config, const std::uint32_t transaction_id,
+                                              const std::array<std::uint8_t, 16> client_hardware_address,
+                                              const pcpp::IPv4Address requested_ip, const pcpp::IPv4Address server_id,
+                                              const std::optional<std::uint8_t> hops,
+                                              const std::optional<pcpp::IPv4Address> gateway_ip,
+                                              const std::optional<std::vector<std::uint8_t>>& client_id,
+                                              const std::optional<std::vector<std::uint8_t>>& message)
+    : DHCPMessage(pcpp::DhcpMessageType::DHCP_DECLINE, std::move(common_config), transaction_id,
+                  client_hardware_address, hops, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt,
+                  gateway_ip, std::nullopt, std::nullopt, requested_ip, std::nullopt, client_id, std::nullopt,
+                  server_id, std::nullopt, std::nullopt, message) {
+  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip);
   if (client_id.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(),
-                                          client_id->size());
-    dhcp_layer->addOption(builder);
+    if (client_id->size() > 255) {
+      throw std::runtime_error("Client ID must be 255 bytes or less");
+    }
+    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-
-  if (vendor_class_id.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                                          vendor_class_id->data(), vendor_class_id->size());
-    dhcp_layer->addOption(builder);
-  }
-
-  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
-
-  for (const auto& opt : extra_options) {
-    dhcp_layer->addOption(opt);
-  }
-
-  const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREPLY;
-  dhcp_header->hops = hops.value_or(0);
-  dhcp_header->transactionID = transaction_id;
-  dhcp_header->flags = bootp_flags.value_or(0);
-  dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
-
-  pcpp::Packet packet = common_config.build();
-  packet.addLayer(dhcp_layer.get());
-
-  packet.computeCalculateFields();
-
-  return packet;
-}*/
-
-pcpp::Packet serratia::protocols::DHCPDecline::build() const {
-  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip});
-
-  dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_DECLINE);
-
-  if (client_id.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(),
-                                          client_id->size());
-    dhcp_layer->addOption(builder);
-  }
-
-  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
-
+  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
   if (message.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(),
-                                          message->size());
-    dhcp_layer->addOption(builder);
+    if (message->size() > 255) {
+      throw std::runtime_error("Message must be 255 bytes or less");
+    }
+    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
   }
-
-  const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = hops.value_or(0);
-  dhcp_header->transactionID = transaction_id;
-  dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
-
-  pcpp::Packet packet = common_config.build();
-  packet.addLayer(dhcp_layer.get());
-
-  packet.computeCalculateFields();
-
-  return packet;
 }
 
-pcpp::Packet serratia::protocols::DHCPRelease::build() const {
-  dhcp_layer->setMessageType(pcpp::DhcpMessageType::DHCP_RELEASE);
-
+serratia::protocols::DHCPRelease::DHCPRelease(DHCPCommon common_config, const std::uint32_t transaction_id,
+                                              const pcpp::IPv4Address client_ip,
+                                              const std::array<std::uint8_t, 16> client_hardware_address,
+                                              const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+                                              const std::optional<pcpp::IPv4Address> gateway_ip,
+                                              const std::optional<std::vector<std::uint8_t>>& client_id,
+                                              const std::optional<std::vector<std::uint8_t>>& message)
+    : DHCPMessage(pcpp::DhcpMessageType::DHCP_RELEASE, std::move(common_config), transaction_id,
+                  client_hardware_address, hops, std::nullopt, std::nullopt, client_ip, std::nullopt, std::nullopt,
+                  gateway_ip, std::nullopt, std::nullopt, std::nullopt, std::nullopt, client_id, std::nullopt,
+                  server_id, std::nullopt, std::nullopt, message) {
   if (client_id.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(),
-                                          client_id->size());
-    dhcp_layer->addOption(builder);
+    if (client_id->size() > 255) {
+      throw std::runtime_error("Client ID must be 255 bytes or less");
+    }
+    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-
-  dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id});
-
+  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
   if (message.has_value()) {
-    const pcpp::DhcpOptionBuilder builder(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(),
-                                          message->size());
-    dhcp_layer->addOption(builder);
+    if (message->size() > 255) {
+      throw std::runtime_error("Message must be 255 bytes or less");
+    }
+    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
   }
-
-  const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  dhcp_header->opCode = pcpp::BootpOpCodes::DHCP_BOOTREQUEST;
-  dhcp_header->hops = hops.value_or(0);
-  dhcp_header->transactionID = transaction_id;
-  dhcp_header->clientIpAddress = client_ip.toInt();
-  dhcp_header->gatewayIpAddress = gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")).toInt();
-  std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
-
-  pcpp::Packet packet = common_config.build();
-  packet.addLayer(dhcp_layer.get());
-
-  packet.computeCalculateFields();
-
-  return packet;
 }

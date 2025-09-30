@@ -935,7 +935,7 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP decline") {
-    const auto dhcp_decline_config = createTestDecline(env);
+    auto dhcp_decline_config = createTestDecline(env);
     const auto packet = dhcp_decline_config.build();
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
@@ -943,7 +943,7 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP release") {
-    const auto dhcp_release_config = createTestRelease(env);
+    auto dhcp_release_config = createTestRelease(env);
     const auto packet = dhcp_release_config.build();
 
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
