@@ -7,6 +7,7 @@
 #include <pcapplusplus/Packet.h>
 #include <pcapplusplus/UdpLayer.h>
 
+#include <ranges>
 #include <utility>
 
 // NOTE: Pcap++ shuffles memory around when adding options & can cause a bug if serverName and bootFilename are set
@@ -36,30 +37,30 @@ serratia::protocols::DHCPMessage::DHCPMessage(
     const std::optional<std::vector<std::uint8_t>>& vendor_class_id, const std::optional<pcpp::IPv4Address> server_id,
     const std::optional<std::vector<std::uint8_t>>& param_request_list,
     const std::optional<std::uint16_t> max_message_size, const std::optional<std::vector<std::uint8_t>>& message)
-    : message_type(message_type),
-      dhcp_layer(std::make_shared<pcpp::DhcpLayer>()),
-      common_config(std::move(common_config)),
-      hops(hops.value_or(0)),
-      transaction_id(transaction_id),
-      seconds_elapsed(seconds_elapsed.value_or(0)),
-      bootp_flags(bootp_flags.value_or(0)),
-      client_ip(client_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
-      your_ip(your_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
-      server_ip(server_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
-      gateway_ip(gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
-      server_name(server_name.value_or(std::array<std::uint8_t, 64>{})),
-      boot_file_name(boot_file_name.value_or(std::array<std::uint8_t, 128>{})),
-      client_hardware_address(client_hardware_address),
-      requested_ip(requested_ip),
-      lease_time(lease_time),
-      client_id(client_id),
-      vendor_class_id(vendor_class_id),
-      server_id(server_id),
-      param_request_list(param_request_list),
-      max_message_size(max_message_size),
-      message(message) {
-  server_name_set = std::ranges::any_of(this->server_name, [](const std::uint8_t x) { return x != 0; });
-  boot_file_name_set = std::ranges::any_of(this->boot_file_name, [](const std::uint8_t x) { return x != 0; });
+    : message_type_(message_type),
+      dhcp_layer_(std::make_shared<pcpp::DhcpLayer>()),
+      common_config_(std::move(common_config)),
+      hops_(hops.value_or(0)),
+      transaction_id_(transaction_id),
+      seconds_elapsed_(seconds_elapsed.value_or(0)),
+      bootp_flags_(bootp_flags.value_or(0)),
+      client_ip_(client_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
+      your_ip_(your_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
+      server_ip_(server_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
+      gateway_ip_(gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0"))),
+      server_name_(server_name.value_or(std::array<std::uint8_t, 64>{})),
+      boot_file_name_(boot_file_name.value_or(std::array<std::uint8_t, 128>{})),
+      client_hardware_address_(client_hardware_address),
+      requested_ip_(requested_ip),
+      lease_time_(lease_time),
+      client_id_(client_id),
+      vendor_class_id_(vendor_class_id),
+      server_id_(server_id),
+      param_request_list_(param_request_list),
+      max_message_size_(max_message_size),
+      message_(message) {
+  server_name_set_ = std::ranges::any_of(this->server_name_, [](const std::uint8_t x) { return x != 0; });
+  boot_file_name_set_ = std::ranges::any_of(this->boot_file_name_, [](const std::uint8_t x) { return x != 0; });
 }
 
 void serratia::protocols::DHCPMessage::addOption(const pcpp::DhcpOptionBuilder& option_builder,
@@ -68,35 +69,35 @@ void serratia::protocols::DHCPMessage::addOption(const pcpp::DhcpOptionBuilder& 
 
   // Last 2 bytes are reserved for the "overloading" and "end" options
   if (built_option.getTotalSize() < remaining_message_size - 2) {
-    dhcp_layer->addOption(option_builder);
+    dhcp_layer_->addOption(option_builder);
     remaining_message_size -= built_option.getTotalSize();
     return;
   }
-  if (false == boot_file_name_set) {
+  if (false == boot_file_name_set_) {
     // Last byte of boot file name is reserved for the "end" option
-    if (boot_file_offset + built_option.getTotalSize() < boot_file_name.size() - 1) {
-      if (0 == (overloading & 1)) {
-        boot_file_name.back() = pcpp::DHCPOPT_END;
-        overloading |= 1;
+    if (boot_file_offset_ + built_option.getTotalSize() < boot_file_name_.size() - 1) {
+      if (0 == (overloading_ & 1)) {
+        boot_file_name_.back() = pcpp::DHCPOPT_END;
+        overloading_ |= 1;
       }
 
       // add option to boot file field
-      std::copy_n(built_option.getRecordBasePtr(), built_option.getTotalSize(), boot_file_name.begin());
-      boot_file_offset += built_option.getTotalSize();
+      std::copy_n(built_option.getRecordBasePtr(), built_option.getTotalSize(), boot_file_name_.begin());
+      boot_file_offset_ += built_option.getTotalSize();
       return;
     }
   }
-  if (false == server_name_set) {
+  if (false == server_name_set_) {
     // Last byte of the server name is reserved for the "end" option
-    if (server_name_offset + built_option.getTotalSize() < server_name.size() - 1) {
-      if (0 == (overloading & 2)) {
-        server_name.back() = pcpp::DHCPOPT_END;
-        overloading |= 2;
+    if (server_name_offset_ + built_option.getTotalSize() < server_name_.size() - 1) {
+      if (0 == (overloading_ & 2)) {
+        server_name_.back() = pcpp::DHCPOPT_END;
+        overloading_ |= 2;
       }
 
       // add option to field
-      std::copy_n(built_option.getRecordBasePtr(), built_option.getTotalSize(), server_name.begin());
-      server_name_offset += built_option.getTotalSize();
+      std::copy_n(built_option.getRecordBasePtr(), built_option.getTotalSize(), server_name_.begin());
+      server_name_offset_ += built_option.getTotalSize();
       return;
     }
   }
@@ -109,27 +110,27 @@ pcpp::Packet serratia::protocols::DHCPMessage::build(std::uint16_t remaining_mes
     throw std::runtime_error("Minimum packet size is 576 bytes");
   }
 
-  remaining_message_size = common_config.ip_layer->getDataLen();
-  remaining_message_size -= common_config.udp_layer->getDataLen();
+  remaining_message_size = common_config_.ip_layer->getDataLen();
+  remaining_message_size -= common_config_.udp_layer->getDataLen();
   remaining_message_size -= sizeof(pcpp::dhcp_header);
 
-  dhcp_layer->setMessageType(message_type);
-  remaining_message_size -= sizeof(dhcp_layer->getMessageType()) + 2;
+  dhcp_layer_->setMessageType(message_type_);
+  remaining_message_size -= sizeof(dhcp_layer_->getMessageType()) + 2;
 
-  for (const auto& option : options) {
+  for (const auto& option : options_ | std::views::values) {
     addOption(option, remaining_message_size);
   }
 
-  for (const auto& opt : extra_options) {
+  for (const auto& opt : extra_options_) {
     addOption(opt, remaining_message_size);
   }
 
-  if (0 != overloading) {
-    dhcp_layer->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_OPTION_OVERLOAD, overloading});
+  if (0 != overloading_) {
+    dhcp_layer_->addOption({pcpp::DhcpOptionTypes::DHCPOPT_DHCP_OPTION_OVERLOAD, overloading_});
   }
 
-  const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  switch (message_type) {
+  const auto dhcp_header = dhcp_layer_->getDhcpHeader();
+  switch (message_type_) {
     case pcpp::DhcpMessageType::DHCP_DISCOVER:
     case pcpp::DhcpMessageType::DHCP_INFORM:
     case pcpp::DhcpMessageType::DHCP_REQUEST:
@@ -146,29 +147,403 @@ pcpp::Packet serratia::protocols::DHCPMessage::build(std::uint16_t remaining_mes
       throw std::runtime_error("Unknown DHCP message type");
   }
 
-  dhcp_header->hops = hops;
-  dhcp_header->transactionID = transaction_id;
-  dhcp_header->secondsElapsed = seconds_elapsed;
-  dhcp_header->clientIpAddress = client_ip.toInt();
-  dhcp_header->yourIpAddress = your_ip.toInt();
-  dhcp_header->serverIpAddress = server_ip.toInt();
-  dhcp_header->flags = bootp_flags;
-  dhcp_header->gatewayIpAddress = gateway_ip.toInt();
-  std::ranges::copy(client_hardware_address, dhcp_header->clientHardwareAddress);
+  dhcp_header->hops = hops_;
+  dhcp_header->transactionID = transaction_id_;
+  dhcp_header->secondsElapsed = seconds_elapsed_;
+  dhcp_header->clientIpAddress = client_ip_.toInt();
+  dhcp_header->yourIpAddress = your_ip_.toInt();
+  dhcp_header->serverIpAddress = server_ip_.toInt();
+  dhcp_header->flags = bootp_flags_;
+  dhcp_header->gatewayIpAddress = gateway_ip_.toInt();
+  std::ranges::copy(client_hardware_address_, dhcp_header->clientHardwareAddress);
 
-  if (server_name_set) {
-    std::ranges::copy(server_name, dhcp_header->serverName);
+  if (server_name_set_) {
+    std::ranges::copy(server_name_, dhcp_header->serverName);
   }
-  if (boot_file_name_set) {
-    std::ranges::copy(boot_file_name, dhcp_header->bootFilename);
+  if (boot_file_name_set_) {
+    std::ranges::copy(boot_file_name_, dhcp_header->bootFilename);
   }
 
-  pcpp::Packet packet = common_config.build();
-  packet.addLayer(dhcp_layer.get());
+  pcpp::Packet packet = common_config_.build();
+  packet.addLayer(dhcp_layer_.get());
 
   packet.computeCalculateFields();
 
   return packet;
+}
+
+bool serratia::protocols::DHCPMessage::set_common_config(DHCPCommon common_config) {
+  common_config_ = std::move(common_config);
+  return true;
+}
+
+bool serratia::protocols::DHCPMessage::set_hops(const std::uint8_t hops) {
+  hops_ = hops;
+  return true;
+}
+
+bool serratia::protocols::DHCPMessage::set_transaction_id(const std::uint16_t transaction_id) {
+  transaction_id_ = transaction_id;
+  return true;
+}
+
+void serratia::protocols::DHCPMessage::set_broadcast_flag() { bootp_flags_ = 0x8000; }
+
+void serratia::protocols::DHCPMessage::clear_broadcast_flag() { bootp_flags_ = 0; }
+
+bool serratia::protocols::DHCPMessage::set_client_ip(const pcpp::IPv4Address client_ip, const DHCPState state) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      client_ip_ = client_ip;
+      return true;
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+      switch (state) {
+        case BOUND:
+        case RENEWING:
+        case REBINDING:
+          client_ip_ = client_ip;
+          return true;
+        default:
+          return false;
+      }
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_your_ip(const pcpp::IPv4Address your_ip) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      your_ip_ = your_ip;
+      return true;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_server_ip(const pcpp::IPv4Address server_ip) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      server_ip_ = server_ip;
+      return true;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_gateway_ip(const pcpp::IPv4Address gateway_ip, const DHCPQuery query) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+      switch (query) {
+        case DISCOVER:
+          gateway_ip_ = gateway_ip;
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      switch (query) {
+        case REQUEST:
+          gateway_ip_ = gateway_ip;
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      gateway_ip_ = gateway_ip;
+      return true;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_server_name(const std::array<std::uint8_t, 64>& server_name) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      server_name_ = server_name;
+      return true;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_boot_file_name(const std::array<std::uint8_t, 128>& boot_file_name) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      boot_file_name_ = boot_file_name;
+      return true;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_client_hardware_address(
+    const std::array<std::uint8_t, 16>& client_hardware_address, const DHCPQuery query) {
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      client_hardware_address_ = client_hardware_address;
+      return true;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+      switch (query) {
+        case DISCOVER:
+          client_hardware_address_ = client_hardware_address;
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      switch (query) {
+        case REQUEST:
+          client_hardware_address_ = client_hardware_address;
+          return true;
+        default:
+          return false;
+      }
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_requested_ip(const pcpp::IPv4Address requested_ip, const DHCPState state) {
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+      switch (state) {
+        case SELECTING:
+        case INIT_REBOOT:
+          options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, requested_ip));
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, requested_ip));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_lease_time(const std::uint32_t lease_time, const DHCPQuery query) {
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_ACK:
+      switch (query) {
+        case REQUEST:
+          options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, lease_time));
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, lease_time));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_client_id(const std::vector<std::uint8_t>& client_id) {
+  if (client_id.size() > 255) {
+    return false;
+  }
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, client_id.data(),
+                                                                     static_cast<std::uint8_t>(client_id.size())));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_vendor_class_id(const std::vector<std::uint8_t>& vendor_class_id) {
+  if (vendor_class_id.size() > 255) {
+    return false;
+  }
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type,
+                                pcpp::DhcpOptionBuilder(option_type, vendor_class_id.data(),
+                                                        static_cast<std::uint8_t>(vendor_class_id.size())));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_server_id(pcpp::IPv4Address server_id, const DHCPState state) {
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+      switch (state) {
+        case SELECTING:
+          options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, server_id));
+          return true;
+        default:
+          return false;
+      }
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, server_id));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_param_request_list(const std::vector<std::uint8_t>& param_request_list) {
+  if (param_request_list.size() > 255) {
+    return false;
+  }
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type,
+                                pcpp::DhcpOptionBuilder(option_type, param_request_list.data(),
+                                                        static_cast<std::uint8_t>(param_request_list.size())));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_max_message_size(std::uint16_t max_message_size) {
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(option_type, pcpp::DhcpOptionBuilder(option_type, max_message_size));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+      return false;
+  }
+  return false;
+}
+
+bool serratia::protocols::DHCPMessage::set_message(const std::vector<std::uint8_t>& message) {
+  if (message.size() > 255) {
+    return false;
+  }
+  constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE;
+  switch (message_type_) {
+    case pcpp::DhcpMessageType::DHCP_DECLINE:
+    case pcpp::DhcpMessageType::DHCP_RELEASE:
+    case pcpp::DhcpMessageType::DHCP_OFFER:
+    case pcpp::DhcpMessageType::DHCP_ACK:
+    case pcpp::DhcpMessageType::DHCP_NAK:
+    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
+      options_.insert_or_assign(
+          option_type, pcpp::DhcpOptionBuilder(option_type, message.data(), static_cast<std::uint8_t>(message.size())));
+      return true;
+    case pcpp::DhcpMessageType::DHCP_DISCOVER:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
+      return false;
+  }
+  return false;
 }
 
 serratia::protocols::DHCPDiscover::DHCPDiscover(
@@ -185,33 +560,39 @@ serratia::protocols::DHCPDiscover::DHCPDiscover(
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, lease_time, client_id, vendor_class_id,
                   std::nullopt, param_request_list, max_message_size) {
   if (requested_ip.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
   }
   if (lease_time.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
+                         lease_time.value());
   }
   if (client_id.has_value()) {
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
   if (param_request_list.has_value()) {
     if (param_request_list->size() > 255) {
       throw std::runtime_error("Request list must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
                          param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
   }
 }
 
@@ -231,24 +612,28 @@ serratia::protocols::DHCPInform::DHCPInform(
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
   if (param_request_list.has_value()) {
     if (param_request_list->size() > 255) {
       throw std::runtime_error("Request list must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
                          param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
   }
 }
 
@@ -266,21 +651,25 @@ serratia::protocols::DHCPOffer::DHCPOffer(DHCPCommon common_config, const std::u
                   hops, std::nullopt, bootp_flags, std::nullopt, your_ip, server_ip, gateway_ip, server_name,
                   boot_file_name, std::nullopt, lease_time, std::nullopt, vendor_class_id, server_id, std::nullopt,
                   std::nullopt, message) {
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
+                       lease_time);
   if (message.has_value()) {
     if (message->size() > 255) {
       throw std::runtime_error("Message must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
+                         message->data(), message->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
 }
 
 serratia::protocols::DHCPRequest::DHCPRequest(
@@ -306,11 +695,14 @@ serratia::protocols::DHCPRequest::DHCPRequest(
       }
       break;
     case SELECTING:
-      options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
-      options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
+      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
+                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
+      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
       break;
     case INIT_REBOOT:
-      options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
+      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
+                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
       if (true == client_ip.has_value()) {
         throw std::runtime_error("Client IP address must not be set in INIT_REBOOT state");
       }
@@ -319,30 +711,35 @@ serratia::protocols::DHCPRequest::DHCPRequest(
       throw std::runtime_error("Invalid state for DHCP state");
   }
   if (lease_time.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
+                         lease_time.value());
   }
   if (client_id.has_value()) {
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
   if (param_request_list.has_value()) {
     if (param_request_list->size() > 255) {
       throw std::runtime_error("Request list must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
                          param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
   }
 }
 
@@ -361,7 +758,8 @@ serratia::protocols::DHCPAck::DHCPAck(
                   std::nullopt, message) {
   if (REQUEST == query) {
     // Intentionally throw error if lease_time isn't set after DHCPREQUEST (refer to RFC 2131 table 3)
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, lease_time.value());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
+                         lease_time.value());
     if (false == your_ip.has_value()) {
       throw std::runtime_error("Your IP address must be set when responding to a DHCP REQUEST");
     }
@@ -374,16 +772,19 @@ serratia::protocols::DHCPAck::DHCPAck(
     if (message->size() > 255) {
       throw std::runtime_error("Message must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
+                         message->data(), message->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
 }
 
 serratia::protocols::DHCPNak::DHCPNak(DHCPCommon common_config, const std::uint32_t transaction_id,
@@ -402,22 +803,26 @@ serratia::protocols::DHCPNak::DHCPNak(DHCPCommon common_config, const std::uint3
     if (message->size() > 255) {
       throw std::runtime_error("Message must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
+                         message->data(), message->size());
   }
   if (client_id.has_value()) {
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
     if (vendor_class_id->size() > 255) {
       throw std::runtime_error("Vendor class ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
                          vendor_class_id->size());
   }
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
 }
 
 serratia::protocols::DHCPDecline::DHCPDecline(DHCPCommon common_config, const std::uint32_t transaction_id,
@@ -431,19 +836,23 @@ serratia::protocols::DHCPDecline::DHCPDecline(DHCPCommon common_config, const st
                   client_hardware_address, hops, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, std::nullopt, client_id, std::nullopt,
                   server_id, std::nullopt, std::nullopt, message) {
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip);
   if (client_id.has_value()) {
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
   if (message.has_value()) {
     if (message->size() > 255) {
       throw std::runtime_error("Message must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
+                         message->data(), message->size());
   }
 }
 
@@ -462,13 +871,16 @@ serratia::protocols::DHCPRelease::DHCPRelease(DHCPCommon common_config, const st
     if (client_id->size() > 255) {
       throw std::runtime_error("Client ID must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
+                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-  options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
+                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
   if (message.has_value()) {
     if (message->size() > 255) {
       throw std::runtime_error("Message must be 255 bytes or less");
     }
-    options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, message->data(), message->size());
+    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
+                         message->data(), message->size());
   }
 }
