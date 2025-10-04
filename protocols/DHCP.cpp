@@ -546,7 +546,7 @@ bool serratia::protocols::DHCPMessage::set_message(const std::vector<std::uint8_
   return false;
 }
 
-serratia::protocols::DHCPDiscover::DHCPDiscover(
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Discover(
     DHCPCommon common_config, const std::uint32_t transaction_id,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
@@ -554,87 +554,71 @@ serratia::protocols::DHCPDiscover::DHCPDiscover(
     const std::optional<std::uint32_t> lease_time, const std::optional<std::vector<std::uint8_t>>& client_id,
     const std::optional<std::vector<std::uint8_t>>& vendor_class_id,
     const std::optional<std::vector<std::uint8_t>>& param_request_list,
-    const std::optional<std::uint16_t> max_message_size)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_DISCOVER, std::move(common_config), transaction_id,
+    const std::optional<std::uint16_t> max_message_size, const DHCPState state) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_DISCOVER, std::move(common_config), transaction_id,
                   client_hardware_address, hops, seconds_elapsed, bootp_flags, std::nullopt, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, lease_time, client_id, vendor_class_id,
-                  std::nullopt, param_request_list, max_message_size) {
+                  std::nullopt, param_request_list, max_message_size);
+
   if (requested_ip.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
+    msg.set_requested_ip(requested_ip.value(), state);
   }
   if (lease_time.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
-                         lease_time.value());
+    msg.set_lease_time(lease_time.value(), DISCOVER);
   }
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(client_id.value())) {
+      throw std::runtime_error("Failed to set client ID");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
+      throw std::runtime_error("Failed to set vendor class ID");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
+    msg.set_vendor_class_id(vendor_class_id.value());
   }
   if (param_request_list.has_value()) {
-    if (param_request_list->size() > 255) {
-      throw std::runtime_error("Request list must be 255 bytes or less");
+    if (false == msg.set_param_request_list(param_request_list.value())) {
+      throw std::runtime_error("Failed to set parameter request list");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
-                         param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    msg.set_max_message_size(max_message_size.value());
   }
+  return msg;
 }
 
-serratia::protocols::DHCPInform::DHCPInform(
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Inform(
     DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
     const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<std::vector<std::uint8_t>>& client_id,
     const std::optional<std::vector<std::uint8_t>>& vendor_class_id,
     const std::optional<std::vector<std::uint8_t>>& param_request_list,
-    const std::optional<std::uint16_t> max_message_size)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_INFORM, std::move(common_config), transaction_id, client_hardware_address,
+    const std::optional<std::uint16_t> max_message_size) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_INFORM, std::move(common_config), transaction_id, client_hardware_address,
                   hops, seconds_elapsed, bootp_flags, client_ip, std::nullopt, std::nullopt, gateway_ip, std::nullopt,
                   std::nullopt, std::nullopt, std::nullopt, client_id, vendor_class_id, std::nullopt,
-                  param_request_list, max_message_size) {
+                  param_request_list, max_message_size);
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(client_id.value())) {
+      throw std::runtime_error("Failed to set client ID");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
+      throw std::runtime_error("Failed to set vendor class ID");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
   }
   if (param_request_list.has_value()) {
-    if (param_request_list->size() > 255) {
-      throw std::runtime_error("Request list must be 255 bytes or less");
+    if (false == msg.set_param_request_list(param_request_list.value())) {
+      throw std::runtime_error("Failed to set paramater request list");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
-                         param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    msg.set_max_message_size(max_message_size.value());
   }
+  return msg;
 }
 
 serratia::protocols::DHCPOffer::DHCPOffer(DHCPCommon common_config, const std::uint32_t transaction_id,

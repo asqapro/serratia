@@ -142,22 +142,13 @@ serratia::protocols::DHCPCommon createTestCommonConfig(const TestEnvironment& en
   return {eth_layer, ip_layer, udp_layer};
 }
 
-serratia::protocols::DHCPDiscover createTestDiscover(const TestEnvironment& env) {
+serratia::protocols::DHCPMessage createTestDiscover(const TestEnvironment& env) {
   const auto dhcp_common_config = createTestCommonConfig(env, INITIAL_CLIENT);
 
-  return {dhcp_common_config,
-          env.transaction_id,
-          env.client_hardware_address,
-          env.hops,
-          env.seconds_elapsed,
-          env.bootp_flags,
-          env.gateway_ip,
-          env.requested_ip,
-          env.lease_time.count(),
-          env.client_id,
-          env.vendor_class_id,
-          env.param_request_list,
-          env.max_message_size};
+  return serratia::protocols::DHCPMessage::Discover(dhcp_common_config, env.transaction_id, env.client_hardware_address,
+                                                    env.hops, env.seconds_elapsed, env.bootp_flags, env.gateway_ip,
+                                                    env.requested_ip, env.lease_time.count(), env.client_id,
+                                                    env.vendor_class_id, env.param_request_list, env.max_message_size);
 }
 
 void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -217,12 +208,13 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
   REQUIRE(dhcp_layer->getOptionsCount() == env.discover_option_count);
 }
 
-serratia::protocols::DHCPInform createTestInform(const TestEnvironment& env) {
+serratia::protocols::DHCPMessage createTestInform(const TestEnvironment& env) {
   const auto dhcp_common_config = createTestCommonConfig(env, CLIENT);
 
-  return {dhcp_common_config, env.transaction_id,  env.client_ip,          env.client_hardware_address,
-          env.hops,           env.seconds_elapsed, env.bootp_flags,        env.gateway_ip,
-          env.client_id,      env.vendor_class_id, env.param_request_list, env.max_message_size};
+  return serratia::protocols::DHCPMessage::Inform(dhcp_common_config, env.transaction_id, env.client_ip,
+                                                  env.client_hardware_address, env.hops, env.seconds_elapsed,
+                                                  env.bootp_flags, env.gateway_ip, env.client_id, env.vendor_class_id,
+                                                  env.param_request_list, env.max_message_size);
 }
 
 void verifyDHCPInform(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
@@ -501,37 +493,37 @@ serratia::protocols::DHCPAck createTestAck(const TestEnvironment& env, const ser
 
   if (serratia::protocols::DHCPQuery::REQUEST == query) {
     return {query,
-          dhcp_common_config,
-          env.transaction_id,
-          env.bootp_flags,
-          env.gateway_ip,
-          env.client_hardware_address,
-          env.server_id,
-          env.hops,
-          env.your_ip,
-          env.server_ip,
-          server_name,
-          boot_file_name,
-          static_cast<std::uint32_t>(env.lease_time.count()),
-          std::vector<std::uint8_t>(env.message.begin(), env.message.end()),
-          env.vendor_class_id};
+            dhcp_common_config,
+            env.transaction_id,
+            env.bootp_flags,
+            env.gateway_ip,
+            env.client_hardware_address,
+            env.server_id,
+            env.hops,
+            env.your_ip,
+            env.server_ip,
+            server_name,
+            boot_file_name,
+            static_cast<std::uint32_t>(env.lease_time.count()),
+            std::vector<std::uint8_t>(env.message.begin(), env.message.end()),
+            env.vendor_class_id};
   }
   if (serratia::protocols::DHCPQuery::INFORM == query) {
     return {query,
-          dhcp_common_config,
-          env.transaction_id,
-          env.bootp_flags,
-          env.gateway_ip,
-          env.client_hardware_address,
-          env.server_id,
-          env.hops,
-          std::nullopt,
-          env.server_ip,
-          server_name,
-          boot_file_name,
-          static_cast<std::uint32_t>(env.lease_time.count()),
-          std::vector<std::uint8_t>(env.message.begin(), env.message.end()),
-          env.vendor_class_id};
+            dhcp_common_config,
+            env.transaction_id,
+            env.bootp_flags,
+            env.gateway_ip,
+            env.client_hardware_address,
+            env.server_id,
+            env.hops,
+            std::nullopt,
+            env.server_ip,
+            server_name,
+            boot_file_name,
+            static_cast<std::uint32_t>(env.lease_time.count()),
+            std::vector<std::uint8_t>(env.message.begin(), env.message.end()),
+            env.vendor_class_id};
   }
   throw std::runtime_error("DHCP ACK can only be sent in response to REQUEST or INFORM");
 }

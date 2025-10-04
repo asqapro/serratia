@@ -54,6 +54,32 @@ class DHCPMessage {
               const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
               std::optional<std::uint16_t> max_message_size = std::nullopt,
               const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
+
+  static DHCPMessage Discover(DHCPCommon common_config, std::uint32_t transaction_id,
+                              std::array<std::uint8_t, 16> client_hardware_address,
+                              std::optional<std::uint8_t> hops = std::nullopt,
+                              std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                              std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                              std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                              std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+                              std::optional<std::uint32_t> lease_time = std::nullopt,
+                              const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
+                              const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
+                              const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
+                              std::optional<std::uint16_t> max_message_size = std::nullopt,
+                              DHCPState state = STATELESS);
+
+  static DHCPMessage Inform(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
+                            std::array<std::uint8_t, 16> client_hardware_address,
+                            std::optional<std::uint8_t> hops = std::nullopt,
+                            std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+                            std::optional<std::uint16_t> bootp_flags = std::nullopt,
+                            std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                            const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
+                            const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
+                            const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
+                            std::optional<std::uint16_t> max_message_size = std::nullopt);
+
   DHCPMessage() = delete;
 
   pcpp::Packet build(std::uint16_t remaining_message_size = ETHERNET_FRAME_SIZE);
@@ -114,34 +140,6 @@ class DHCPMessage {
   std::uint8_t overloading_ = 0;
   size_t server_name_offset_ = 0;
   size_t boot_file_offset_ = 0;
-};
-
-struct DHCPDiscover final : DHCPMessage {
-  DHCPDiscover(DHCPCommon common_config, std::uint32_t transaction_id,
-               std::array<std::uint8_t, 16> client_hardware_address, std::optional<std::uint8_t> hops = std::nullopt,
-               std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-               std::optional<std::uint16_t> bootp_flags = std::nullopt,
-               std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-               std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
-               std::optional<std::uint32_t> lease_time = std::nullopt,
-               const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-               const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
-               const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
-               std::optional<std::uint16_t> max_message_size = std::nullopt);
-  DHCPDiscover() = delete;
-};
-
-struct DHCPInform final : DHCPMessage {
-  DHCPInform(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
-             std::array<std::uint8_t, 16> client_hardware_address, std::optional<std::uint8_t> hops = std::nullopt,
-             std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-             std::optional<std::uint16_t> bootp_flags = std::nullopt,
-             std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-             const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-             const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
-             const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
-             std::optional<std::uint16_t> max_message_size = std::nullopt);
-  DHCPInform() = delete;
 };
 
 struct DHCPOffer final : DHCPMessage {
