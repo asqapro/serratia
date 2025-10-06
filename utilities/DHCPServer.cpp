@@ -188,10 +188,10 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   // auto vendor_class_id = config_.vendor_class_id;
   // auto max_message_size = config_.max_message_size;
 
-  serratia::protocols::DHCPOffer dhcp_offer_config(
+  auto dhcp_offer = serratia::protocols::DHCPMessage::Offer(
       dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
       config_.lease_time.count(), config_.server_id, hops, server_name, boot_file_name);
-  const auto packet = dhcp_offer_config.build();
+  const auto packet = dhcp_offer.build();
   device_->send(packet);
 }
 

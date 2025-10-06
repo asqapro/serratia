@@ -454,7 +454,7 @@ bool serratia::protocols::DHCPMessage::set_vendor_class_id(const std::vector<std
   return false;
 }
 
-bool serratia::protocols::DHCPMessage::set_server_id(pcpp::IPv4Address server_id, const DHCPState state) {
+bool serratia::protocols::DHCPMessage::set_server_id(const pcpp::IPv4Address server_id, const DHCPState state) {
   constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER;
   switch (message_type_) {
     case pcpp::DhcpMessageType::DHCP_REQUEST:
@@ -504,7 +504,7 @@ bool serratia::protocols::DHCPMessage::set_param_request_list(const std::vector<
   return false;
 }
 
-bool serratia::protocols::DHCPMessage::set_max_message_size(std::uint16_t max_message_size) {
+bool serratia::protocols::DHCPMessage::set_max_message_size(const std::uint16_t max_message_size) {
   constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE;
   switch (message_type_) {
     case pcpp::DhcpMessageType::DHCP_DISCOVER:
@@ -554,36 +554,41 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Discover(
     const std::optional<std::uint32_t> lease_time, const std::optional<std::vector<std::uint8_t>>& client_id,
     const std::optional<std::vector<std::uint8_t>>& vendor_class_id,
     const std::optional<std::vector<std::uint8_t>>& param_request_list,
-    const std::optional<std::uint16_t> max_message_size, const DHCPState state) {
+    const std::optional<std::uint16_t> max_message_size) {
   DHCPMessage msg(pcpp::DhcpMessageType::DHCP_DISCOVER, std::move(common_config), transaction_id,
                   client_hardware_address, hops, seconds_elapsed, bootp_flags, std::nullopt, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, lease_time, client_id, vendor_class_id,
                   std::nullopt, param_request_list, max_message_size);
 
   if (requested_ip.has_value()) {
-    msg.set_requested_ip(requested_ip.value(), state);
+    if (false == msg.set_requested_ip(requested_ip.value())) {
+      throw std::runtime_error("Failed to set requested IP in DHCP Discover");
+    }
   }
   if (lease_time.has_value()) {
-    msg.set_lease_time(lease_time.value(), DISCOVER);
+    if (false == msg.set_lease_time(lease_time.value(), DISCOVER)) {
+      throw std::runtime_error("Failed to set lease time in DHCP Discover");
+    }
   }
   if (client_id.has_value()) {
     if (false == msg.set_client_id(client_id.value())) {
-      throw std::runtime_error("Failed to set client ID");
+      throw std::runtime_error("Failed to set client ID in DHCP Discover");
     }
   }
   if (vendor_class_id.has_value()) {
     if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
-      throw std::runtime_error("Failed to set vendor class ID");
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Discover");
     }
-    msg.set_vendor_class_id(vendor_class_id.value());
   }
   if (param_request_list.has_value()) {
     if (false == msg.set_param_request_list(param_request_list.value())) {
-      throw std::runtime_error("Failed to set parameter request list");
+      throw std::runtime_error("Failed to set parameter request list in DHCP Discover");
     }
   }
   if (max_message_size.has_value()) {
-    msg.set_max_message_size(max_message_size.value());
+    if (false == msg.set_max_message_size(max_message_size.value())) {
+      throw std::runtime_error("Failed to set max message size in DHCP Discover");
+    }
   }
   return msg;
 }
@@ -602,61 +607,60 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Inform(
                   param_request_list, max_message_size);
   if (client_id.has_value()) {
     if (false == msg.set_client_id(client_id.value())) {
-      throw std::runtime_error("Failed to set client ID");
+      throw std::runtime_error("Failed to set client ID in DHCP Inform");
     }
   }
   if (vendor_class_id.has_value()) {
     if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
-      throw std::runtime_error("Failed to set vendor class ID");
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Inform");
     }
   }
   if (param_request_list.has_value()) {
     if (false == msg.set_param_request_list(param_request_list.value())) {
-      throw std::runtime_error("Failed to set paramater request list");
+      throw std::runtime_error("Failed to set parameter request list in DHCP Inform");
     }
   }
   if (max_message_size.has_value()) {
-    msg.set_max_message_size(max_message_size.value());
+    if (false == msg.set_max_message_size(max_message_size.value())) {
+      throw std::runtime_error("Failed to set max message size in DHCP Inform");
+    }
   }
   return msg;
 }
 
-serratia::protocols::DHCPOffer::DHCPOffer(DHCPCommon common_config, const std::uint32_t transaction_id,
-                                          const pcpp::IPv4Address your_ip, const pcpp::IPv4Address server_ip,
-                                          const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
-                                          const std::array<std::uint8_t, 16> client_hardware_address,
-                                          const std::uint32_t lease_time, const pcpp::IPv4Address server_id,
-                                          const std::optional<std::uint8_t> hops,
-                                          const std::optional<std::array<std::uint8_t, 64>>& server_name,
-                                          const std::optional<std::array<std::uint8_t, 128>>& boot_file_name,
-                                          const std::optional<std::vector<std::uint8_t>>& message,
-                                          const std::optional<std::vector<std::uint8_t>>& vendor_class_id)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_OFFER, std::move(common_config), transaction_id, client_hardware_address,
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Offer(
+    DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address your_ip,
+    const pcpp::IPv4Address server_ip, const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
+    const std::array<std::uint8_t, 16> client_hardware_address, const std::uint32_t lease_time,
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<std::array<std::uint8_t, 64>>& server_name,
+    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name,
+    const std::optional<std::vector<std::uint8_t>>& message,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_OFFER, std::move(common_config), transaction_id, client_hardware_address,
                   hops, std::nullopt, bootp_flags, std::nullopt, your_ip, server_ip, gateway_ip, server_name,
                   boot_file_name, std::nullopt, lease_time, std::nullopt, vendor_class_id, server_id, std::nullopt,
-                  std::nullopt, message) {
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
-                       lease_time);
+                  std::nullopt, message);
+  if (false == msg.set_lease_time(lease_time)) {
+    throw std::runtime_error("Failed to set lease time in DHCP Offer");
+  }
   if (message.has_value()) {
-    if (message->size() > 255) {
-      throw std::runtime_error("Message must be 255 bytes or less");
+    if (false == msg.set_message(message.value())) {
+      throw std::runtime_error("Failed to set message in DHCP Offer");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
-                         message->data(), message->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Offer");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
   }
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  if (false == msg.set_server_id(server_id)) {
+    throw std::runtime_error("Failed to set server ID in DHCP Offer");
+  }
+  return msg;
 }
 
-serratia::protocols::DHCPRequest::DHCPRequest(
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
     const DHCPState state, DHCPCommon common_config, const std::uint32_t transaction_id,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
     const std::optional<std::uint16_t> seconds_elapsed, const std::optional<std::uint16_t> bootp_flags,
@@ -665,69 +669,79 @@ serratia::protocols::DHCPRequest::DHCPRequest(
     const std::optional<std::vector<std::uint8_t>>& client_id,
     const std::optional<std::vector<std::uint8_t>>& vendor_class_id, const std::optional<pcpp::IPv4Address> server_id,
     const std::optional<std::vector<std::uint8_t>>& param_request_list,
-    const std::optional<std::uint16_t> max_message_size)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_REQUEST, std::move(common_config), transaction_id,
+    const std::optional<std::uint16_t> max_message_size) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_REQUEST, std::move(common_config), transaction_id,
                   client_hardware_address, hops, seconds_elapsed, bootp_flags, client_ip, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, lease_time, client_id, vendor_class_id,
-                  server_id, param_request_list, max_message_size) {
+                  server_id, param_request_list, max_message_size);
   switch (state) {
     case BOUND:
     case RENEWING:
+      if (true == requested_ip.has_value()) {
+        throw std::runtime_error("Requested IP must not be set in BOUND or RENEWING state in DHCP Request");
+      }
     case REBINDING:
-      if (false == client_ip.has_value()) {
-        throw std::runtime_error("Client IP address must be set in REBINDING state");
+      if (false == msg.set_client_ip(client_ip.value(), state)) {
+        throw std::runtime_error("Failed to set client IP in DHCP Request");
+      }
+      if (true == server_id.has_value()) {
+        throw std::runtime_error("Server ID must not be set in BOUND / RENEWING / REBINDING states in DHCP Request");
       }
       break;
     case SELECTING:
-      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
-      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id.value());
+      if (false == msg.set_requested_ip(requested_ip.value(), state)) {
+        throw std::runtime_error("Failed to set requested IP in DHCP Request");
+      }
+      if (false == msg.set_server_id(server_id.value(), state)) {
+        throw std::runtime_error("Failed to set server ID in DHCP Request");
+      }
+      if (true == client_ip.has_value()) {
+        throw std::runtime_error("Client IP address must not be set in SELECTING state in DHCP Request");
+      }
       break;
     case INIT_REBOOT:
-      options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                           pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip.value());
+      if (false == msg.set_requested_ip(requested_ip.value(), state)) {
+        throw std::runtime_error("Failed to set requested IP in DHCP Request");
+      }
       if (true == client_ip.has_value()) {
-        throw std::runtime_error("Client IP address must not be set in INIT_REBOOT state");
+        throw std::runtime_error("Client IP address must not be set in INIT-REBOOT state in DHCP Reqeust");
+      }
+      if (true == server_id.has_value()) {
+        throw std::runtime_error("Server ID must not be set in INIT-REBOOT state in DHCP Request");
       }
       break;
     default:
-      throw std::runtime_error("Invalid state for DHCP state");
+      throw std::runtime_error("Invalid state for DHCP state in DHCP Request");
   }
   if (lease_time.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
-                         lease_time.value());
+    if (false == msg.set_lease_time(lease_time.value())) {
+      throw std::runtime_error("Failed to set lease time in DHCP Request");
+    }
   }
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(client_id.value())) {
+      throw std::runtime_error("Failed to set client_id in DHCP Request");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Request");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
   }
   if (param_request_list.has_value()) {
-    if (param_request_list->size() > 255) {
-      throw std::runtime_error("Request list must be 255 bytes or less");
+    if (false == msg.set_param_request_list(param_request_list.value())) {
+      throw std::runtime_error("Failed to set parameter request list in DHCP Request");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST, param_request_list->data(),
-                         param_request_list->size());
   }
   if (max_message_size.has_value()) {
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE, max_message_size.value());
+    if (false == msg.set_max_message_size(max_message_size.value())) {
+      throw std::runtime_error("Failed to set max message size in DHCP Request");
+    }
   }
+  return msg;
 }
 
-serratia::protocols::DHCPAck::DHCPAck(
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Ack(
     const DHCPQuery query, DHCPCommon common_config, const std::uint32_t transaction_id,
     const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
     const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
@@ -735,136 +749,123 @@ serratia::protocols::DHCPAck::DHCPAck(
     const std::optional<pcpp::IPv4Address> server_ip, const std::optional<std::array<std::uint8_t, 64>>& server_name,
     const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, const std::optional<std::uint32_t> lease_time,
     const std::optional<std::vector<std::uint8_t>>& message,
-    const std::optional<std::vector<std::uint8_t>>& vendor_class_id)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_ACK, std::move(common_config), transaction_id, client_hardware_address,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_ACK, std::move(common_config), transaction_id, client_hardware_address,
                   hops, std::nullopt, bootp_flags, std::nullopt, your_ip, server_ip, gateway_ip, server_name,
                   boot_file_name, std::nullopt, lease_time, std::nullopt, vendor_class_id, server_id, std::nullopt,
-                  std::nullopt, message) {
+                  std::nullopt, message);
   if (REQUEST == query) {
     // Intentionally throw error if lease_time isn't set after DHCPREQUEST (refer to RFC 2131 table 3)
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_LEASE_TIME,
-                         lease_time.value());
-    if (false == your_ip.has_value()) {
-      throw std::runtime_error("Your IP address must be set when responding to a DHCP REQUEST");
+    if (false == msg.set_lease_time(lease_time.value(), query)) {
+      throw std::runtime_error("Failed to set lease time in DHCP Ack");
+    }
+    if (false == msg.set_your_ip(your_ip.value())) {
+      throw std::runtime_error("Failed to set your IP in DHCP Ack");
     }
   } else if (INFORM == query) {
     if (true == your_ip.has_value()) {
-      throw std::runtime_error("Your IP address must not be set when responding to DHCP INFORM");
+      throw std::runtime_error("Your IP address must not be set when responding to DHCP Inform in DHCP Ack");
     }
   }
   if (message.has_value()) {
-    if (message->size() > 255) {
-      throw std::runtime_error("Message must be 255 bytes or less");
+    if (false == msg.set_message(message.value())) {
+      throw std::runtime_error("Failed to set message in DHCP Ack");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
-                         message->data(), message->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(vendor_class_id.value())) {
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Ack");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
   }
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  if (false == msg.set_server_id(server_id)) {
+    throw std::runtime_error("Failed to set server ID in DHCP Ack");
+  }
+  return msg;
 }
 
-serratia::protocols::DHCPNak::DHCPNak(DHCPCommon common_config, const std::uint32_t transaction_id,
-                                      const std::array<std::uint8_t, 16> client_hardware_address,
-                                      const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
-                                      const std::optional<std::uint16_t> bootp_flags,
-                                      const std::optional<pcpp::IPv4Address> gateway_ip,
-                                      const std::optional<std::vector<std::uint8_t>>& message,
-                                      const std::optional<std::vector<std::uint8_t>>& client_id,
-                                      const std::optional<std::vector<std::uint8_t>>& vendor_class_id)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_NAK, std::move(common_config), transaction_id, client_hardware_address,
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Nak(
+    DHCPCommon common_config, const std::uint32_t transaction_id,
+    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
+    const std::optional<std::uint8_t> hops, const std::optional<std::uint16_t> bootp_flags,
+    const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<std::vector<std::uint8_t>>& message,
+    const std::optional<std::vector<std::uint8_t>>& client_id,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_NAK, std::move(common_config), transaction_id, client_hardware_address,
                   hops, std::nullopt, bootp_flags, std::nullopt, std::nullopt, std::nullopt, gateway_ip, std::nullopt,
                   std::nullopt, std::nullopt, std::nullopt, client_id, vendor_class_id, server_id, std::nullopt,
-                  std::nullopt, message) {
+                  std::nullopt, message);
   if (message.has_value()) {
-    if (message->size() > 255) {
-      throw std::runtime_error("Message must be 255 bytes or less");
+    if (false == msg.set_message(message.value())) {
+      throw std::runtime_error("Failed to set message in DHCP Nak");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
-                         message->data(), message->size());
   }
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(*client_id)) {
+      throw std::runtime_error("Failed to set client_id in DHCP Nak");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
   if (vendor_class_id.has_value()) {
-    if (vendor_class_id->size() > 255) {
-      throw std::runtime_error("Vendor class ID must be 255 bytes or less");
+    if (false == msg.set_vendor_class_id(*vendor_class_id)) {
+      throw std::runtime_error("Failed to set vendor class ID in DHCP Nak");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_VENDOR_CLASS_IDENTIFIER, vendor_class_id->data(),
-                         vendor_class_id->size());
   }
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  if (false == msg.set_server_id(server_id)) {
+    throw std::runtime_error("Failed to set server ID in DHCP Nak");
+  }
+  return msg;
 }
 
-serratia::protocols::DHCPDecline::DHCPDecline(DHCPCommon common_config, const std::uint32_t transaction_id,
-                                              const std::array<std::uint8_t, 16> client_hardware_address,
-                                              const pcpp::IPv4Address requested_ip, const pcpp::IPv4Address server_id,
-                                              const std::optional<std::uint8_t> hops,
-                                              const std::optional<pcpp::IPv4Address> gateway_ip,
-                                              const std::optional<std::vector<std::uint8_t>>& client_id,
-                                              const std::optional<std::vector<std::uint8_t>>& message)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_DECLINE, std::move(common_config), transaction_id,
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Decline(
+    DHCPCommon common_config, const std::uint32_t transaction_id,
+    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address requested_ip,
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<std::vector<std::uint8_t>>& client_id,
+    const std::optional<std::vector<std::uint8_t>>& message) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_DECLINE, std::move(common_config), transaction_id,
                   client_hardware_address, hops, std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, requested_ip, std::nullopt, client_id, std::nullopt,
-                  server_id, std::nullopt, std::nullopt, message) {
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_REQUESTED_ADDRESS, requested_ip);
+                  server_id, std::nullopt, std::nullopt, message);
+  if (false == msg.set_requested_ip(requested_ip)) {
+    throw std::runtime_error("Failed to set requested IP in DHCP Decline");
+  }
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(client_id.value())) {
+      throw std::runtime_error("Failed to set client ID in DHCP Decline");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  if (false == msg.set_server_id(server_id)) {
+    throw std::runtime_error("Failed to set server ID in DHCP Decline");
+  }
   if (message.has_value()) {
-    if (message->size() > 255) {
-      throw std::runtime_error("Message must be 255 bytes or less");
+    if (false == msg.set_message(message.value())) {
+      throw std::runtime_error("Failed to set message in DHCP Decline");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
-                         message->data(), message->size());
   }
+  return msg;
 }
 
-serratia::protocols::DHCPRelease::DHCPRelease(DHCPCommon common_config, const std::uint32_t transaction_id,
-                                              const pcpp::IPv4Address client_ip,
-                                              const std::array<std::uint8_t, 16> client_hardware_address,
-                                              const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
-                                              const std::optional<pcpp::IPv4Address> gateway_ip,
-                                              const std::optional<std::vector<std::uint8_t>>& client_id,
-                                              const std::optional<std::vector<std::uint8_t>>& message)
-    : DHCPMessage(pcpp::DhcpMessageType::DHCP_RELEASE, std::move(common_config), transaction_id,
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Release(
+    DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address client_ip,
+    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
+    const std::optional<std::uint8_t> hops, const std::optional<pcpp::IPv4Address> gateway_ip,
+    const std::optional<std::vector<std::uint8_t>>& client_id,
+    const std::optional<std::vector<std::uint8_t>>& message) {
+  DHCPMessage msg(pcpp::DhcpMessageType::DHCP_RELEASE, std::move(common_config), transaction_id,
                   client_hardware_address, hops, std::nullopt, std::nullopt, client_ip, std::nullopt, std::nullopt,
                   gateway_ip, std::nullopt, std::nullopt, std::nullopt, std::nullopt, client_id, std::nullopt,
-                  server_id, std::nullopt, std::nullopt, message) {
+                  server_id, std::nullopt, std::nullopt, message);
   if (client_id.has_value()) {
-    if (client_id->size() > 255) {
-      throw std::runtime_error("Client ID must be 255 bytes or less");
+    if (false == msg.set_client_id(client_id.value())) {
+      throw std::runtime_error("Failed to set client ID in DHCP Release");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER,
-                         pcpp::DhcpOptionTypes::DHCPOPT_DHCP_CLIENT_IDENTIFIER, client_id->data(), client_id->size());
   }
-  options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER,
-                       pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER, server_id);
+  if (false == msg.set_server_id(server_id)) {
+    throw std::runtime_error("Failed to set server ID in DHCP Release");
+  }
   if (message.has_value()) {
-    if (message->size() > 255) {
-      throw std::runtime_error("Message must be 255 bytes or less");
+    if (false == msg.set_message(message.value())) {
+      throw std::runtime_error("Failed to set message in DHCP Release");
     }
-    options_.try_emplace(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE, pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MESSAGE,
-                         message->data(), message->size());
   }
+  return msg;
 }
