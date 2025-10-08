@@ -457,7 +457,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer,
   }
 }
 
-serratia::protocols::DHCPMessage createTestAck(const TestEnvironment& env, const serratia::protocols::DHCPQuery query) {
+serratia::protocols::DHCPMessage createTestAck(const TestEnvironment& env, const pcpp::DhcpMessageType query) {
   const auto dhcp_common_config = createTestCommonConfig(env, SERVER);
 
   std::array<std::uint8_t, MAX_SERVER_NAME_SIZE> server_name{};
@@ -467,24 +467,23 @@ serratia::protocols::DHCPMessage createTestAck(const TestEnvironment& env, const
   std::array<std::uint8_t, MAX_BOOT_FILE_NAME_SIZE> boot_file_name = {0};
   std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
-  if (serratia::protocols::DHCPQuery::REQUEST == query) {
+  if (pcpp::DhcpMessageType::DHCP_REQUEST == query) {
     return serratia::protocols::DHCPMessage::Ack(
         query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
         env.server_id, env.hops, env.your_ip, env.server_ip, server_name, boot_file_name,
         static_cast<std::uint32_t>(env.lease_time.count()),
         std::vector<std::uint8_t>(env.message.begin(), env.message.end()), env.vendor_class_id);
   }
-  if (serratia::protocols::DHCPQuery::INFORM == query) {
+  if (pcpp::DhcpMessageType::DHCP_INFORM == query) {
     return serratia::protocols::DHCPMessage::Ack(
         query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
-        env.server_id, env.hops, std::nullopt, env.server_ip, server_name, boot_file_name,
-        static_cast<std::uint32_t>(env.lease_time.count()),
+        env.server_id, env.hops, std::nullopt, env.server_ip, server_name, boot_file_name, std::nullopt,
         std::vector<std::uint8_t>(env.message.begin(), env.message.end()), env.vendor_class_id);
   }
   throw std::runtime_error("DHCP ACK can only be sent in response to REQUEST or INFORM");
 }
 
-void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serratia::protocols::DHCPQuery query) {
+void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, pcpp::DhcpMessageType query) {
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   REQUIRE(pcpp::BootpOpCodes::DHCP_BOOTREPLY == dhcp_header->opCode);
@@ -532,13 +531,13 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, serr
   REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).isNull());
 
   switch (query) {
-    case serratia::protocols::REQUEST:
+    case pcpp::DhcpMessageType::DHCP_REQUEST:
       REQUIRE(env.your_ip == dhcp_header->yourIpAddress);
       REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
               ntohl(env.lease_time.count()));
       REQUIRE(dhcp_layer->getOptionsCount() == env.ack_request_option_count);
       break;
-    case serratia::protocols::INFORM:
+    case pcpp::DhcpMessageType::DHCP_INFORM:
       REQUIRE(EMPTY_IP_ADDR == dhcp_header->yourIpAddress);
       REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).isNull());
       REQUIRE(dhcp_layer->getOptionsCount() == env.ack_inform_option_count);
@@ -845,7 +844,7 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP ACK (after request)") {
-    constexpr serratia::protocols::DHCPQuery query{serratia::protocols::REQUEST};
+    constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
     auto dhcp_ack_config = createTestAck(env, query);
     const auto packet = dhcp_ack_config.build();
 
@@ -854,7 +853,7 @@ TEST_CASE("Build DHCP packets") {
   }
 
   SECTION("DHCP ACK (after inform)") {
-    constexpr serratia::protocols::DHCPQuery query{serratia::protocols::INFORM};
+    constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_INFORM};
     auto dhcp_ack_config = createTestAck(env, query);
     const auto packet = dhcp_ack_config.build();
 

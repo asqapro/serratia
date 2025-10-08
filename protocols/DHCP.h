@@ -8,7 +8,6 @@
 #include <pcapplusplus/UdpLayer.h>
 
 #include <optional>
-#include <set>
 #include <unordered_map>
 #include <utility>
 
@@ -19,7 +18,6 @@ namespace serratia::protocols {
 constexpr std::uint16_t ETHERNET_FRAME_SIZE = 1500;
 
 enum DHCPState { INIT, SELECTING, REQUESTING, INIT_REBOOT, REBOOTING, BOUND, RENEWING, REBINDING, STATELESS };
-enum DHCPQuery { DISCOVER, INFORM, REQUEST, DECLINE, RELEASE, UNKNOWN };
 
 struct DHCPCommon {
   DHCPCommon(std::shared_ptr<pcpp::EthLayer> eth_layer, std::shared_ptr<pcpp::IPv4Layer> ip_layer,
@@ -36,25 +34,6 @@ struct DHCPCommon {
 
 class DHCPMessage {
  public:
-  DHCPMessage(pcpp::DhcpMessageType message_type, DHCPCommon common_config, std::uint32_t transaction_id,
-              std::array<std::uint8_t, 16> client_hardware_address, std::optional<std::uint8_t> hops = std::nullopt,
-              std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
-              std::optional<std::uint16_t> bootp_flags = std::nullopt,
-              std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
-              std::optional<pcpp::IPv4Address> your_ip = std::nullopt,
-              std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
-              std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-              const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
-              const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
-              std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
-              std::optional<std::uint32_t> lease_time = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
-              std::optional<pcpp::IPv4Address> server_id = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
-              std::optional<std::uint16_t> max_message_size = std::nullopt,
-              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
-
   static DHCPMessage Discover(DHCPCommon common_config, std::uint32_t transaction_id,
                               std::array<std::uint8_t, 16> client_hardware_address,
                               std::optional<std::uint8_t> hops = std::nullopt,
@@ -103,7 +82,7 @@ class DHCPMessage {
                              const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
                              std::optional<std::uint16_t> max_message_size = std::nullopt);
 
-  static DHCPMessage Ack(DHCPQuery query, DHCPCommon common_config, std::uint32_t transaction_id,
+  static DHCPMessage Ack(pcpp::DhcpMessageType query, DHCPCommon common_config, std::uint32_t transaction_id,
                          std::uint16_t bootp_flags, pcpp::IPv4Address gateway_ip,
                          std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address server_id,
                          std::optional<std::uint8_t> hops = std::nullopt,
@@ -148,15 +127,17 @@ class DHCPMessage {
   void set_broadcast_flag();
   void clear_broadcast_flag();
   bool set_client_ip(pcpp::IPv4Address client_ip, DHCPState state = STATELESS);
-  bool set_your_ip(pcpp::IPv4Address your_ip);
+  bool set_your_ip(pcpp::IPv4Address your_ip, pcpp::DhcpMessageType query);
   bool set_server_ip(pcpp::IPv4Address server_ip);
-  bool set_gateway_ip(pcpp::IPv4Address gateway_ip, DHCPQuery query = UNKNOWN);
+  bool set_gateway_ip(pcpp::IPv4Address gateway_ip,
+                      pcpp::DhcpMessageType query = pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE);
   bool set_server_name(const std::array<std::uint8_t, 64>& server_name);
   bool set_boot_file_name(const std::array<std::uint8_t, 128>& boot_file_name);
   bool set_client_hardware_address(const std::array<std::uint8_t, 16>& client_hardware_address,
-                                   DHCPQuery query = UNKNOWN);
+                                   pcpp::DhcpMessageType query = pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE);
   bool set_requested_ip(pcpp::IPv4Address requested_ip, DHCPState state = STATELESS);
-  bool set_lease_time(std::uint32_t lease_time, DHCPQuery query = UNKNOWN);
+  bool set_lease_time(std::uint32_t lease_time,
+                      pcpp::DhcpMessageType query = pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE);
   bool set_client_id(const std::vector<std::uint8_t>& client_id);
   bool set_vendor_class_id(const std::vector<std::uint8_t>& vendor_class_id);
   bool set_server_id(pcpp::IPv4Address server_id, DHCPState state = STATELESS);
@@ -164,7 +145,27 @@ class DHCPMessage {
   bool set_max_message_size(std::uint16_t max_message_size);
   bool set_message(const std::vector<std::uint8_t>& message);
 
- protected:
+ private:
+  DHCPMessage(pcpp::DhcpMessageType message_type, DHCPCommon common_config, std::uint32_t transaction_id,
+              std::array<std::uint8_t, 16> client_hardware_address, std::optional<std::uint8_t> hops = std::nullopt,
+              std::optional<std::uint16_t> seconds_elapsed = std::nullopt,
+              std::optional<std::uint16_t> bootp_flags = std::nullopt,
+              std::optional<pcpp::IPv4Address> client_ip = std::nullopt,
+              std::optional<pcpp::IPv4Address> your_ip = std::nullopt,
+              std::optional<pcpp::IPv4Address> server_ip = std::nullopt,
+              std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+              const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+              const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
+              std::optional<pcpp::IPv4Address> requested_ip = std::nullopt,
+              std::optional<std::uint32_t> lease_time = std::nullopt,
+              const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
+              const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt,
+              std::optional<pcpp::IPv4Address> server_id = std::nullopt,
+              const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
+              std::optional<std::uint16_t> max_message_size = std::nullopt,
+              const std::optional<std::vector<std::uint8_t>>& message = std::nullopt,
+              pcpp::DhcpMessageType query = pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE, DHCPState state = STATELESS);
+
   pcpp::DhcpMessageType message_type_;
   std::shared_ptr<pcpp::DhcpLayer> dhcp_layer_;
   DHCPCommon common_config_;
@@ -179,25 +180,15 @@ class DHCPMessage {
   std::array<std::uint8_t, 64> server_name_;
   std::array<std::uint8_t, 128> boot_file_name_;
   std::array<std::uint8_t, 16> client_hardware_address_;
-  std::optional<pcpp::IPv4Address> requested_ip_;
-  std::optional<std::uint32_t> lease_time_;
-  std::optional<std::vector<std::uint8_t>> client_id_;
-  std::optional<std::vector<std::uint8_t>> vendor_class_id_;
-  std::optional<pcpp::IPv4Address> server_id_;
-  std::optional<std::vector<std::uint8_t>> param_request_list_;
-  std::optional<std::uint16_t> max_message_size_;
-  std::optional<std::vector<std::uint8_t>> message_;
   std::unordered_map<pcpp::DhcpOptionTypes, pcpp::DhcpOptionBuilder> options_;
   std::vector<pcpp::DhcpOptionBuilder> extra_options_;
 
-  void addOption(const pcpp::DhcpOptionBuilder& option_builder, std::uint16_t& remaining_message_size);
-
- private:
   bool server_name_set_;
   bool boot_file_name_set_;
   std::uint8_t overloading_ = 0;
   size_t server_name_offset_ = 0;
   size_t boot_file_offset_ = 0;
+
+  void addOption(const pcpp::DhcpOptionBuilder& option_builder, std::uint16_t& remaining_message_size);
 };
-;
 };  // namespace serratia::protocols
