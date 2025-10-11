@@ -60,44 +60,28 @@ serratia::protocols::DHCPMessage::DHCPMessage(
   boot_file_name_set_ = std::ranges::any_of(this->boot_file_name_, [](const std::uint8_t x) { return x != 0; });
 
   if (requested_ip.has_value()) {
-    if (false == set_requested_ip(requested_ip.value(), state)) {
-      throw std::runtime_error("Failed to set requested IP");
-    }
+    set_requested_ip(requested_ip.value(), state);
   }
   if (lease_time.has_value()) {
-    if (false == set_lease_time(lease_time.value(), query)) {
-      throw std::runtime_error("Failed to set lease time");
-    }
+    set_lease_time(lease_time.value(), query);
   }
   if (client_id.has_value()) {
-    if (false == set_client_id(client_id.value())) {
-      throw std::runtime_error("Failed to set client ID");
-    }
+    set_client_id(client_id.value());
   }
   if (vendor_class_id.has_value()) {
-    if (false == set_vendor_class_id(vendor_class_id.value())) {
-      throw std::runtime_error("Failed to set vendor class ID");
-    }
+    set_vendor_class_id(vendor_class_id.value());
   }
   if (server_id.has_value()) {
-    if (false == set_server_id(server_id.value(), state)) {
-      throw std::runtime_error("Failed to set server ID");
-    }
+    set_server_id(server_id.value(), state);
   }
   if (param_request_list.has_value()) {
-    if (false == set_param_request_list(param_request_list.value())) {
-      throw std::runtime_error("Failed to set parameter request list");
-    }
+    set_param_request_list(param_request_list.value());
   }
   if (max_message_size.has_value()) {
-    if (false == set_max_message_size(max_message_size.value())) {
-      throw std::runtime_error("Failed to set max message size");
-    }
+    set_max_message_size(max_message_size.value());
   }
   if (message.has_value()) {
-    if (false == set_message(message.value())) {
-      throw std::runtime_error("Failed to set message");
-    }
+    set_message(message.value());
   }
 }
 
@@ -663,38 +647,6 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Inform(
           max_message_size};
 }
 
-serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Offer(
-    DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address your_ip,
-    const pcpp::IPv4Address server_ip, const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
-    const std::array<std::uint8_t, 16> client_hardware_address, const std::uint32_t lease_time,
-    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
-    const std::optional<std::array<std::uint8_t, 64>>& server_name,
-    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name,
-    const std::optional<std::vector<std::uint8_t>>& message,
-    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
-  return {pcpp::DhcpMessageType::DHCP_OFFER,
-          std::move(common_config),
-          transaction_id,
-          client_hardware_address,
-          hops,
-          std::nullopt,
-          bootp_flags,
-          std::nullopt,
-          your_ip,
-          server_ip,
-          gateway_ip,
-          server_name,
-          boot_file_name,
-          std::nullopt,
-          lease_time,
-          std::nullopt,
-          vendor_class_id,
-          server_id,
-          std::nullopt,
-          std::nullopt,
-          message};
-}
-
 serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
     const DHCPState state, DHCPCommon common_config, const std::uint32_t transaction_id,
     const std::array<std::uint8_t, 16> client_hardware_address, const std::optional<std::uint8_t> hops,
@@ -712,6 +664,9 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
         throw std::runtime_error("Requested IP must not be set in BOUND or RENEWING state in DHCP Request");
       }
     case REBINDING:
+      if (false == client_ip.has_value()) {
+        throw std::runtime_error("Client IP must be set in BOUND / RENEW / REBINDING states in DHCP Request");
+      }
       if (true == server_id.has_value()) {
         throw std::runtime_error("Server ID must not be set in BOUND / RENEWING / REBINDING states in DHCP Request");
       }
@@ -720,10 +675,19 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
       if (true == client_ip.has_value()) {
         throw std::runtime_error("Client IP address must not be set in SELECTING state in DHCP Request");
       }
+      if (false == requested_ip.has_value()) {
+        throw std::runtime_error("Requested IP must be set in SELECTING state in DHCP Request");
+      }
+      if (false == server_id.has_value()) {
+        throw std::runtime_error("Server ID must be set in SELECTING state in DHCP Request");
+      }
       break;
     case INIT_REBOOT:
       if (true == client_ip.has_value()) {
         throw std::runtime_error("Client IP address must not be set in INIT-REBOOT state in DHCP Reqeust");
+      }
+      if (false == requested_ip.has_value()) {
+        throw std::runtime_error("Requested IP must be set in INIT-REBOOT state in DHCP Request");
       }
       if (true == server_id.has_value()) {
         throw std::runtime_error("Server ID must not be set in INIT-REBOOT state in DHCP Request");
@@ -755,74 +719,6 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
           std::nullopt,
           pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE,
           state};
-}
-
-serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Ack(
-    const pcpp::DhcpMessageType query, DHCPCommon common_config, const std::uint32_t transaction_id,
-    const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
-    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
-    const std::optional<std::uint8_t> hops, const std::optional<pcpp::IPv4Address> your_ip,
-    const std::optional<pcpp::IPv4Address> server_ip, const std::optional<std::array<std::uint8_t, 64>>& server_name,
-    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, const std::optional<std::uint32_t> lease_time,
-    const std::optional<std::vector<std::uint8_t>>& message,
-    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
-  if (pcpp::DhcpMessageType::DHCP_INFORM == query) {
-    if (true == your_ip.has_value()) {
-      throw std::runtime_error("Your IP address must not be set when responding to DHCP Inform in DHCP Ack");
-    }
-  }
-  return {pcpp::DhcpMessageType::DHCP_ACK,
-          std::move(common_config),
-          transaction_id,
-          client_hardware_address,
-          hops,
-          std::nullopt,
-          bootp_flags,
-          std::nullopt,
-          your_ip,
-          server_ip,
-          gateway_ip,
-          server_name,
-          boot_file_name,
-          std::nullopt,
-          lease_time,
-          std::nullopt,
-          vendor_class_id,
-          server_id,
-          std::nullopt,
-          std::nullopt,
-          message,
-          query};
-}
-
-serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Nak(
-    DHCPCommon common_config, const std::uint32_t transaction_id,
-    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
-    const std::optional<std::uint8_t> hops, const std::optional<std::uint16_t> bootp_flags,
-    const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<std::vector<std::uint8_t>>& message,
-    const std::optional<std::vector<std::uint8_t>>& client_id,
-    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
-  return {pcpp::DhcpMessageType::DHCP_NAK,
-          std::move(common_config),
-          transaction_id,
-          client_hardware_address,
-          hops,
-          std::nullopt,
-          bootp_flags,
-          std::nullopt,
-          std::nullopt,
-          std::nullopt,
-          gateway_ip,
-          std::nullopt,
-          std::nullopt,
-          std::nullopt,
-          std::nullopt,
-          client_id,
-          vendor_class_id,
-          server_id,
-          std::nullopt,
-          std::nullopt,
-          message};
 }
 
 serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Decline(
@@ -877,6 +773,113 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Release(
           std::nullopt,
           client_id,
           std::nullopt,
+          server_id,
+          std::nullopt,
+          std::nullopt,
+          message};
+}
+
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Offer(
+    DHCPCommon common_config, const std::uint32_t transaction_id, const pcpp::IPv4Address your_ip,
+    const pcpp::IPv4Address server_ip, const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
+    const std::array<std::uint8_t, 16> client_hardware_address, const std::uint32_t lease_time,
+    const pcpp::IPv4Address server_id, const std::optional<std::uint8_t> hops,
+    const std::optional<std::array<std::uint8_t, 64>>& server_name,
+    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name,
+    const std::optional<std::vector<std::uint8_t>>& message,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  return {pcpp::DhcpMessageType::DHCP_OFFER,
+          std::move(common_config),
+          transaction_id,
+          client_hardware_address,
+          hops,
+          std::nullopt,
+          bootp_flags,
+          std::nullopt,
+          your_ip,
+          server_ip,
+          gateway_ip,
+          server_name,
+          boot_file_name,
+          std::nullopt,
+          lease_time,
+          std::nullopt,
+          vendor_class_id,
+          server_id,
+          std::nullopt,
+          std::nullopt,
+          message};
+}
+
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Ack(
+    const pcpp::DhcpMessageType query, DHCPCommon common_config, const std::uint32_t transaction_id,
+    const std::uint16_t bootp_flags, const pcpp::IPv4Address gateway_ip,
+    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
+    const std::optional<std::uint8_t> hops, const std::optional<pcpp::IPv4Address> your_ip,
+    const std::optional<pcpp::IPv4Address> server_ip, const std::optional<std::array<std::uint8_t, 64>>& server_name,
+    const std::optional<std::array<std::uint8_t, 128>>& boot_file_name, const std::optional<std::uint32_t> lease_time,
+    const std::optional<std::vector<std::uint8_t>>& message,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  if (pcpp::DhcpMessageType::DHCP_REQUEST == query) {
+    if (false == lease_time.has_value()) {
+      throw std::runtime_error("Lease time must be set when responding to DHCP Request in DHCP Ack");
+    }
+  } else if (pcpp::DhcpMessageType::DHCP_INFORM == query) {
+    if (true == your_ip.has_value()) {
+      throw std::runtime_error("Your IP address should not be set when responding to DHCP Inform in DHCP Ack");
+    }
+    if (true == lease_time.has_value()) {
+      throw std::runtime_error("Lease time must not be set when responding to DHCP Inform in DHCP Ack");
+    }
+  }
+  return {pcpp::DhcpMessageType::DHCP_ACK,
+          std::move(common_config),
+          transaction_id,
+          client_hardware_address,
+          hops,
+          std::nullopt,
+          bootp_flags,
+          std::nullopt,
+          your_ip,
+          server_ip,
+          gateway_ip,
+          server_name,
+          boot_file_name,
+          std::nullopt,
+          lease_time,
+          std::nullopt,
+          vendor_class_id,
+          server_id,
+          std::nullopt,
+          std::nullopt,
+          message,
+          query};
+}
+
+serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Nak(
+    DHCPCommon common_config, const std::uint32_t transaction_id,
+    const std::array<std::uint8_t, 16> client_hardware_address, const pcpp::IPv4Address server_id,
+    const std::optional<std::uint8_t> hops, const std::optional<std::uint16_t> bootp_flags,
+    const std::optional<pcpp::IPv4Address> gateway_ip, const std::optional<std::vector<std::uint8_t>>& message,
+    const std::optional<std::vector<std::uint8_t>>& client_id,
+    const std::optional<std::vector<std::uint8_t>>& vendor_class_id) {
+  return {pcpp::DhcpMessageType::DHCP_NAK,
+          std::move(common_config),
+          transaction_id,
+          client_hardware_address,
+          hops,
+          std::nullopt,
+          bootp_flags,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          gateway_ip,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          std::nullopt,
+          client_id,
+          vendor_class_id,
           server_id,
           std::nullopt,
           std::nullopt,

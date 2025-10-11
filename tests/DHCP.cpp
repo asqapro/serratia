@@ -762,7 +762,6 @@ TEST_CASE("Build DHCP packets") {
     auto dhcp_discover_config = createTestDiscover(env);
     const auto packet = dhcp_discover_config.build();
 
-    // TODO: all fields getting cleared somewhere before here
     const auto dhcp_layer = packet.getLayerOfType<pcpp::DhcpLayer>();
     verifyDHCPDiscover(env, dhcp_layer);
 

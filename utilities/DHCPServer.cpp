@@ -146,6 +146,8 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   const auto udp_layer = std::make_shared<pcpp::UdpLayer>(config_.server_port, config_.client_port);
 
+  const serratia::protocols::DHCPCommon dhcp_common_config(eth_layer, ip_layer, udp_layer);
+
   std::array<std::uint8_t, 255> client_id{};
   // Client ID is either client MAC or set in DHCP discover
   if (const auto client_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
@@ -168,29 +170,17 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   // TODO: process DHCP options somewhere here
 
-  const serratia::protocols::DHCPCommon dhcp_common_config(eth_layer, ip_layer, udp_layer);
-
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
-  // TODO: Remove these since no longer have getters
-  const auto transaction_id = dhcp_header->transactionID;
-  const auto server_ip = config_.server_ip;
-  const auto bootp_flags = dhcp_header->flags;
-  const auto gateway_ip = dhcp_header->gatewayIpAddress;
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
-  // auto server_id = config_.get_server_id
   constexpr auto hops = 0;
-  const auto server_name = config_.server_name;
-  const auto boot_file_name = config_.boot_file_name;
-  // auto message = config_.message;
-  // auto vendor_class_id = config_.vendor_class_id;
-  // auto max_message_size = config_.max_message_size;
 
   auto dhcp_offer = serratia::protocols::DHCPMessage::Offer(
-      dhcp_common_config, transaction_id, offered_ip, server_ip, bootp_flags, gateway_ip, client_hardware_address,
-      config_.lease_time.count(), config_.server_id, hops, server_name, boot_file_name);
+      dhcp_common_config, dhcp_header->transactionID, offered_ip, config_.server_ip, dhcp_header->flags,
+      dhcp_header->gatewayIpAddress, client_hardware_address, config_.lease_time.count(), config_.server_id, hops,
+      config_.server_name, config_.boot_file_name);
   const auto packet = dhcp_offer.build();
   device_->send(packet);
 }

@@ -11,10 +11,10 @@
 #include <unordered_map>
 #include <utility>
 
-// TODO: Add doxygen comments & use @note for extra_options explanation
-// TODO: Switch structs to classes, add functions for changing header values
+// TODO: Add doxygen comments & use @note for extra_options explanationW
 
 namespace serratia::protocols {
+
 constexpr std::uint16_t ETHERNET_FRAME_SIZE = 1500;
 
 enum DHCPState { INIT, SELECTING, REQUESTING, INIT_REBOOT, REBOOTING, BOUND, RENEWING, REBINDING, STATELESS };
@@ -58,15 +58,6 @@ class DHCPMessage {
                             const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
                             std::optional<std::uint16_t> max_message_size = std::nullopt);
 
-  static DHCPMessage Offer(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
-                           pcpp::IPv4Address server_ip, std::uint16_t bootp_flags, pcpp::IPv4Address gateway_ip,
-                           std::array<std::uint8_t, 16> client_hardware_address, std::uint32_t lease_time,
-                           pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
-                           const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
-                           const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
-                           const std::optional<std::vector<std::uint8_t>>& message = std::nullopt,
-                           const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt);
-
   static DHCPMessage Request(DHCPState state, DHCPCommon common_config, std::uint32_t transaction_id,
                              std::array<std::uint8_t, 16> client_hardware_address,
                              std::optional<std::uint8_t> hops = std::nullopt,
@@ -81,6 +72,29 @@ class DHCPMessage {
                              std::optional<pcpp::IPv4Address> server_id = std::nullopt,
                              const std::optional<std::vector<std::uint8_t>>& param_request_list = std::nullopt,
                              std::optional<std::uint16_t> max_message_size = std::nullopt);
+
+  static DHCPMessage Decline(DHCPCommon common_config, std::uint32_t transaction_id,
+                             std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address requested_ip,
+                             pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
+                             std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                             const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
+                             const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
+
+  static DHCPMessage Release(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
+                             std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address server_id,
+                             std::optional<std::uint8_t> hops = std::nullopt,
+                             std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
+                             const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
+                             const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
+
+  static DHCPMessage Offer(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address your_ip,
+                           pcpp::IPv4Address server_ip, std::uint16_t bootp_flags, pcpp::IPv4Address gateway_ip,
+                           std::array<std::uint8_t, 16> client_hardware_address, std::uint32_t lease_time,
+                           pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
+                           const std::optional<std::array<std::uint8_t, 64>>& server_name = std::nullopt,
+                           const std::optional<std::array<std::uint8_t, 128>>& boot_file_name = std::nullopt,
+                           const std::optional<std::vector<std::uint8_t>>& message = std::nullopt,
+                           const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt);
 
   static DHCPMessage Ack(pcpp::DhcpMessageType query, DHCPCommon common_config, std::uint32_t transaction_id,
                          std::uint16_t bootp_flags, pcpp::IPv4Address gateway_ip,
@@ -102,20 +116,6 @@ class DHCPMessage {
                          const std::optional<std::vector<std::uint8_t>>& message = std::nullopt,
                          const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
                          const std::optional<std::vector<std::uint8_t>>& vendor_class_id = std::nullopt);
-
-  static DHCPMessage Decline(DHCPCommon common_config, std::uint32_t transaction_id,
-                             std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address requested_ip,
-                             pcpp::IPv4Address server_id, std::optional<std::uint8_t> hops = std::nullopt,
-                             std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                             const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-                             const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
-
-  static DHCPMessage Release(DHCPCommon common_config, std::uint32_t transaction_id, pcpp::IPv4Address client_ip,
-                             std::array<std::uint8_t, 16> client_hardware_address, pcpp::IPv4Address server_id,
-                             std::optional<std::uint8_t> hops = std::nullopt,
-                             std::optional<pcpp::IPv4Address> gateway_ip = std::nullopt,
-                             const std::optional<std::vector<std::uint8_t>>& client_id = std::nullopt,
-                             const std::optional<std::vector<std::uint8_t>>& message = std::nullopt);
 
   DHCPMessage() = delete;
 
