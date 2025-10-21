@@ -982,13 +982,10 @@ TEST_CASE("Interact with DHCP server") {
     const auto lease_table = server.get_lease_table();
     constexpr std::uint8_t LEASE_TABLE_SIZE = 1;
     REQUIRE(LEASE_TABLE_SIZE == lease_table.size());
-    auto lease_mac = lease_table.begin()->first.toByteArray();
-    REQUIRE(true == std::ranges::equal(std::span(env.client_hardware_address.data(), lease_mac.size()), lease_mac));
+    auto [data] = lease_table.begin()->first;
+    REQUIRE(true == std::ranges::equal(std::span(env.client_id.data(), data.size()), data));
     const auto lease = lease_table.begin()->second;
     REQUIRE(env.client_ip == lease.assigned_ip_);
-    REQUIRE(true == std::ranges::equal(env.client_id, lease.client_id_ | std::views::take(env.client_id.size())));
-    REQUIRE(true == std::ranges::all_of(lease.client_id_ | std::views::drop(env.client_id.size()),
-                                        [](std::uint8_t x) { return x == 0; }));
     const auto estimated_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
     const auto expiry_difference = std::chrono::steady_clock::now() - estimated_expiry_time;
     REQUIRE(expiry_difference.count() < 5);

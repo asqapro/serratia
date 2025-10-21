@@ -22,17 +22,6 @@ struct std::hash<pcpp::MacAddress> {
 };
 
 namespace serratia::utils {
-struct LeaseInfo {
-  LeaseInfo(const std::array<std::uint8_t, 255>& client_id, const pcpp::IPv4Address assigned_ip,
-            const std::chrono::steady_clock::time_point expiry_time)
-      : client_id_(client_id), assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
-  LeaseInfo() = default;
-
-  std::array<std::uint8_t, 255> client_id_{};
-  pcpp::IPv4Address assigned_ip_;
-  std::chrono::steady_clock::time_point expiry_time_;
-};
-
 class IPcapLiveDevice {
  public:
   virtual bool send(const pcpp::Packet& packet) = 0;
@@ -50,6 +39,38 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
 
  private:
   pcpp::PcapLiveDevice* device_;
+};
+
+struct ClientID {
+  std::vector<std::uint8_t> data;
+
+  void assign(const std::uint8_t* buf, const std::size_t len) {
+    if (len > 255) {
+      throw std::length_error("ClientID exceeds 255 bytes");
+    }
+    data.assign(buf, buf + len);
+  }
+
+  bool operator==(const ClientID& other) const noexcept = default;
+};
+
+struct ClientIDHash {
+  std::size_t operator()(const ClientID& id) const noexcept {
+    std::size_t hash = 0;
+    for (const auto byte : id.data) {
+      hash = (hash * 131) ^ byte;
+    }
+    return hash;
+  }
+};
+
+struct Lease {
+  Lease(const pcpp::IPv4Address assigned_ip, const std::chrono::steady_clock::time_point expiry_time)
+      : assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
+  Lease() = default;
+
+  pcpp::IPv4Address assigned_ip_;
+  std::chrono::steady_clock::time_point expiry_time_;
 };
 
 struct DHCPServerConfig {
@@ -88,19 +109,19 @@ class DHCPServer {
   void stop();
   bool is_running() const;
   std::set<pcpp::IPv4Address> get_lease_pool() const;
-  std::unordered_map<pcpp::MacAddress, LeaseInfo> get_lease_table() const;
+  std::unordered_map<ClientID, Lease, ClientIDHash> get_lease_table() const;
 
  private:
   void handleDiscover(const pcpp::Packet& dhcp_packet);
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
 
-  pcpp::IPv4Address allocateIP(const pcpp::MacAddress& client_mac, pcpp::IPv4Address requested_ip);
+  pcpp::IPv4Address allocateIP(const ClientID& id, pcpp::IPv4Address requested_ip);
 
   bool server_running_;
   DHCPServerConfig config_;
   std::shared_ptr<IPcapLiveDevice> device_;
   std::set<pcpp::IPv4Address> lease_pool_;
-  std::unordered_map<pcpp::MacAddress, LeaseInfo> lease_table_;
+  std::unordered_map<ClientID, Lease, ClientIDHash> lease_table_;
 };
 }  // namespace serratia::utils
