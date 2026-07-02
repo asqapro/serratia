@@ -137,24 +137,28 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
 }
 
 serratia::protocols::DHCPCommon buildCommonConfig(serratia::utils::DHCPServerConfig config,
-                                                  const pcpp::Packet& dhcp_packet) {
-  const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
-
+                                                  const pcpp::MacAddress client_mac, const std::uint16_t dhcp_flags,
+                                                  const pcpp::IPv4Address client_ip,
+                                                  const std::optional<pcpp::IPv4Address> offered_ip = std::nullopt) {
   const auto src_mac = config.server_mac;
   pcpp::MacAddress dst_mac;
-  if (1 == dhcp_layer->getDhcpHeader()->flags) {
+  if (1 == dhcp_flags) {
     dst_mac = pcpp::MacAddress("ff:ff:ff:ff:ff:ff");
   } else {
-    dst_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac();
+    dst_mac = client_mac;
   }
   const auto eth_layer = std::make_shared<pcpp::EthLayer>(src_mac, dst_mac);
 
   const auto src_ip = config.server_ip;
   pcpp::IPv4Address dst_ip;
-  if (1 == dhcp_layer->getDhcpHeader()->flags) {
+  if (0 != client_ip.toInt()) {
+    dst_ip = client_ip;
+  } else if (1 == dhcp_flags) {
     dst_ip = pcpp::IPv4Address("255.255.255.255.255");
+  } else if (offered_ip.has_value()) {
+    dst_ip = offered_ip.value();
   } else {
-    dst_ip = dhcp_packet.getLayerOfType<pcpp::IPv4Layer>()->getSrcIPv4Address();
+    throw std::runtime_error("No destination IP address provided");
   }
   const auto ip_layer = std::make_shared<pcpp::IPv4Layer>(src_ip, dst_ip);
 
@@ -165,11 +169,7 @@ serratia::protocols::DHCPCommon buildCommonConfig(serratia::utils::DHCPServerCon
   return dhcp_common_config;
 }
 
-// TODO: Add buildCommonConfigBroadcast
-
 void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet) {
-  const auto dhcp_common_config = buildCommonConfig(config_, dhcp_packet);
-
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
 
   ClientID client_id;
@@ -210,6 +210,9 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 
   constexpr auto hops = 0;
 
+  const auto dhcp_common_config = buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress),
+                                                    dhcp_header->flags, dhcp_header->clientIpAddress, offered_ip);
+
   auto dhcp_offer = serratia::protocols::DHCPMessage::Offer(
       dhcp_common_config, dhcp_header->transactionID, offered_ip, config_.server_ip, dhcp_header->flags,
       dhcp_header->gatewayIpAddress, client_hardware_address, config_.lease_time.count(), config_.server_id, hops,
@@ -234,7 +237,8 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
-  const auto dhcp_common_config = buildCommonConfig(config_, dhcp_packet);
+  // const auto dhcp_common_config = buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress),
+  //                                                   dhcp_header->flags, dhcp_header->clientIpAddress, offered_ip);
 
   if (const auto server_id = dhcp_layer->getOptionData(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER);
       server_id.isNotNull()) {
@@ -337,9 +341,14 @@ void serratia::utils::DHCPServer::handleRelease(const pcpp::Packet& dhcp_packet)
 
 serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateAck(const pcpp::Packet& dhcp_packet,
                                                                           const Lease& lease) const {
+  // TODO: Add handling for INFORMs
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  const auto dhcp_common_config = buildCommonConfig(config_, dhcp_packet);
+
+  const auto dhcp_common_config =
+      buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress), dhcp_header->flags,
+                        dhcp_header->clientIpAddress, lease.assigned_ip_);
+
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
@@ -354,7 +363,8 @@ serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateAck(const 
 serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateNak(const pcpp::Packet& dhcp_packet) const {
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
-  const auto dhcp_common_config = buildCommonConfig(config_, dhcp_packet);
+  const auto dhcp_common_config = buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress),
+                                                    dhcp_header->flags, dhcp_header->clientIpAddress);
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
