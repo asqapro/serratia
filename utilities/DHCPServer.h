@@ -9,18 +9,6 @@
 
 #include "spdlog/spdlog.h"
 
-template <>
-struct std::hash<pcpp::MacAddress> {
-  std::size_t operator()(const pcpp::MacAddress& mac) const noexcept {
-    const uint8_t* data = mac.getRawData();
-    std::size_t h = 0;
-    for (int i = 0; i < 6; ++i) {
-      h ^= static_cast<std::size_t>(data[i]) << (i * 8);
-    }
-    return h;
-  }
-};
-
 namespace serratia::utils {
 class IPcapLiveDevice {
  public:
@@ -51,16 +39,12 @@ struct ClientID {
     data.assign(buf, buf + len);
   }
 
-  bool operator==(const ClientID& other) const noexcept = default;
-};
+  bool operator<(const ClientID& other) const noexcept {
+    return std::ranges::lexicographical_compare(data, other.data);
+  }
 
-struct ClientIDHash {
-  std::size_t operator()(const ClientID& id) const noexcept {
-    std::size_t hash = 0;
-    for (const auto byte : id.data) {
-      hash = (hash * 131) ^ byte;
-    }
-    return hash;
+  bool operator==(const ClientID& other) const noexcept {
+    return data == other.data;
   }
 };
 
@@ -71,6 +55,64 @@ struct Lease {
 
   pcpp::IPv4Address assigned_ip_;
   std::chrono::steady_clock::time_point expiry_time_;
+
+};
+
+template <typename ClientID, typename IP, typename Lease>
+class LeaseTable {
+public:
+  // Assigns a lease to a client
+  bool assign(const ClientID& client, const Lease& lease) {
+    const auto& ip = lease.assigned_ip_;
+
+    // prevent conflicts
+    if (ip_to_client.contains(ip) || client_to_lease.contains(client))
+      return false;
+
+    client_to_lease[client] = lease;
+    ip_to_client[ip] = client;
+    return true;
+  }
+
+  // Remove a client's lease (e.g., on expiry)
+  bool removeByClient(const ClientID& client) {
+    auto it = client_to_lease.find(client);
+    if (it == client_to_lease.end())
+      return false;
+    ip_to_client.erase(it->second.ip);
+    client_to_lease.erase(it);
+    return true;
+  }
+
+  // Remove by IP
+  bool removeByIP(const IP& ip) {
+    auto it = ip_to_client.find(ip);
+    if (it == ip_to_client.end())
+      return false;
+    client_to_lease.erase(it->second);
+    ip_to_client.erase(it);
+    return true;
+  }
+
+  // Lookup by client
+  [[nodiscard]] std::optional<Lease> getLease(const ClientID& client) const {
+    auto it = client_to_lease.find(client);
+    if (it == client_to_lease.end()) return std::nullopt;
+    return it->second;
+  }
+
+  // Lookup by IP
+  [[nodiscard]] std::optional<ClientID> getClient(const IP& ip) const {
+    auto it = ip_to_client.find(ip);
+    if (it == ip_to_client.end()) return std::nullopt;
+    return it->second;
+  }
+
+  [[nodiscard]] std::size_t size() const noexcept { return client_to_lease.size(); }
+
+private:
+  std::map<ClientID, Lease> client_to_lease;
+  std::map<IP, ClientID> ip_to_client;
 };
 
 struct DHCPServerConfig {
@@ -107,9 +149,9 @@ class DHCPServer {
   DHCPServer(const DHCPServerConfig& config, std::shared_ptr<IPcapLiveDevice> device);
   void run();
   void stop();
-  bool is_running() const;
-  std::set<pcpp::IPv4Address> get_lease_pool() const;
-  std::unordered_map<ClientID, Lease, ClientIDHash> get_lease_table() const;
+  [[nodiscard]] bool is_running() const;
+  [[nodiscard]] std::set<pcpp::IPv4Address> get_lease_pool() const;
+  [[nodiscard]] LeaseTable<ClientID, pcpp::IPv4Address, Lease>get_lease_table() const;
 
  private:
   void handleDiscover(const pcpp::Packet& dhcp_packet);
@@ -122,6 +164,6 @@ class DHCPServer {
   DHCPServerConfig config_;
   std::shared_ptr<IPcapLiveDevice> device_;
   std::set<pcpp::IPv4Address> lease_pool_;
-  std::unordered_map<ClientID, Lease, ClientIDHash> lease_table_;
+  LeaseTable<ClientID, pcpp::IPv4Address, Lease> lease_table_;
 };
 }  // namespace serratia::utils

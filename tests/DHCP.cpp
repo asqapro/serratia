@@ -88,8 +88,8 @@ struct TestEnvironment {
   std::size_t request_selecting_option_count = 8;
   std::size_t request_init_reboot_option_count = 7;
   std::size_t request_bound_renew_rebind_option_count = 6;
-  std::size_t ack_request_option_count = 5;
-  std::size_t ack_inform_option_count = 4;
+  std::size_t ack_request_option_count = 3;
+  std::size_t ack_inform_option_count = 2;
   std::size_t nak_option_count = 5;
   std::size_t decline_option_count = 5;
   std::size_t release_option_count = 4;
@@ -472,13 +472,13 @@ serratia::protocols::DHCPMessage createTestAck(const TestEnvironment& env, const
         query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
         env.server_id, env.hops, env.your_ip, env.server_ip, server_name, boot_file_name,
         static_cast<std::uint32_t>(env.lease_time.count()),
-        std::vector<std::uint8_t>(env.message.begin(), env.message.end()), env.vendor_class_id);
+       std::nullopt, std::nullopt);
   }
   if (pcpp::DhcpMessageType::DHCP_INFORM == query) {
     return serratia::protocols::DHCPMessage::Ack(
         query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
         env.server_id, env.hops, std::nullopt, env.server_ip, server_name, boot_file_name, std::nullopt,
-        std::vector<std::uint8_t>(env.message.begin(), env.message.end()), env.vendor_class_id);
+        std::nullopt, std::nullopt);
   }
   throw std::runtime_error("DHCP ACK can only be sent in response to REQUEST or INFORM");
 }
@@ -516,15 +516,14 @@ void verifyDHCPAck(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer, pcpp
 
   REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).isNull());
 
-  REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).isNull());
 
   REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).isNull());
 
   const auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
   const auto vendor_class_id = vendor_class_id_option.getValue();
   const auto vendor_class_id_size = vendor_class_id_option.getDataSize();
-  REQUIRE(true == std::equal(vendor_class_id, vendor_class_id + vendor_class_id_size, env.vendor_class_id.begin(),
-                             env.vendor_class_id.end()));
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER).isNull());
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
 
@@ -968,54 +967,41 @@ TEST_CASE("Interact with DHCP server") {
 
     env.bootp_flags = 0x8000;
     auto dhcp_discover_config = createTestDiscover(env);
-    const auto packet = dhcp_discover_config.build();
+    const auto discover_packet = dhcp_discover_config.build();
 
-    device->send(packet);
-    server.stop();
+    device->send(discover_packet);
     REQUIRE(2 == device->sent_dhcp_packets.size());
 
-    auto& dhcp_layer = device->sent_dhcp_packets.back();
+    auto dhcp_layer = device->sent_dhcp_packets.back();
     verifyDHCPOffer(env, &dhcp_layer);
     env.bootp_flags = 0;
-    // TODO: Complete request of process
 
     const auto lease_table = server.get_lease_table();
     constexpr std::uint8_t LEASE_TABLE_SIZE = 1;
     REQUIRE(LEASE_TABLE_SIZE == lease_table.size());
-    auto [data] = lease_table.begin()->first;
-    REQUIRE(true == std::ranges::equal(std::span(env.client_id.data(), data.size()), data));
-    const auto lease = lease_table.begin()->second;
-    REQUIRE(env.client_ip == lease.assigned_ip_);
+
+    auto client = lease_table.getClient(env.requested_ip);
+    REQUIRE(std::nullopt != client);
+    REQUIRE(true == std::ranges::equal(std::span(env.client_id.data(), client->data.size()), client->data));
+
+    const auto lease = lease_table.getLease(client.value());
+    REQUIRE(std::nullopt != lease);
+    REQUIRE(env.client_ip == lease.value().assigned_ip_);
     const auto estimated_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
     const auto expiry_difference = std::chrono::steady_clock::now() - estimated_expiry_time;
     REQUIRE(expiry_difference.count() < 5);
+
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::SELECTING};
+    auto dhcp_request_config = createTestInitialRequest(env, state);
+    const auto request_packet = dhcp_request_config.build();
+
+    device->send(request_packet);
+    REQUIRE(4 == device->sent_dhcp_packets.size());
+
+    dhcp_layer = device->sent_dhcp_packets.back();
+    constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
+    verifyDHCPAck(env, &dhcp_layer, query);
+
+    server.stop();
   }
-
-  /* Saving this code for later, needs to be used when sending DISCOVER & verify options when get back OFFER
-    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK, env.subnet_mask);
-
-    std::vector<std::uint8_t> routers;
-    // Each router IP address is 4 bytes
-    routers.reserve(env.routers.size() * 4);
-
-    for (const auto& router : env.routers) {
-      auto router_bytes = router.toByteArray();
-      routers.insert(routers.end(), router_bytes.begin(), router_bytes.end());
-    }
-
-    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS, routers.data(),
-                                                  static_cast<std::uint8_t>(env.routers.size()));
-
-    std::vector<std::uint8_t> dns_servers;
-    // Each DNS server IP address is 4 bytes
-    dns_servers.reserve(env.routers.size() * 4);
-
-    for (const auto& server : env.dns_servers) {
-      auto server_bytes = server.toByteArray();
-      dns_servers.insert(routers.end(), server_bytes.begin(), server_bytes.end());
-    }
-
-    dhcp_offer_config.extra_options.emplace_back(pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS, dns_servers.data(),
-                                                  static_cast<std::uint8_t>(env.dns_servers.size()));
-   */
 }

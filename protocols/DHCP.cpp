@@ -660,10 +660,10 @@ serratia::protocols::DHCPMessage serratia::protocols::DHCPMessage::Request(
   switch (state) {
     case BOUND:
     case RENEWING:
-      if (true == requested_ip.has_value()) {
-        throw std::runtime_error("Requested IP must not be set in BOUND or RENEWING state in DHCP Request");
-      }
     case REBINDING:
+      if (true == requested_ip.has_value()) {
+        throw std::runtime_error("Requested IP must not be set in BOUND / RENEW / REBINDING states in DHCP Request");
+      }
       if (false == client_ip.has_value()) {
         throw std::runtime_error("Client IP must be set in BOUND / RENEW / REBINDING states in DHCP Request");
       }
