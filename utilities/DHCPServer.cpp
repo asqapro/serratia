@@ -95,16 +95,25 @@ serratia::utils::DHCPServer::get_lease_table() const {
 }
 
 pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, const pcpp::IPv4Address requested_ip) {
-  // Check if the IP was reserved by another client, try to take it from them if so
-  const auto reserver = lease_table_.getClient(requested_ip);
-  if (std::nullopt != reserver && id != reserver) {
-    const auto lease = lease_table_.getLease(reserver.value());
-    // Check that it's still a valid lease, take the IP if not
-    if (std::nullopt == lease) {
-      return requested_ip;
+  // Check if the client has an existing lease, give them the same IP if possible
+  if (const auto lease = lease_table_.getLease(id); lease.has_value()) {
+    if (std::chrono::steady_clock::now() < lease->expiry_time_) {
+      // lease hasn't expired yet
+      return lease->assigned_ip_;
     }
-    // Check if the lease expired, take the IP if so
-    if (std::chrono::steady_clock::now() > lease->expiry_time_) {
+    if (lease_pool_.contains(lease->assigned_ip_)) {
+      // lease expired but the old IP is still available
+      lease_pool_.erase(lease->assigned_ip_);
+      return lease->assigned_ip_;
+    }
+  }
+
+  // Check if the requested IP is reserved by another client, take it if possible
+  if (const auto reserver = lease_table_.getClient(requested_ip); reserver.has_value()) {
+    // Check if the other client's lease expired, take the IP if so
+    if (const auto lease = lease_table_.getLease(reserver.value());
+        std::chrono::steady_clock::now() > lease->expiry_time_) {
+      lease_pool_.erase(lease->assigned_ip_);
       return requested_ip;
     }
   }
@@ -113,21 +122,6 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
   if (lease_pool_.contains(requested_ip)) {
     lease_pool_.erase(requested_ip);
     return requested_ip;
-  }
-
-  // Check if the client has an existing lease, give them the same IP if so
-  if (id == reserver.value()) {
-    if (const auto lease = lease_table_.getLease(id); std::nullopt != lease) {
-      if (std::chrono::steady_clock::now() < lease->expiry_time_) {
-        // lease hasn't expired yet
-        return lease->assigned_ip_;
-      }
-
-      if (lease_pool_.contains(lease->assigned_ip_)) {
-        // lease expired but the old IP is still available
-        return lease->assigned_ip_;
-      }
-    }
   }
 
   if (lease_pool_.empty()) {
@@ -181,7 +175,13 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
       true == requested_ip_opt.isNotNull()) {
     requested_ip = requested_ip_opt.getValueAsIpAddr();
   }
-  const pcpp::IPv4Address offered_ip = allocateIP(client_id, requested_ip);
+
+  pcpp::IPv4Address offered_ip;
+  try {
+    offered_ip = allocateIP(client_id, requested_ip);
+  } catch (const std::runtime_error& e) {
+    // TODO: Log lease pool exhaustion
+  }
 
   const auto lease_expiry = std::chrono::steady_clock::now() + config_.offer_time;
 
@@ -383,8 +383,7 @@ pcpp::Packet serratia::utils::DHCPServer::generateNak(const pcpp::Packet& dhcp_p
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
   const auto dhcp_common_config = buildCommonConfig(config_, dhcp_packet);
   std::array<std::uint8_t, 16> client_hardware_address{};
-  std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6),
-                    client_hardware_address.begin());
+  std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
   auto dhcp_nak = serratia::protocols::DHCPMessage::Nak(
       dhcp_common_config, dhcp_header->transactionID, client_hardware_address, config_.server_id, dhcp_header->hops,
