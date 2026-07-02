@@ -43,9 +43,7 @@ struct ClientID {
     return std::ranges::lexicographical_compare(data, other.data);
   }
 
-  bool operator==(const ClientID& other) const noexcept {
-    return data == other.data;
-  }
+  bool operator==(const ClientID& other) const noexcept { return data == other.data; }
 };
 
 struct Lease {
@@ -55,19 +53,20 @@ struct Lease {
 
   pcpp::IPv4Address assigned_ip_;
   std::chrono::steady_clock::time_point expiry_time_;
-
+  bool finalized_{};
 };
 
 template <typename ClientID, typename IP, typename Lease>
 class LeaseTable {
-public:
+ public:
   // Assigns a lease to a client
   bool assign(const ClientID& client, const Lease& lease) {
     const auto& ip = lease.assigned_ip_;
 
     // prevent conflicts
-    if (ip_to_client.contains(ip) || client_to_lease.contains(client))
+    if (ip_to_client.contains(ip) || client_to_lease.contains(client)) {
       return false;
+    }
 
     client_to_lease[client] = lease;
     ip_to_client[ip] = client;
@@ -77,8 +76,9 @@ public:
   // Remove a client's lease (e.g., on expiry)
   bool removeByClient(const ClientID& client) {
     auto it = client_to_lease.find(client);
-    if (it == client_to_lease.end())
+    if (it == client_to_lease.end()) {
       return false;
+    }
     ip_to_client.erase(it->second.assigned_ip_);
     client_to_lease.erase(it);
     return true;
@@ -87,8 +87,9 @@ public:
   // Remove by IP
   bool removeByIP(const IP& ip) {
     auto it = ip_to_client.find(ip);
-    if (it == ip_to_client.end())
+    if (it == ip_to_client.end()) {
       return false;
+    }
     client_to_lease.erase(it->second);
     ip_to_client.erase(it);
     return true;
@@ -97,23 +98,46 @@ public:
   // Lookup by client
   [[nodiscard]] std::optional<Lease> getLease(const ClientID& client) const {
     auto it = client_to_lease.find(client);
-    if (it == client_to_lease.end()) return std::nullopt;
+    if (it == client_to_lease.end()) {
+      return std::nullopt;
+    }
     return it->second;
   }
 
   // Lookup by IP
+  // TODO: Probably remove this function. Used in allocateIP() but should just be checking lease pool
   [[nodiscard]] std::optional<ClientID> getClient(const IP& ip) const {
     auto it = ip_to_client.find(ip);
-    if (it == ip_to_client.end()) return std::nullopt;
+    if (it == ip_to_client.end()) {
+      return std::nullopt;
+    }
     return it->second;
+  }
+
+  void finalize_lease(const ClientID& client) {
+    auto it = client_to_lease.find(client);
+    if (it == client_to_lease.end()) {
+      throw std::runtime_error("Client not found");
+    }
+    it->second.finalized_ = true;
+  }
+
+  void cleanup_leases() {
+    for (auto it = client_to_lease.begin(); it != client_to_lease.end();) {
+      if (false == it->second.finalized) {
+        ip_to_client.erase(it->second.assigned_ip_);
+        it = client_to_lease.erase(it);
+      } else {
+        ++it;
+      }
+    }
   }
 
   [[nodiscard]] std::size_t size() const noexcept { return client_to_lease.size(); }
 
-private:
+ private:
   std::map<ClientID, Lease> client_to_lease;
   std::map<IP, ClientID> ip_to_client;
-  // TODO: Track unfinalized leases (tentative OFFERS)
 };
 
 struct DHCPServerConfig {
@@ -152,7 +176,7 @@ class DHCPServer {
   void stop();
   [[nodiscard]] bool is_running() const;
   [[nodiscard]] std::set<pcpp::IPv4Address> get_lease_pool() const;
-  [[nodiscard]] LeaseTable<ClientID, pcpp::IPv4Address, Lease>get_lease_table() const;
+  [[nodiscard]] LeaseTable<ClientID, pcpp::IPv4Address, Lease> get_lease_table() const;
 
  private:
   void handleDiscover(const pcpp::Packet& dhcp_packet);

@@ -144,6 +144,8 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
 }
 
 void serratia::utils::DHCPServer::deallocateIP(const ClientID& id) {
+  const auto lease = lease_table_.getLease(id);
+  lease_pool_.insert(lease->assigned_ip_);
   lease_table_.removeByClient(id);
 }
 
@@ -227,8 +229,6 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
       std::ranges::copy(client_mac, std::back_inserter(client_id.data));
     }
 
-    //offered_ip = requested_ip.getValueAsIpAddr();
-
     // Check if the client has an existing lease
     if (const auto lease = lease_table_.getLease(client_id); std::nullopt != lease) {
       // Check if the client's IP address is different from the one it's requesting
@@ -248,6 +248,7 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
     // record the lease
     const Lease lease(offered_ip.value(), lease_expiry);
     lease_table_.assign(client_id, lease);
+    lease_table_.finalize_lease(client_id);
   }
 
   const auto src_mac = config_.server_mac;

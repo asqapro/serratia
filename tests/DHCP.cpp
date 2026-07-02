@@ -976,15 +976,17 @@ TEST_CASE("Interact with DHCP server") {
     verifyDHCPOffer(env, &dhcp_layer);
     env.bootp_flags = 0;
 
-    const auto lease_table = server.get_lease_table();
+    auto lease_table = server.get_lease_table();
     constexpr std::uint8_t LEASE_TABLE_SIZE = 1;
     REQUIRE(LEASE_TABLE_SIZE == lease_table.size());
+
+    REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
 
     auto client = lease_table.getClient(env.requested_ip);
     REQUIRE(std::nullopt != client);
     REQUIRE(true == std::ranges::equal(std::span(env.client_id.data(), client->data.size()), client->data));
 
-    const auto lease = lease_table.getLease(client.value());
+    auto lease = lease_table.getLease(client.value());
     REQUIRE(std::nullopt != lease);
     REQUIRE(env.client_ip == lease.value().assigned_ip_);
     const auto estimated_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
@@ -1004,6 +1006,10 @@ TEST_CASE("Interact with DHCP server") {
 
     server.stop();
 
+    lease_table = server.get_lease_table();
+    lease = lease_table.getLease(client.value());
+    REQUIRE(true == lease->finalized_);
     REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
+
   }
 }
