@@ -7,6 +7,7 @@
 
 #include <set>
 
+#include "../protocols/DHCP.h"
 #include "spdlog/spdlog.h"
 
 namespace serratia::utils {
@@ -174,8 +175,8 @@ class DHCPServer {
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
 
+  [[nodiscard]] pcpp::Packet generateNak(const pcpp::Packet& dhcp_packet) const;
   pcpp::IPv4Address allocateIP(const ClientID& id, pcpp::IPv4Address requested_ip);
-  void deallocateIP(const ClientID& id);
 
   bool server_running_;
   DHCPServerConfig config_;
