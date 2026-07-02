@@ -17,6 +17,13 @@ bool serratia::utils::RealPcapLiveDevice::startCapture(const pcpp::OnPacketArriv
 
 void serratia::utils::RealPcapLiveDevice::stopCapture() { device_->stopCapture(); }
 
+pcpp::MacAddress serratia::utils::RealPcapLiveDevice::getMacAddress(const pcpp::IPv4Address& target_ip,
+                                                                    const int timeout) {
+  double response_time = 0.0;
+  return pcpp::NetworkUtils::getInstance().getMacAddress(target_ip, device_, response_time, device_->getMacAddress(),
+                                                         device_->getIPv4Address(), timeout);
+}
+
 serratia::utils::DHCPServer::DHCPServer(const DHCPServerConfig& config, std::shared_ptr<IPcapLiveDevice> device)
     : server_running_(false), config_(config), device_(std::move(device)) {
   const auto lease_pool_start = config_.lease_pool_start;
@@ -110,11 +117,22 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
 
   // Check if the requested IP is reserved by another client, take it if possible
   if (const auto reserver = lease_table_.getClient(requested_ip); reserver.has_value()) {
-    // Check if the other client's lease expired, take the IP if so
+    // Check if the other client's lease expired, take the IP if not in use
     if (const auto lease = lease_table_.getLease(reserver.value());
         std::chrono::steady_clock::now() > lease->expiry_time_) {
-      lease_pool_.erase(lease->assigned_ip_);
-      return requested_ip;
+      bool address_in_use = false;
+      // Try the probe a few times in case the ARP packets get dropped
+      for (auto probe = 0; probe < 3; ++probe) {
+        const auto active_client = device_->getMacAddress(requested_ip, 500);
+        if (pcpp::MacAddress::Zero != active_client) {
+          address_in_use = true;
+        }
+      }
+      if (false == address_in_use) {
+        // Other client is not actively using the IP, take it
+        lease_pool_.erase(lease->assigned_ip_);
+        return requested_ip;
+      }
     }
   }
 
@@ -233,12 +251,7 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
     const auto client_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac().toByteArray();
     std::ranges::copy(client_mac, std::back_inserter(client_id.data));
   }
-
-  std::array<std::uint8_t, 16> client_hardware_address{};
-  std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
-
-  // const auto dhcp_common_config = buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress),
-  //                                                   dhcp_header->flags, dhcp_header->clientIpAddress, offered_ip);
+  const auto lease = lease_table_.getLease(client_id);
 
   if (const auto server_id = dhcp_layer->getOptionData(pcpp::DhcpOptionTypes::DHCPOPT_DHCP_SERVER_IDENTIFIER);
       server_id.isNotNull()) {
@@ -254,7 +267,6 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
       return;
     }
 
-    const auto lease = lease_table_.getLease(client_id);
     if (const auto requested_ip_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS);
         requested_ip_opt.isNotNull()) {
       if (false == lease.has_value()) {
@@ -280,7 +292,6 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
   if (const auto requested_ip_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS);
       requested_ip_opt.isNotNull()) {
     // Client is in INIT-REBOOT state
-    const auto lease = lease_table_.getLease(client_id);
     if (false == lease.has_value() || LeaseState::Finalized != lease->state_) {
       // Client doesn't have a lease, ignore the message
       return;
@@ -323,7 +334,6 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
   }
 
   // Client in RENEWING or REBINDING state
-  const auto lease = lease_table_.getLease(client_id);
   if (false == lease.has_value() || LeaseState::Finalized != lease->state_) {
     // Client doesn't have a lease, ignore the message
     return;
@@ -334,30 +344,58 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
   }
   auto ack = generateAck(dhcp_packet, lease.value());
   const auto packet = ack.build();
+  device_->send(packet);
 }
+
 void serratia::utils::DHCPServer::handleRelease(const pcpp::Packet& dhcp_packet) {
   // TODO: fill out this function
 }
 
-serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateAck(const pcpp::Packet& dhcp_packet,
-                                                                          const Lease& lease) const {
-  // TODO: Add handling for INFORMs
+void serratia::utils::DHCPServer::handleInform(const pcpp::Packet& dhcp_packet) const {
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
+  const auto client_addr = pcpp::IPv4Address(dhcp_header->clientIpAddress);
 
-  const auto dhcp_common_config =
-      buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress), dhcp_header->flags,
-                        dhcp_header->clientIpAddress, lease.assigned_ip_);
+  if (const auto network_addr = pcpp::IPv4Network(config_.server_ip, config_.server_netmask.toString());
+      false == client_addr.matchNetwork(network_addr)) {
+    // Do not respond if client not in the same network as server
+    return;
+  }
+
+  auto ack = generateAck(dhcp_packet);
+  const auto packet = ack.build();
+  device_->send(packet);
+}
+
+serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateAck(const pcpp::Packet& dhcp_packet,
+                                                                          const std::optional<Lease>& lease) const {
+  const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
+  const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
   std::array<std::uint8_t, 16> client_hardware_address{};
   std::ranges::copy(dhcp_header->clientHardwareAddress | std::ranges::views::take(6), client_hardware_address.begin());
 
-  auto dhcp_ack = serratia::protocols::DHCPMessage::Ack(
-      pcpp::DHCP_REQUEST, dhcp_common_config, dhcp_header->transactionID, dhcp_header->flags,
-      dhcp_header->gatewayIpAddress, client_hardware_address, config_.server_id, dhcp_header->hops, lease.assigned_ip_,
-      config_.server_ip, config_.server_name, config_.boot_file_name, config_.lease_time.count(), std::nullopt,
-      std::nullopt);
-  return dhcp_ack;
+  if (lease.has_value()) {
+    const auto dhcp_common_config =
+        buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress), dhcp_header->flags,
+                          dhcp_header->clientIpAddress, lease->assigned_ip_);
+
+    auto dhcp_ack = serratia::protocols::DHCPMessage::Ack(
+        pcpp::DHCP_REQUEST, dhcp_common_config, dhcp_header->transactionID, dhcp_header->flags,
+        dhcp_header->gatewayIpAddress, client_hardware_address, config_.server_id, dhcp_header->hops,
+        lease->assigned_ip_, config_.server_ip, config_.server_name, config_.boot_file_name, config_.lease_time.count(),
+        std::nullopt, std::nullopt);
+    return dhcp_ack;
+  } else {
+    const auto dhcp_common_config = buildCommonConfig(config_, pcpp::MacAddress(dhcp_header->clientHardwareAddress),
+                                                      dhcp_header->flags, dhcp_header->clientIpAddress);
+
+    auto dhcp_ack = serratia::protocols::DHCPMessage::Ack(
+        pcpp::DHCP_INFORM, dhcp_common_config, dhcp_header->transactionID, dhcp_header->flags,
+        dhcp_header->gatewayIpAddress, client_hardware_address, config_.server_id, dhcp_header->hops, std::nullopt,
+        config_.server_ip, config_.server_name, config_.boot_file_name, std::nullopt, std::nullopt, std::nullopt);
+    return dhcp_ack;
+  }
 }
 
 serratia::protocols::DHCPMessage serratia::utils::DHCPServer::generateNak(const pcpp::Packet& dhcp_packet) const {

@@ -893,6 +893,8 @@ struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
   bool capturing = false;
   void* packet_arrives_cookie = nullptr;
 
+  pcpp::MacAddress arp_reply_mac = pcpp::MacAddress::Zero;
+
   bool send(const pcpp::Packet& packet) override {
     sent_dhcp_packets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
 
@@ -915,6 +917,7 @@ struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
     capture_callback = nullptr;
     packet_arrives_cookie = nullptr;
   }
+  pcpp::MacAddress getMacAddress(const pcpp::IPv4Address&, int) override { return arp_reply_mac; }
 };
 
 void acquire_ip(TestEnvironment env, const std::shared_ptr<MockPcapLiveDevice>& device) {
@@ -1056,6 +1059,5 @@ TEST_CASE("Interact with DHCP server") {
     verifyDHCPAck(env, &dhcp_layer, query);
 
     server.stop();
-
   }
 }

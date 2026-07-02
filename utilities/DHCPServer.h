@@ -3,6 +3,7 @@
 #include <pcapplusplus/DhcpLayer.h>
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
+#include <pcapplusplus/NetworkUtils.h>
 #include <pcapplusplus/PcapLiveDevice.h>
 
 #include <set>
@@ -16,6 +17,7 @@ class IPcapLiveDevice {
   virtual bool send(const pcpp::Packet& packet) = 0;
   virtual bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) = 0;
   virtual void stopCapture() = 0;
+  virtual pcpp::MacAddress getMacAddress(const pcpp::IPv4Address& target_ip, int timeout) = 0;
   virtual ~IPcapLiveDevice() = default;
 };
 
@@ -25,6 +27,7 @@ class RealPcapLiveDevice final : public IPcapLiveDevice {
   bool send(const pcpp::Packet& packet) override;
   bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) override;
   void stopCapture() override;
+  pcpp::MacAddress getMacAddress(const pcpp::IPv4Address& target_ip, int timeout) override;
 
  private:
   pcpp::PcapLiveDevice* device_;
@@ -183,8 +186,10 @@ class DHCPServer {
   void handleDiscover(const pcpp::Packet& dhcp_packet);
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
+  void handleInform(const pcpp::Packet& dhcp_packet) const;
 
-  [[nodiscard]] serratia::protocols::DHCPMessage generateAck(const pcpp::Packet& dhcp_packet, const Lease& lease) const;
+  [[nodiscard]] serratia::protocols::DHCPMessage generateAck(const pcpp::Packet& dhcp_packet,
+                                                             const std::optional<Lease>& lease = std::nullopt) const;
   [[nodiscard]] serratia::protocols::DHCPMessage generateNak(const pcpp::Packet& dhcp_packet) const;
   pcpp::IPv4Address allocateIP(const ClientID& id, pcpp::IPv4Address requested_ip);
 
