@@ -19,6 +19,7 @@ constexpr int NO_DIFFERENCE = 0;
 constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
 constexpr std::size_t MAX_BOOT_FILE_NAME_SIZE = 128;
+constexpr std::uint16_t BROADCAST_FLAG = 0x8000;
 
 enum PacketSource {
   INITIAL_CLIENT,
@@ -54,7 +55,7 @@ struct TestEnvironment {
   std::uint16_t seconds_elapsed = 0;
   std::uint16_t bootp_flags = 0;
   pcpp::IPv4Address your_ip;
-  pcpp::IPv4Address gateway_ip{"192.168.0.1"};
+  pcpp::IPv4Address gateway_ip{"0.0.0.0"};
   // Notional MAC address
   std::array<std::uint8_t, 16> client_hardware_address{0xcb, 0xc7, 0x4d, 0x54, 0x98, 0xd1};
   std::array<std::uint8_t, 64> server_host_name{"skalrog"};
@@ -757,7 +758,7 @@ TEST_CASE("Build DHCP packets") {
 
   SECTION("DHCP discover") {
     // Set broadcast flag
-    env.bootp_flags = 0x8000;
+    env.bootp_flags = BROADCAST_FLAG;
 
     auto dhcp_discover_config = createTestDiscover(env);
     const auto packet = dhcp_discover_config.build();
@@ -787,7 +788,7 @@ TEST_CASE("Build DHCP packets") {
 
   SECTION("DHCP request - INIT-REBOOT") {
     // Set broadcast flag
-    env.bootp_flags = 0x8000;
+    env.bootp_flags = BROADCAST_FLAG;
 
     constexpr serratia::protocols::DHCPState state{serratia::protocols::INIT_REBOOT};
     auto dhcp_request_config = createTestInitialRequest(env, state);
@@ -802,7 +803,7 @@ TEST_CASE("Build DHCP packets") {
 
   SECTION("DHCP request - SELECTING") {
     // Set broadcast flag
-    env.bootp_flags = 0x8000;
+    env.bootp_flags = BROADCAST_FLAG;
 
     constexpr serratia::protocols::DHCPState state{serratia::protocols::SELECTING};
     auto dhcp_request_config = createTestInitialRequest(env, state);
@@ -916,6 +917,22 @@ struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
   }
 };
 
+void acquire_ip(TestEnvironment env, const std::shared_ptr<MockPcapLiveDevice>& device) {
+  // Set broadcast flag
+  env.bootp_flags = BROADCAST_FLAG;
+  auto dhcp_discover_config = createTestDiscover(env);
+  const auto discover_packet = dhcp_discover_config.build();
+
+  device->send(discover_packet);
+
+  env.bootp_flags = 0;
+  constexpr serratia::protocols::DHCPState state{serratia::protocols::SELECTING};
+  auto dhcp_request_config = createTestInitialRequest(env, state);
+  const auto request_packet = dhcp_request_config.build();
+
+  device->send(request_packet);
+}
+
 TEST_CASE("Interact with DHCP server") {
   auto& env = getEnv();
   // Change environment to match real-world scenario
@@ -962,7 +979,7 @@ TEST_CASE("Interact with DHCP server") {
     REQUIRE(1 == device->sent_dhcp_packets.size());
   }
 
-  SECTION("Acquire IP") {
+  SECTION("Acquire IP - DORA / INIT") {
     serratia::utils::DHCPServer server(config, device);
     server.run();
 
@@ -1017,5 +1034,28 @@ TEST_CASE("Interact with DHCP server") {
     real_expiry_time = lease->expiry_time_;
     expiry_difference = std::chrono::duration_cast<std::chrono::seconds>(est_expiry_time - real_expiry_time);
     REQUIRE(expiry_difference.count() < 1);
+  }
+
+  SECTION("Acquire IP - DORA / INIT-REBOOT") {
+    serratia::utils::DHCPServer server(config, device);
+    server.run();
+
+    // Get an IP first
+    acquire_ip(env, device);
+
+    // Then try getting the same IP again
+    constexpr serratia::protocols::DHCPState state{serratia::protocols::INIT_REBOOT};
+    auto dhcp_request_config = createTestInitialRequest(env, state);
+    const auto request_packet = dhcp_request_config.build();
+
+    device->send(request_packet);
+    REQUIRE(6 == device->sent_dhcp_packets.size());
+
+    auto dhcp_layer = device->sent_dhcp_packets.back();
+    constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
+    verifyDHCPAck(env, &dhcp_layer, query);
+
+    server.stop();
+
   }
 }
