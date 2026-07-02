@@ -1003,5 +1003,7 @@ TEST_CASE("Interact with DHCP server") {
     verifyDHCPAck(env, &dhcp_layer, query);
 
     server.stop();
+
+    REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
   }
 }

@@ -110,6 +110,7 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
   }
 
   if (lease_pool_.contains(requested_ip)) {
+    lease_pool_.erase(requested_ip);
     return requested_ip;
   }
 
@@ -142,7 +143,9 @@ pcpp::IPv4Address serratia::utils::DHCPServer::allocateIP(const ClientID& id, co
   return assigned_ip;
 }
 
-void deallocateIP() {}
+void serratia::utils::DHCPServer::deallocateIP(const ClientID& id) {
+  lease_table_.removeByClient(id);
+}
 
 void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet) {
   const auto src_mac = config_.server_mac;
@@ -200,8 +203,6 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
 }
 
 void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet) {
-  // TODO: fill out this function
-
   const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
   const auto dhcp_header = dhcp_layer->getDhcpHeader();
 
@@ -226,22 +227,27 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
       std::ranges::copy(client_mac, std::back_inserter(client_id.data));
     }
 
+    //offered_ip = requested_ip.getValueAsIpAddr();
+
     // Check if the client has an existing lease
     if (const auto lease = lease_table_.getLease(client_id); std::nullopt != lease) {
       // Check if the client's IP address is different from the one it's requesting
       if (requested_ip.getValueAsIpAddr() != lease.value().assigned_ip_) {
-        if (false == lease_pool_.contains(requested_ip.getValueAsIpAddr())) {
-          // TODO: send DHCP NAK
-          return;
-        }
+        deallocateIP(client_id);
       }
     }
-    if (false == lease_pool_.contains(requested_ip.getValueAsIpAddr())) {
+    // No lease, asking for an unavailable IP
+    else if (false == lease_pool_.contains(requested_ip.getValueAsIpAddr())) {
       // TODO: send DHCP NAK
       return;
     }
 
-    offered_ip = requested_ip.getValueAsIpAddr();
+    offered_ip = allocateIP(client_id, requested_ip.getValueAsIpAddr());
+    const auto lease_expiry = std::chrono::steady_clock::now() + config_.lease_time;
+
+    // record the lease
+    const Lease lease(offered_ip.value(), lease_expiry);
+    lease_table_.assign(client_id, lease);
   }
 
   const auto src_mac = config_.server_mac;

@@ -79,7 +79,7 @@ public:
     auto it = client_to_lease.find(client);
     if (it == client_to_lease.end())
       return false;
-    ip_to_client.erase(it->second.ip);
+    ip_to_client.erase(it->second.assigned_ip_);
     client_to_lease.erase(it);
     return true;
   }
@@ -113,6 +113,7 @@ public:
 private:
   std::map<ClientID, Lease> client_to_lease;
   std::map<IP, ClientID> ip_to_client;
+  // TODO: Track unfinalized leases (tentative OFFERS)
 };
 
 struct DHCPServerConfig {
@@ -159,6 +160,7 @@ class DHCPServer {
   void handleRelease(const pcpp::Packet& dhcp_packet);
 
   pcpp::IPv4Address allocateIP(const ClientID& id, pcpp::IPv4Address requested_ip);
+  void deallocateIP(const ClientID& id);
 
   bool server_running_;
   DHCPServerConfig config_;
