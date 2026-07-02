@@ -184,7 +184,8 @@ class DHCPServer {
   void handleRequest(const pcpp::Packet& dhcp_packet);
   void handleRelease(const pcpp::Packet& dhcp_packet);
 
-  [[nodiscard]] pcpp::Packet generateNak(const pcpp::Packet& dhcp_packet) const;
+  [[nodiscard]] serratia::protocols::DHCPMessage generateAck(const pcpp::Packet& dhcp_packet, const Lease& lease) const;
+  [[nodiscard]] serratia::protocols::DHCPMessage generateNak(const pcpp::Packet& dhcp_packet) const;
   pcpp::IPv4Address allocateIP(const ClientID& id, pcpp::IPv4Address requested_ip);
 
   bool server_running_;
