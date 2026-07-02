@@ -75,7 +75,7 @@ class LeaseTable {
   // Remove a client's lease (e.g., on expiry)
   bool removeByClient(const ClientID& client) {
     auto it = client_to_lease.find(client);
-    if (it == client_to_lease.end()) {
+    if (client_to_lease.end() == it) {
       return false;
     }
     ip_to_client.erase(it->second.assigned_ip_);
@@ -86,7 +86,7 @@ class LeaseTable {
   // Remove by IP
   bool removeByIP(const IP& ip) {
     auto it = ip_to_client.find(ip);
-    if (it == ip_to_client.end()) {
+    if (ip_to_client.end() == it) {
       return false;
     }
     client_to_lease.erase(it->second);
@@ -97,7 +97,7 @@ class LeaseTable {
   // Lookup by client
   [[nodiscard]] std::optional<Lease> getLease(const ClientID& client) const {
     auto it = client_to_lease.find(client);
-    if (it == client_to_lease.end()) {
+    if (client_to_lease.end() == it) {
       return std::nullopt;
     }
     return it->second;
@@ -110,6 +110,15 @@ class LeaseTable {
       return std::nullopt;
     }
     return it->second;
+  }
+
+  void finalize_lease(const ClientID& client, const std::chrono::seconds lease_time) {
+    auto it = client_to_lease.find(client);
+    if (client_to_lease.end() == it) {
+      throw std::runtime_error("Cannot extend lease - client not found");
+    }
+    it->second.state_ = LeaseState::Finalized;
+    it->second.expiry_time_ = std::chrono::steady_clock::now() + lease_time;
   }
 
   void cleanup_leases() {
