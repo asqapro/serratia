@@ -46,14 +46,17 @@ struct ClientID {
   bool operator==(const ClientID& other) const noexcept { return data == other.data; }
 };
 
+enum class LeaseState { Pending, Finalized };
+
 struct Lease {
-  Lease(const pcpp::IPv4Address assigned_ip, const std::chrono::steady_clock::time_point expiry_time)
-      : assigned_ip_(assigned_ip), expiry_time_(expiry_time) {}
+  Lease(const pcpp::IPv4Address assigned_ip, const std::chrono::steady_clock::time_point expiry_time,
+        const LeaseState state)
+      : assigned_ip_(assigned_ip), expiry_time_(expiry_time), state_(state) {}
   Lease() = default;
 
   pcpp::IPv4Address assigned_ip_;
   std::chrono::steady_clock::time_point expiry_time_;
-  bool finalized_{};
+  LeaseState state_{LeaseState::Pending};
 };
 
 template <typename ClientID, typename IP, typename Lease>
@@ -63,13 +66,8 @@ class LeaseTable {
   bool assign(const ClientID& client, const Lease& lease) {
     const auto& ip = lease.assigned_ip_;
 
-    // prevent conflicts
-    if (ip_to_client.contains(ip) || client_to_lease.contains(client)) {
-      return false;
-    }
-
-    client_to_lease[client] = lease;
-    ip_to_client[ip] = client;
+    client_to_lease.insert_or_assign(client, lease);
+    ip_to_client.insert_or_assign(ip, client);
     return true;
   }
 
@@ -105,7 +103,6 @@ class LeaseTable {
   }
 
   // Lookup by IP
-  // TODO: Probably remove this function. Used in allocateIP() but should just be checking lease pool
   [[nodiscard]] std::optional<ClientID> getClient(const IP& ip) const {
     auto it = ip_to_client.find(ip);
     if (it == ip_to_client.end()) {
@@ -114,17 +111,9 @@ class LeaseTable {
     return it->second;
   }
 
-  void finalize_lease(const ClientID& client) {
-    auto it = client_to_lease.find(client);
-    if (it == client_to_lease.end()) {
-      throw std::runtime_error("Client not found");
-    }
-    it->second.finalized_ = true;
-  }
-
   void cleanup_leases() {
     for (auto it = client_to_lease.begin(); it != client_to_lease.end();) {
-      if (false == it->second.finalized) {
+      if (LeaseState::Pending == it->second.finalized) {
         ip_to_client.erase(it->second.assigned_ip_);
         it = client_to_lease.erase(it);
       } else {
@@ -144,8 +133,8 @@ struct DHCPServerConfig {
   DHCPServerConfig(const pcpp::MacAddress server_mac, const pcpp::IPv4Address& server_ip,
                    const std::uint16_t server_port, const std::uint16_t client_port,
                    const std::array<std::uint8_t, 64>& server_name, const pcpp::IPv4Address& lease_pool_start,
-                   const pcpp::IPv4Address& server_netmask, const std::chrono::seconds lease_time,
-                   const std::array<std::uint8_t, 128>& boot_file_name = {})
+                   const pcpp::IPv4Address& server_netmask, const std::chrono::seconds offer_time,
+                   const std::chrono::seconds lease_time, const std::array<std::uint8_t, 128>& boot_file_name = {})
       : server_mac(server_mac),
         server_ip(server_ip),
         server_port(server_port),
@@ -154,6 +143,7 @@ struct DHCPServerConfig {
         boot_file_name(boot_file_name),
         lease_pool_start(lease_pool_start),
         server_netmask(server_netmask),
+        offer_time(offer_time),
         lease_time(lease_time),
         server_id(server_ip) {}
 
@@ -165,6 +155,7 @@ struct DHCPServerConfig {
   std::array<std::uint8_t, 128> boot_file_name;
   pcpp::IPv4Address lease_pool_start;
   pcpp::IPv4Address server_netmask;
+  std::chrono::seconds offer_time;
   std::chrono::seconds lease_time;
   pcpp::IPv4Address server_id;
 };

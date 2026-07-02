@@ -60,6 +60,8 @@ struct TestEnvironment {
   std::array<std::uint8_t, 64> server_host_name{"skalrog"};
   std::array<std::uint8_t, 128> boot_file_name{"boot/fake"};
   pcpp::IPv4Address requested_ip;
+  // 1 minute
+  std::chrono::seconds offer_time{60};
   // 24 hours
   std::chrono::seconds lease_time{86400};
   // 87.5% of lease time
@@ -471,14 +473,13 @@ serratia::protocols::DHCPMessage createTestAck(const TestEnvironment& env, const
     return serratia::protocols::DHCPMessage::Ack(
         query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
         env.server_id, env.hops, env.your_ip, env.server_ip, server_name, boot_file_name,
-        static_cast<std::uint32_t>(env.lease_time.count()),
-       std::nullopt, std::nullopt);
+        static_cast<std::uint32_t>(env.lease_time.count()), std::nullopt, std::nullopt);
   }
   if (pcpp::DhcpMessageType::DHCP_INFORM == query) {
-    return serratia::protocols::DHCPMessage::Ack(
-        query, dhcp_common_config, env.transaction_id, env.bootp_flags, env.gateway_ip, env.client_hardware_address,
-        env.server_id, env.hops, std::nullopt, env.server_ip, server_name, boot_file_name, std::nullopt,
-        std::nullopt, std::nullopt);
+    return serratia::protocols::DHCPMessage::Ack(query, dhcp_common_config, env.transaction_id, env.bootp_flags,
+                                                 env.gateway_ip, env.client_hardware_address, env.server_id, env.hops,
+                                                 std::nullopt, env.server_ip, server_name, boot_file_name, std::nullopt,
+                                                 std::nullopt, std::nullopt);
   }
   throw std::runtime_error("DHCP ACK can only be sent in response to REQUEST or INFORM");
 }
@@ -932,8 +933,8 @@ TEST_CASE("Interact with DHCP server") {
   std::ranges::copy(env.boot_file_name | std::ranges::views::take(boot_file_name.size()), boot_file_name.begin());
 
   const serratia::utils::DHCPServerConfig config(env.server_mac, env.server_ip, env.server_port, env.client_port,
-                                                 server_name, env.lease_pool_start, env.subnet_mask, env.lease_time,
-                                                 boot_file_name);
+                                                 server_name, env.lease_pool_start, env.subnet_mask, env.offer_time,
+                                                 env.lease_time, boot_file_name);
 
   SECTION("Verify server configuration") {
     const serratia::utils::DHCPServer server(config, device);
@@ -989,9 +990,10 @@ TEST_CASE("Interact with DHCP server") {
     auto lease = lease_table.getLease(client.value());
     REQUIRE(std::nullopt != lease);
     REQUIRE(env.client_ip == lease.value().assigned_ip_);
-    const auto estimated_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
-    const auto expiry_difference = std::chrono::steady_clock::now() - estimated_expiry_time;
-    REQUIRE(expiry_difference.count() < 5);
+    auto est_expiry_time = std::chrono::steady_clock::now() + env.offer_time;
+    auto real_expiry_time = lease->expiry_time_;
+    auto expiry_difference = std::chrono::duration_cast<std::chrono::seconds>(est_expiry_time - real_expiry_time);
+    REQUIRE(expiry_difference.count() < 1);
 
     constexpr serratia::protocols::DHCPState state{serratia::protocols::SELECTING};
     auto dhcp_request_config = createTestInitialRequest(env, state);
@@ -1008,8 +1010,12 @@ TEST_CASE("Interact with DHCP server") {
 
     lease_table = server.get_lease_table();
     lease = lease_table.getLease(client.value());
-    REQUIRE(true == lease->finalized_);
+    REQUIRE(serratia::utils::LeaseState::Finalized == lease->state_);
     REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
 
+    est_expiry_time = std::chrono::steady_clock::now() + env.lease_time;
+    real_expiry_time = lease->expiry_time_;
+    expiry_difference = std::chrono::duration_cast<std::chrono::seconds>(est_expiry_time - real_expiry_time);
+    REQUIRE(expiry_difference.count() < 1);
   }
 }
