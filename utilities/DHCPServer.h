@@ -1,15 +1,14 @@
 #pragma once
 
-#include <pcapplusplus/DhcpLayer.h>
+#include "../protocols/DHCP.h"
+#include "spdlog/spdlog.h"
+
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
-#include <pcapplusplus/NetworkUtils.h>
+
 #include <pcapplusplus/PcapLiveDevice.h>
 
 #include <set>
-
-#include "../protocols/DHCP.h"
-#include "spdlog/spdlog.h"
 
 namespace serratia::utils {
 class IPcapLiveDevice {

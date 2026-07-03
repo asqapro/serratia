@@ -1,10 +1,11 @@
 #include "DHCPServer.h"
+#include "../protocols/DHCP.h"
+
+#include <pcapplusplus/NetworkUtils.h>
+#include <pcapplusplus/DhcpLayer.h>
 
 #include <netinet/in.h>
-
 #include <ranges>
-
-#include "../protocols/DHCP.h"
 
 bool serratia::utils::RealPcapLiveDevice::send(const pcpp::Packet& packet) {
   return device_->sendPacket(*(packet.getRawPacketReadOnly()));
@@ -214,7 +215,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
   try {
     offered_ip = allocateIP(client_id, requested_ip);
   } catch (const std::runtime_error& e) {
-    // TODO: Log lease pool exhaustion
+    spdlog::info(e.what());
   }
 
   const auto lease_expiry = std::chrono::steady_clock::now() + config_.offer_time;

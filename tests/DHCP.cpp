@@ -27,8 +27,6 @@ enum PacketSource {
   SERVER,
 };
 
-// TODO: Maybe move to header, idk
-// TODO: also probably parameterize the fields
 struct TestEnvironment {
   TestEnvironment() : your_ip(client_ip), requested_ip(client_ip), server_id(server_ip) {
     std::random_device rd;
