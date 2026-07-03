@@ -1045,6 +1045,11 @@ TEST_CASE("Interact with DHCP server") {
 
     // Get an IP first
     acquire_ip(env, device);
+    const auto lease_table = server.get_lease_table();
+    const auto client = lease_table.getClient(env.requested_ip);
+    auto lease = lease_table.getLease(client.value());
+    REQUIRE(serratia::utils::LeaseState::Finalized == lease->state_);
+    REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
 
     // Then try getting the same IP again
     constexpr serratia::protocols::DHCPState state{serratia::protocols::INIT_REBOOT};
@@ -1057,6 +1062,10 @@ TEST_CASE("Interact with DHCP server") {
     auto dhcp_layer = device->sent_dhcp_packets.back();
     constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
     verifyDHCPAck(env, &dhcp_layer, query);
+
+    lease = lease_table.getLease(client.value());
+    REQUIRE(serratia::utils::LeaseState::Finalized == lease->state_);
+    REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
 
     server.stop();
   }
@@ -1074,5 +1083,29 @@ TEST_CASE("Interact with DHCP server") {
     auto dhcp_layer = device->sent_dhcp_packets.back();
     constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_INFORM};
     verifyDHCPAck(env, &dhcp_layer, query);
+  }
+
+  SECTION("Release lease") {
+    serratia::utils::DHCPServer server(config, device);
+    server.run();
+
+    // Get an IP first
+    acquire_ip(env, device);
+    auto lease_table = server.get_lease_table();
+    auto client = lease_table.getClient(env.requested_ip);
+    auto lease = lease_table.getLease(client.value());
+    REQUIRE(serratia::utils::LeaseState::Finalized == lease->state_);
+    REQUIRE(false == server.get_lease_pool().contains(env.requested_ip));
+
+    auto dhcp_release = createTestRelease(env);
+    const auto release_packet = dhcp_release.build();
+
+    device->send(release_packet);
+    REQUIRE(5 == device->sent_dhcp_packets.size());
+
+    lease_table = server.get_lease_table();
+    client = lease_table.getClient(env.requested_ip);
+    REQUIRE(false == client.has_value());
+    REQUIRE(true == server.get_lease_pool().contains(env.requested_ip));
   }
 }

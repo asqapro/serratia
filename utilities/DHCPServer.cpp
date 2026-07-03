@@ -350,7 +350,20 @@ void serratia::utils::DHCPServer::handleRequest(const pcpp::Packet& dhcp_packet)
 }
 
 void serratia::utils::DHCPServer::handleRelease(const pcpp::Packet& dhcp_packet) {
-  // TODO: fill out this function
+  const auto dhcp_layer = dhcp_packet.getLayerOfType<pcpp::DhcpLayer>();
+
+  ClientID client_id;
+  if (const auto client_id_opt = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER);
+      client_id_opt.isNotNull()) {
+    std::copy_n(client_id_opt.getValue(), client_id_opt.getDataSize(), std::back_inserter(client_id.data));
+  } else {
+    const auto client_mac = dhcp_packet.getLayerOfType<pcpp::EthLayer>()->getSourceMac().toByteArray();
+    std::ranges::copy(client_mac, std::back_inserter(client_id.data));
+  }
+  if (const auto lease = lease_table_.getLease(client_id); lease.has_value()) {
+    lease_table_.removeByClient(client_id);
+    lease_pool_.insert(lease->assigned_ip_);
+  }
 }
 
 void serratia::utils::DHCPServer::handleInform(const pcpp::Packet& dhcp_packet) const {
