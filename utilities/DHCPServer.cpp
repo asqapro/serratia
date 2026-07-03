@@ -80,6 +80,8 @@ void serratia::utils::DHCPServer::run() {
       case pcpp::DHCP_RELEASE:
         handleRelease(parsed_packet);
         break;
+      case pcpp::DHCP_INFORM:
+        handleInform(parsed_packet);
       default:
         break;
     }

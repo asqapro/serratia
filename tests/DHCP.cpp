@@ -1060,4 +1060,19 @@ TEST_CASE("Interact with DHCP server") {
 
     server.stop();
   }
+
+  SECTION("Inform server") {
+    serratia::utils::DHCPServer server(config, device);
+    server.run();
+
+    auto dhcp_inform_config = createTestInform(env);
+    const auto inform_packet = dhcp_inform_config.build();
+
+    device->send(inform_packet);
+    REQUIRE(2 == device->sent_dhcp_packets.size());
+
+    auto dhcp_layer = device->sent_dhcp_packets.back();
+    constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_INFORM};
+    verifyDHCPAck(env, &dhcp_layer, query);
+  }
 }
