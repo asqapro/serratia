@@ -12,7 +12,6 @@ const pcpp::IPv4Address BROADCAST_IP("255.255.255.255");
 const pcpp::MacAddress BROADCAST_MAC("FF:FF:FF:FF:FF:FF");
 constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
 constexpr std::uint32_t EMPTY_IP_ADDR = 0;
-constexpr size_t EMPTY_OPTION = 0;
 constexpr int NO_DIFFERENCE = 0;
 constexpr char NULL_TERMINATOR = '\0';
 constexpr std::size_t MAX_SERVER_NAME_SIZE = 64;
@@ -117,8 +116,7 @@ void verifyDHCPDiscover(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer)
   REQUIRE(true == std::equal(vendor_class_id, vendor_class_id + vendor_class_id_size, env.vendor_class_id.begin(),
                              env.vendor_class_id.end()));
 
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).isNull());
 
   const auto param_request_list_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST);
   const auto param_request_list = param_request_list_option.getValue();
@@ -232,21 +230,18 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
   REQUIRE(true == std::equal(std::begin(dhcp_header->bootFilename), std::end(dhcp_header->bootFilename),
                              env.boot_file_name.begin(), env.boot_file_name.end()));
 
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_REQUESTED_ADDRESS).isNull());
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_LEASE_TIME).getValueAs<std::uint32_t>() ==
           ntohl(env.lease_time.count()));
 
   REQUIRE(pcpp::DhcpMessageType::DHCP_OFFER == dhcp_layer->getMessageType());
 
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_PARAMETER_REQUEST_LIST).isNull());
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValueAsString() == env.message);
 
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_CLIENT_IDENTIFIER).isNull());
 
   const auto vendor_class_id_option = dhcp_layer->getOptionData(pcpp::DHCPOPT_VENDOR_CLASS_IDENTIFIER);
   // env.vendor_class_id will be blank during server test
@@ -259,8 +254,7 @@ void verifyDHCPOffer(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer) {
 
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_SERVER_IDENTIFIER).getValueAsIpAddr() == env.server_ip);
 
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).isNull());
 
   REQUIRE(dhcp_layer->getOptionsCount() == env.offer_option_count);
 }
@@ -349,9 +343,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer,
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
           ntohs(env.max_message_size));
 
-  // TODO: Replace instances of this with: REQUIRE(true == dhcp_layer->getOptionData(pcpp::<option>).isNull());
-  REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getDataSize());
-  REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValue());
+  REQUIRE(true == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).isNull());
 
   switch (state) {
     case serratia::protocols::BOUND:
