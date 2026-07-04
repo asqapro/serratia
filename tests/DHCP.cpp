@@ -1,17 +1,15 @@
+#include "Common.h"
+#include "DHCPCommon.h"
 #include "../protocols/DHCP.h"
-
-#include <arpa/inet.h>
+#include "../utilities/DHCPServer.h"
 
 #include <catch2/catch_test_macros.hpp>
-#include <random>
-#include <ranges>
 
-#include "../utilities/DHCPServer.h"
-#include "../utilities/DHCPUtils.h"
+#include <arpa/inet.h>
+#include <ranges>
 
 const pcpp::IPv4Address BROADCAST_IP("255.255.255.255");
 const pcpp::MacAddress BROADCAST_MAC("FF:FF:FF:FF:FF:FF");
-constexpr std::uint8_t HTYPE_ETHER = 1;
 constexpr std::uint8_t STANDARD_MAC_LENGTH = 6;
 constexpr std::uint32_t EMPTY_IP_ADDR = 0;
 constexpr size_t EMPTY_OPTION = 0;
@@ -26,81 +24,6 @@ enum PacketSource {
   CLIENT,
   SERVER,
 };
-
-struct TestEnvironment {
-  TestEnvironment() : your_ip(client_ip), requested_ip(client_ip), server_id(server_ip) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<uint32_t> distrib;
-    transaction_id = distrib(gen);
-    for (const auto byte : client_mac.toByteArray()) {
-      client_id.push_back(byte);
-    }
-  }
-
-  // Notional MAC address
-  pcpp::MacAddress server_mac{"ca:5e:d7:6B:c2:7c"};
-  // Notional MAC address
-  pcpp::MacAddress client_mac{"a1:eb:37:7b:e9:bf"};
-  pcpp::IPv4Address server_ip{"192.168.0.1"};
-  pcpp::IPv4Address client_ip{"192.168.0.2"};
-  // Typical DHCP server port
-  std::uint16_t server_port = 67;
-  // Typical DHCP client port
-  std::uint16_t client_port = 68;
-  std::uint8_t hops = 0;
-  std::uint32_t transaction_id;
-  std::uint16_t seconds_elapsed = 0;
-  std::uint16_t bootp_flags = 0;
-  pcpp::IPv4Address your_ip;
-  pcpp::IPv4Address gateway_ip{"0.0.0.0"};
-  // Notional MAC address
-  std::array<std::uint8_t, 16> client_hardware_address{0xcb, 0xc7, 0x4d, 0x54, 0x98, 0xd1};
-  std::array<std::uint8_t, 64> server_host_name{"skalrog"};
-  std::array<std::uint8_t, 128> boot_file_name{"boot/fake"};
-  pcpp::IPv4Address requested_ip;
-  // 1 minute
-  std::chrono::seconds offer_time{60};
-  // 24 hours
-  std::chrono::seconds lease_time{86400};
-  // 87.5% of lease time
-  std::chrono::seconds renewal_time{75600};
-  // 50& of lease time
-  std::chrono::seconds rebind_time{43200};
-  std::vector<std::uint8_t> client_id{HTYPE_ETHER};
-  // Notional data
-  std::vector<std::uint8_t> vendor_class_id{1};
-  pcpp::IPv4Address server_id;
-  std::vector<std::uint8_t> param_request_list{pcpp::DhcpOptionTypes::DHCPOPT_SUBNET_MASK,
-                                               pcpp::DhcpOptionTypes::DHCPOPT_ROUTERS,
-                                               pcpp::DhcpOptionTypes::DHCPOPT_DOMAIN_NAME_SERVERS};
-  std::uint16_t max_message_size = 576;
-  std::string_view message = "test error";
-
-  pcpp::IPv4Address subnet_mask{"255.255.255.0"};
-  pcpp::IPv4Address lease_pool_start{"192.168.0.2"};
-
-  std::vector<pcpp::IPv4Address> routers{pcpp::IPv4Address("192.168.0.1")};
-  // Quad9 DNS
-  std::vector<pcpp::IPv4Address> dns_servers{pcpp::IPv4Address("9.9.9.9")};
-
-  std::size_t discover_option_count = 7;
-  std::size_t offer_option_count = 5;
-  std::size_t request_selecting_option_count = 8;
-  std::size_t request_init_reboot_option_count = 7;
-  std::size_t request_bound_renew_rebind_option_count = 6;
-  std::size_t ack_request_option_count = 3;
-  std::size_t ack_inform_option_count = 2;
-  std::size_t nak_option_count = 5;
-  std::size_t decline_option_count = 5;
-  std::size_t release_option_count = 4;
-  std::size_t inform_option_count = 5;
-};
-
-TestEnvironment& getEnv() {
-  static TestEnvironment env;
-  return env;
-}
 
 serratia::protocols::DHCPCommon createTestCommonConfig(const TestEnvironment& env, const PacketSource source) {
   pcpp::MacAddress src_mac;
@@ -426,7 +349,7 @@ void verifyDHCPRequest(const TestEnvironment& env, pcpp::DhcpLayer* dhcp_layer,
   REQUIRE(dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MAX_MESSAGE_SIZE).getValueAs<std::uint16_t>() ==
           ntohs(env.max_message_size));
 
-  // TOOD: Replace instances of this with: REQUIRE(true == dhcp_layer->getOptionData(pcpp::<option>).isNull());
+  // TODO: Replace instances of this with: REQUIRE(true == dhcp_layer->getOptionData(pcpp::<option>).isNull());
   REQUIRE(EMPTY_OPTION == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getDataSize());
   REQUIRE(nullptr == dhcp_layer->getOptionData(pcpp::DHCPOPT_DHCP_MESSAGE).getValue());
 
@@ -881,41 +804,7 @@ TEST_CASE("Build DHCP packets") {
   }
 }
 
-struct MockPcapLiveDevice final : public serratia::utils::IPcapLiveDevice {
-  std::vector<pcpp::DhcpLayer> sent_dhcp_packets;
-
-  pcpp::OnPacketArrivesCallback capture_callback;
-  bool capturing = false;
-  void* packet_arrives_cookie = nullptr;
-
-  pcpp::MacAddress arp_reply_mac = pcpp::MacAddress::Zero;
-
-  bool send(const pcpp::Packet& packet) override {
-    sent_dhcp_packets.push_back(*(packet.getLayerOfType<pcpp::DhcpLayer>()));
-
-    if (true == capturing && nullptr != capture_callback) {
-      const auto raw_packet = packet.getRawPacket();
-      capture_callback(raw_packet, nullptr, packet_arrives_cookie);
-    }
-
-    return true;
-  }
-  bool startCapture(const pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) override {
-    capturing = true;
-    capture_callback = onPacketArrives;
-    packet_arrives_cookie = onPacketArrivesUserCookie;
-    return true;
-  }
-
-  void stopCapture() override {
-    capturing = false;
-    capture_callback = nullptr;
-    packet_arrives_cookie = nullptr;
-  }
-  pcpp::MacAddress getMacAddress(const pcpp::IPv4Address&, int) override { return arp_reply_mac; }
-};
-
-void acquire_ip(TestEnvironment env, const std::shared_ptr<MockPcapLiveDevice>& device) {
+void acquire_ip(TestEnvironment env, const std::shared_ptr<MockPcapLiveDevice<pcpp::DhcpLayer>>& device) {
   // Set broadcast flag
   env.bootp_flags = BROADCAST_FLAG;
   auto dhcp_discover_config = createTestDiscover(env);
@@ -938,7 +827,7 @@ TEST_CASE("Interact with DHCP server") {
   env.vendor_class_id = {};
   env.offer_option_count = 3;
 
-  const auto device = std::make_shared<MockPcapLiveDevice>();
+  const auto device = std::make_shared<MockPcapLiveDevice<pcpp::DhcpLayer>>();
 
   std::array<std::uint8_t, 64> server_name{};
   // Copy server_host_name string into server_name array
@@ -953,9 +842,8 @@ TEST_CASE("Interact with DHCP server") {
 
   SECTION("Verify server configuration") {
     const serratia::utils::DHCPServer server(config, device);
-    constexpr std::uint8_t LEASE_POOL_SIZE = 253;
     const auto lease_pool = server.get_lease_pool();
-    REQUIRE(LEASE_POOL_SIZE == lease_pool.size());
+    REQUIRE(env.lease_pool_size == lease_pool.size());
     REQUIRE(env.lease_pool_start == *lease_pool.begin());
   }
 
@@ -967,14 +855,14 @@ TEST_CASE("Interact with DHCP server") {
     const auto packet = dhcp_discover_config.build();
     device->send(packet);
     // 1 packet sent, server responds with 1 packet
-    REQUIRE(2 == device->sent_dhcp_packets.size());
+    REQUIRE(2 == device->sent_packets.size());
 
     server.stop();
-    device->sent_dhcp_packets.clear();
+    device->sent_packets.clear();
     REQUIRE(false == server.is_running());
     device->send(packet);
     // 1 packet sent, server shouldn't respond
-    REQUIRE(1 == device->sent_dhcp_packets.size());
+    REQUIRE(1 == device->sent_packets.size());
   }
 
   SECTION("Acquire IP - DORA / INIT") {
@@ -986,9 +874,9 @@ TEST_CASE("Interact with DHCP server") {
     const auto discover_packet = dhcp_discover_config.build();
 
     device->send(discover_packet);
-    REQUIRE(2 == device->sent_dhcp_packets.size());
+    REQUIRE(2 == device->sent_packets.size());
 
-    auto dhcp_layer = device->sent_dhcp_packets.back();
+    auto dhcp_layer = device->sent_packets.back();
     verifyDHCPOffer(env, &dhcp_layer);
     env.bootp_flags = 0;
 
@@ -1015,9 +903,9 @@ TEST_CASE("Interact with DHCP server") {
     const auto request_packet = dhcp_request_config.build();
 
     device->send(request_packet);
-    REQUIRE(4 == device->sent_dhcp_packets.size());
+    REQUIRE(4 == device->sent_packets.size());
 
-    dhcp_layer = device->sent_dhcp_packets.back();
+    dhcp_layer = device->sent_packets.back();
     constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
     verifyDHCPAck(env, &dhcp_layer, query);
 
@@ -1052,9 +940,9 @@ TEST_CASE("Interact with DHCP server") {
     const auto request_packet = dhcp_request_config.build();
 
     device->send(request_packet);
-    REQUIRE(6 == device->sent_dhcp_packets.size());
+    REQUIRE(6 == device->sent_packets.size());
 
-    auto dhcp_layer = device->sent_dhcp_packets.back();
+    auto dhcp_layer = device->sent_packets.back();
     constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_REQUEST};
     verifyDHCPAck(env, &dhcp_layer, query);
 
@@ -1073,9 +961,9 @@ TEST_CASE("Interact with DHCP server") {
     const auto inform_packet = dhcp_inform_config.build();
 
     device->send(inform_packet);
-    REQUIRE(2 == device->sent_dhcp_packets.size());
+    REQUIRE(2 == device->sent_packets.size());
 
-    auto dhcp_layer = device->sent_dhcp_packets.back();
+    auto dhcp_layer = device->sent_packets.back();
     constexpr pcpp::DhcpMessageType query{pcpp::DhcpMessageType::DHCP_INFORM};
     verifyDHCPAck(env, &dhcp_layer, query);
   }
@@ -1096,7 +984,7 @@ TEST_CASE("Interact with DHCP server") {
     const auto release_packet = dhcp_release.build();
 
     device->send(release_packet);
-    REQUIRE(5 == device->sent_dhcp_packets.size());
+    REQUIRE(5 == device->sent_packets.size());
 
     lease_table = server.get_lease_table();
     client = lease_table.getClient(env.requested_ip);

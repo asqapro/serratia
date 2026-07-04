@@ -1,37 +1,15 @@
 #pragma once
 
+#include "PCPPUtils.h"
 #include "../protocols/DHCP.h"
 #include "spdlog/spdlog.h"
 
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
 
-#include <pcapplusplus/PcapLiveDevice.h>
-
 #include <set>
 
 namespace serratia::utils {
-class IPcapLiveDevice {
- public:
-  virtual bool send(const pcpp::Packet& packet) = 0;
-  virtual bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) = 0;
-  virtual void stopCapture() = 0;
-  virtual pcpp::MacAddress getMacAddress(const pcpp::IPv4Address& target_ip, int timeout) = 0;
-  virtual ~IPcapLiveDevice() = default;
-};
-
-class RealPcapLiveDevice final : public IPcapLiveDevice {
- public:
-  explicit RealPcapLiveDevice(pcpp::PcapLiveDevice* device) : device_(device) {}
-  bool send(const pcpp::Packet& packet) override;
-  bool startCapture(pcpp::OnPacketArrivesCallback onPacketArrives, void* onPacketArrivesUserCookie) override;
-  void stopCapture() override;
-  pcpp::MacAddress getMacAddress(const pcpp::IPv4Address& target_ip, int timeout) override;
-
- private:
-  pcpp::PcapLiveDevice* device_;
-};
-
 struct ClientID {
   std::vector<std::uint8_t> data;
 
@@ -40,6 +18,13 @@ struct ClientID {
       throw std::length_error("ClientID exceeds 255 bytes");
     }
     data.assign(buf, buf + len);
+  }
+
+  void assign(const pcpp::MacAddress mac) {
+    data.resize(7);
+    constexpr std::uint8_t HTYPE_ETHER = 1;
+    data[0] = HTYPE_ETHER;
+    mac.copyTo(data.data() + 1, 6);
   }
 
   bool operator<(const ClientID& other) const noexcept {

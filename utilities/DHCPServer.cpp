@@ -199,10 +199,7 @@ void serratia::utils::DHCPServer::handleDiscover(const pcpp::Packet& dhcp_packet
       client_id_option.isNotNull()) {
     client_id.assign(client_id_option.getValue(), client_id_option.getDataSize());
   } else {
-    constexpr std::uint8_t HTYPE_ETHER = 1;
-    client_id.data[0] = HTYPE_ETHER;
-    const auto client_id_mac = dhcp_layer->getClientHardwareAddress();
-    client_id_mac.copyTo(client_id.data.data() + 1, 6);
+    client_id.assign(dhcp_layer->getClientHardwareAddress());
   }
 
   pcpp::IPv4Address requested_ip("0.0.0.0");

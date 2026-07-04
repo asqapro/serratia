@@ -5,6 +5,7 @@ add_library(utilities
         DHCPUtils.cpp
         DHCPServer.h
         DHCPServer.cpp
+        PCPPUtils.h
 )
 
 find_package(PcapPlusPlus REQUIRED)
