@@ -1,0 +1,536 @@
+\doxysection{serratia::\+protocols::\+DHCPMessage Class Reference}
+\hypertarget{classserratia_1_1protocols_1_1DHCPMessage}{}\label{classserratia_1_1protocols_1_1DHCPMessage}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+
+
+Presents unified structure for creating DHCP messages.  
+
+
+
+
+{\ttfamily \+\#include $<$DHCP.\+h$>$}
+
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+pcpp::\+\+Packet \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a6284955e53e333a230e41a05a3268eb4}{build}} (std::\+uint16\+\_\+t max\+\_\+message\+\_\+size=ETHERNET\+\_\+\+FRAME\+\_\+\+SIZE)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_ae631d18cb3955b00ff56edeb3546f46d}\label{classserratia_1_1protocols_1_1DHCPMessage_ae631d18cb3955b00ff56edeb3546f46d} 
+bool {\bfseries set\+\_\+common\+\_\+config} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a4b3d4d5c65c657fabb6165b8068449ee}\label{classserratia_1_1protocols_1_1DHCPMessage_a4b3d4d5c65c657fabb6165b8068449ee} 
+bool {\bfseries set\+\_\+hops} (std::\+uint8\+\_\+t hops)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_aae8afc87f15a0884b69e504911ef7cd9}\label{classserratia_1_1protocols_1_1DHCPMessage_aae8afc87f15a0884b69e504911ef7cd9} 
+bool {\bfseries set\+\_\+transaction\+\_\+id} (std::\+uint16\+\_\+t transaction\+\_\+id)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_ae8a80bf3b4b6e2396877dd0d4f52f78c}\label{classserratia_1_1protocols_1_1DHCPMessage_ae8a80bf3b4b6e2396877dd0d4f52f78c} 
+void {\bfseries set\+\_\+broadcast\+\_\+flag} ()
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a837c351b97746ddd2dbf2a292a44c8d1}\label{classserratia_1_1protocols_1_1DHCPMessage_a837c351b97746ddd2dbf2a292a44c8d1} 
+void {\bfseries clear\+\_\+broadcast\+\_\+flag} ()
+\item 
+bool \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_acd64462b88ca44e844d192974745d320}{set\+\_\+client\+\_\+ip}} (pcpp::\+\+IPv4\+Address client\+\_\+ip, DHCPState state=STATELESS)
+\begin{DoxyCompactList}\small\item\em Sets the client\textquotesingle{}s currently configured IP address (ciaddr). \end{DoxyCompactList}\item 
+bool \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa528585cfdc98557ce2170d2292f5e87}{set\+\_\+your\+\_\+ip}} (pcpp::\+\+IPv4\+Address your\+\_\+ip, pcpp::\+\+Dhcp\+Message\+Type query=pcpp::\+\+DHCP\+\_\+\+UNKNOWN\+\_\+\+MSG\+\_\+\+TYPE)
+\begin{DoxyCompactList}\small\item\em Sets the client\textquotesingle{}s offered IP address (yiaddr). \end{DoxyCompactList}\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a6d731531193dc4d21fe280fc57f40cf6}\label{classserratia_1_1protocols_1_1DHCPMessage_a6d731531193dc4d21fe280fc57f40cf6} 
+bool {\bfseries set\+\_\+server\+\_\+ip} (pcpp::\+\+IPv4\+Address server\+\_\+ip)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_afad4818dc858229fac1e4ec6f389da52}\label{classserratia_1_1protocols_1_1DHCPMessage_afad4818dc858229fac1e4ec6f389da52} 
+bool {\bfseries set\+\_\+gateway\+\_\+ip} (pcpp::\+\+IPv4\+Address gateway\+\_\+ip)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a80369bb8e32873d3d2e7416a21547533}\label{classserratia_1_1protocols_1_1DHCPMessage_a80369bb8e32873d3d2e7416a21547533} 
+bool {\bfseries set\+\_\+server\+\_\+name} (const std::\+array$<$ std::\+uint8\+\_\+t, 64 $>$ \&server\+\_\+name)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a136333b74f1befd88c33f50db2fa903d}\label{classserratia_1_1protocols_1_1DHCPMessage_a136333b74f1befd88c33f50db2fa903d} 
+bool {\bfseries set\+\_\+boot\+\_\+file\+\_\+name} (const std::\+array$<$ std::\+uint8\+\_\+t, 128 $>$ \&boot\+\_\+file\+\_\+name)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a422d98cfa313aeedc92696275085d5ec}\label{classserratia_1_1protocols_1_1DHCPMessage_a422d98cfa313aeedc92696275085d5ec} 
+bool {\bfseries set\+\_\+client\+\_\+hardware\+\_\+address} (const std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ \&client\+\_\+hardware\+\_\+address)
+\item 
+bool \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a1d2c020d6edb4ce896505be03ef8c276}{set\+\_\+requested\+\_\+ip}} (pcpp::\+\+IPv4\+Address requested\+\_\+ip, DHCPState state=STATELESS)
+\begin{DoxyCompactList}\small\item\em Sets the client\textquotesingle{}s offered IP address (yiaddr). \end{DoxyCompactList}\item 
+bool \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a98b733bb6ce4aaec0e7b3953e88cb204}{set\+\_\+lease\+\_\+time}} (std::\+uint32\+\_\+t lease\+\_\+time, pcpp::\+\+Dhcp\+Message\+Type query=pcpp::\+\+Dhcp\+Message\+Type::\+\+DHCP\+\_\+\+UNKNOWN\+\_\+\+MSG\+\_\+\+TYPE)
+\begin{DoxyCompactList}\small\item\em Sets the client\textquotesingle{}s offered IP address (yiaddr). \end{DoxyCompactList}\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_ae60c10d25c027d3ca8c0496c772059ce}\label{classserratia_1_1protocols_1_1DHCPMessage_ae60c10d25c027d3ca8c0496c772059ce} 
+bool {\bfseries set\+\_\+client\+\_\+id} (const std::\+vector$<$ std::\+uint8\+\_\+t $>$ \&client\+\_\+id)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_ab25a3ceda164616a593000ddeb0ff91a}\label{classserratia_1_1protocols_1_1DHCPMessage_ab25a3ceda164616a593000ddeb0ff91a} 
+bool {\bfseries set\+\_\+vendor\+\_\+class\+\_\+id} (const std::\+vector$<$ std::\+uint8\+\_\+t $>$ \&vendor\+\_\+class\+\_\+id)
+\item 
+bool \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a52219ef689fa393ef94883c172774ad8}{set\+\_\+server\+\_\+id}} (pcpp::\+\+IPv4\+Address server\+\_\+id, DHCPState state=STATELESS)
+\begin{DoxyCompactList}\small\item\em Sets the client\textquotesingle{}s offered IP address (yiaddr). \end{DoxyCompactList}\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a78e2d6071e3e9c431967cb62c77d7ea9}\label{classserratia_1_1protocols_1_1DHCPMessage_a78e2d6071e3e9c431967cb62c77d7ea9} 
+bool {\bfseries set\+\_\+param\+\_\+request\+\_\+list} (const std::\+vector$<$ std::\+uint8\+\_\+t $>$ \&param\+\_\+request\+\_\+list)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a84700d4d35a5c00c1fb56e5b1488c4f8}\label{classserratia_1_1protocols_1_1DHCPMessage_a84700d4d35a5c00c1fb56e5b1488c4f8} 
+bool {\bfseries set\+\_\+max\+\_\+message\+\_\+size} (std::\+uint16\+\_\+t max\+\_\+message\+\_\+size)
+\item 
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a8203e0f40811e5d1b5d025cbf85370ae}\label{classserratia_1_1protocols_1_1DHCPMessage_a8203e0f40811e5d1b5d025cbf85370ae} 
+bool {\bfseries set\+\_\+message} (const std::\+vector$<$ std::\+uint8\+\_\+t $>$ \&message)
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Static Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_ab100d6aa813e47bfbfb9b2b0a101aab1}{Discover}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ seconds\+\_\+elapsed=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ bootp\+\_\+flags=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ requested\+\_\+ip=std::\+nullopt, std::\+optional$<$ std::\+uint32\+\_\+t $>$ lease\+\_\+time=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&param\+\_\+request\+\_\+list=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ max\+\_\+message\+\_\+size=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPDISCOVER message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa9aa62d84ca24c70fa685e9b368d61de}{Inform}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, pcpp::\+\+IPv4\+Address client\+\_\+ip, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ seconds\+\_\+elapsed=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ bootp\+\_\+flags=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&param\+\_\+request\+\_\+list=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ max\+\_\+message\+\_\+size=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPINFORM message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa2a7f9e0d0ea8647734dd69bfce7c2bd}{Request}} (DHCPState state, \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ seconds\+\_\+elapsed=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ bootp\+\_\+flags=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ client\+\_\+ip=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ requested\+\_\+ip=std::\+nullopt, std::\+optional$<$ std::\+uint32\+\_\+t $>$ lease\+\_\+time=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ server\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&param\+\_\+request\+\_\+list=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ max\+\_\+message\+\_\+size=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPREQUEST message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a98cc7506c20f63a4ca0885fae16324a2}{Decline}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, pcpp::\+\+IPv4\+Address requested\+\_\+ip, pcpp::\+\+IPv4\+Address server\+\_\+id, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&message=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPDECLINE message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a57f33ac627141ca8b479cb371438c934}{Release}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, pcpp::\+\+IPv4\+Address client\+\_\+ip, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, pcpp::\+\+IPv4\+Address server\+\_\+id, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&message=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPRELEASE message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_adaf14bbb3a39679f353311bb6215d024}{Offer}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, pcpp::\+\+IPv4\+Address your\+\_\+ip, pcpp::\+\+IPv4\+Address server\+\_\+ip, std::\+uint16\+\_\+t bootp\+\_\+flags, pcpp::\+\+IPv4\+Address gateway\+\_\+ip, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, std::\+uint32\+\_\+t lease\+\_\+time, pcpp::\+\+IPv4\+Address server\+\_\+id, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 64 $>$ $>$ \&server\+\_\+name=std::\+nullopt, const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 128 $>$ $>$ \&boot\+\_\+file\+\_\+name=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&message=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPOFFER message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a2a940fbeb694e884f2c6c49f62ca753e}{Ack}} (pcpp::\+\+Dhcp\+Message\+Type query, \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, std::\+uint16\+\_\+t bootp\+\_\+flags, pcpp::\+\+IPv4\+Address gateway\+\_\+ip, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, pcpp::\+\+IPv4\+Address server\+\_\+id, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ your\+\_\+ip=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ server\+\_\+ip=std::\+nullopt, const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 64 $>$ $>$ \&server\+\_\+name=std::\+nullopt, const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 128 $>$ $>$ \&boot\+\_\+file\+\_\+name=std::\+nullopt, std::\+optional$<$ std::\+uint32\+\_\+t $>$ lease\+\_\+time=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&message=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPACK message. \end{DoxyCompactList}\item 
+static DHCPMessage \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aef59aa38fe7da06a7996a86bc4dbb971}{Nak}} (\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}} common\+\_\+config, std::\+uint32\+\_\+t transaction\+\_\+id, std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$ client\+\_\+hardware\+\_\+address, pcpp::\+\+IPv4\+Address server\+\_\+id, std::\+optional$<$ std::\+uint8\+\_\+t $>$ hops=std::\+nullopt, std::\+optional$<$ std::\+uint16\+\_\+t $>$ bootp\+\_\+flags=std::\+nullopt, std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$ gateway\+\_\+ip=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&message=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&client\+\_\+id=std::\+nullopt, const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&vendor\+\_\+class\+\_\+id=std::\+nullopt)
+\begin{DoxyCompactList}\small\item\em Overloaded constructor for creating a DHCPNAK message. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Presents unified structure for creating DHCP messages. 
+
+Offers constructors for each DHCP message type, along with methods for configuring each of the message\textquotesingle{}s fields. 
+
+\label{doc-func-members}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_doc-func-members}
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a2a940fbeb694e884f2c6c49f62ca753e}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Ack@{Ack}}
+\index{Ack@{Ack}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Ack()}{Ack()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a2a940fbeb694e884f2c6c49f62ca753e} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Ack (\begin{DoxyParamCaption}\item[{pcpp::\+\+Dhcp\+Message\+Type}]{query}{, }\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{std::\+uint16\+\_\+t}]{bootp\+\_\+flags}{, }\item[{pcpp::\+\+IPv4\+Address}]{gateway\+\_\+ip}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{your\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{server\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 64 $>$ $>$ \&}]{server\+\_\+name}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 128 $>$ $>$ \&}]{boot\+\_\+file\+\_\+name}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint32\+\_\+t $>$}]{lease\+\_\+time}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{message}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPACK message. 
+
+Constructs a DHCPACK message used to confirm a leased IP address or acknowledge a DHCPINFORM request. Sent by the server in response to a DHCPREQUEST to finalize a lease assignment or renewal, or in response to a DHCPINFORM to supply configuration parameters without assigning an address.
+
+
+\begin{DoxyParams}{Parameters}
+{\em query} & Message type of the client request being acknowledged. Must be either DHCPREQUEST or DHCPINFORM. Determines which fields are required and how the client interprets the response. \\
+\hline
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to the client\textquotesingle{}s request (xid). Must match the transaction ID from the DHCPREQUEST or DHCPINFORM. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Must be copied directly from the client\textquotesingle{}s request to preserve the client\textquotesingle{}s broadcast preference. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Must be copied directly from the client\textquotesingle{}s request. Set to 0.\+0.\+0.\+0 if the message was not relayed. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). Must be copied directly from the client\textquotesingle{}s request. For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em server\+\_\+id} & IP address of this server (option 54). Used by the client to identify the server that issued the acknowledgement. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct server-\/to-\/client responses. Incremented by relay agents before forwarding. \\
+\hline
+{\em your\+\_\+ip} & IP address being confirmed to the client (yiaddr). Required when acknowledging a DHCPREQUEST to assign or renew a lease. Must be left unset when acknowledging a DHCPINFORM, as no address is being assigned. \\
+\hline
+{\em server\+\_\+ip} & IP address of the next server to use in the bootstrap process (siaddr). Set when a boot server is required for network booting. Leave unset if not applicable. \\
+\hline
+{\em server\+\_\+name} & Optional null-\/terminated host name of the server (sname). Used in network boot scenarios to identify the boot server. Leave unset if not applicable. \\
+\hline
+{\em boot\+\_\+file\+\_\+name} & Optional null-\/terminated boot file name (file). Used in network boot scenarios to specify the boot image path on the boot server. Leave unset if not applicable. \\
+\hline
+{\em lease\+\_\+time} & Duration of the confirmed lease in seconds (option 51). Required when acknowledging a DHCPREQUEST to assign or renew a lease. Must be left unset when acknowledging a DHCPINFORM, as no lease is being issued. \\
+\hline
+{\em message} & Human-\/readable message from the server to the client (option 56). Leave unset if no additional context is needed. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the server\textquotesingle{}s vendor and configuration to the client. Leave unset if not required. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a6284955e53e333a230e41a05a3268eb4}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!build@{build}}
+\index{build@{build}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{build()}{build()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a6284955e53e333a230e41a05a3268eb4} 
+pcpp::\+\+Packet serratia::\+protocols::\+\+DHCPMessage::\+build (\begin{DoxyParamCaption}\item[{std::\+uint16\+\_\+t}]{max\+\_\+message\+\_\+size}{ = {\ttfamily ETHERNET\+\_\+FRAME\+\_\+SIZE}}\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}{Parameters}
+{\em max\+\_\+message\+\_\+size} & Maximum supported size for the DHCP packet. If this limit is reached while building the packet, the sname and file fields may be used for additional space (if unused). \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+pcpp::\+\+Packet containing the non-\/\+DHCP layers along with the DHCP layer. 
+\end{DoxyReturn}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a98cc7506c20f63a4ca0885fae16324a2}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Decline@{Decline}}
+\index{Decline@{Decline}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Decline()}{Decline()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a98cc7506c20f63a4ca0885fae16324a2} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Decline (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{pcpp::\+\+IPv4\+Address}]{requested\+\_\+ip}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{message}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPDECLINE message. 
+
+Constructs a DHCPDECLINE message used to notify the server that the offered IP address is already in use on the network. Sent by the client after detecting a conflict via ARP following a DHCPACK. The server should mark the address as unavailable and may notify the network administrator.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to the prior exchange (xid). Reuse the value from the DHCPDISCOVER exchange that led to this decline. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em requested\+\_\+ip} & IP address being declined (option 50). Must be the address that was offered and confirmed via DHCPACK but found to be already in use on the network. \\
+\hline
+{\em server\+\_\+id} & IP address of the server whose offer is being declined (option 54). Must match the server identifier from the DHCPACK that assigned the conflicting address. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct client use. Incremented by relay agents before forwarding. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Required when constructing this message for relay forwarding. Leave unset for direct client-\/to-\/server messages. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em message} & Human-\/readable message describing the reason for the decline (option 56). Typically used to convey conflict detection details. Leave unset if no additional context is needed. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_ab100d6aa813e47bfbfb9b2b0a101aab1}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Discover@{Discover}}
+\index{Discover@{Discover}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Discover()}{Discover()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_ab100d6aa813e47bfbfb9b2b0a101aab1} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Discover (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{seconds\+\_\+elapsed}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{bootp\+\_\+flags}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{requested\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint32\+\_\+t $>$}]{lease\+\_\+time}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{param\+\_\+request\+\_\+list}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{max\+\_\+message\+\_\+size}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPDISCOVER message. 
+
+Constructs a DHCPDISCOVER message used to locate available DHCP servers. Refer to RFC2131 table 5 for the expected values and which DHCP options are included.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to server replies (xid). Generate randomly and reuse across the full DORA exchange. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct client use. Incremented by relay agents before forwarding. \\
+\hline
+{\em seconds\+\_\+elapsed} & Seconds elapsed since the client began the address acquisition process (secs). Leave unset to default to 0. Set when retrying after an initial attempt. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Set the broadcast bit (0x8000) if the client cannot accept unicast responses before an IP is configured. Leave unset otherwise. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Required when constructing this message for relay forwarding. Leave unset for direct client-\/to-\/server messages. \\
+\hline
+{\em requested\+\_\+ip} & Preferred IP address (option 50). Set when the client has a previously allocated address it wishes to reuse. Leave unset for a fresh allocation. \\
+\hline
+{\em lease\+\_\+time} & Requested lease duration in seconds (option 51). Leave unset to let the server choose. Set to hint at a preferred lease length. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the client\textquotesingle{}s vendor and hardware configuration to the server. Leave unset if not required. \\
+\hline
+{\em param\+\_\+request\+\_\+list} & Parameter request list (option 55). List of DHCP option codes the client would like the server to return in its reply. Leave unset to request no specific options. \\
+\hline
+{\em max\+\_\+message\+\_\+size} & Maximum DHCP message size the client can accept in bytes (option 57). Leave unset to apply no constrain. Must be at least 576 if set. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_aa9aa62d84ca24c70fa685e9b368d61de}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Inform@{Inform}}
+\index{Inform@{Inform}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Inform()}{Inform()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_aa9aa62d84ca24c70fa685e9b368d61de} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Inform (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{pcpp::\+\+IPv4\+Address}]{client\+\_\+ip}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{seconds\+\_\+elapsed}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{bootp\+\_\+flags}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{param\+\_\+request\+\_\+list}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{max\+\_\+message\+\_\+size}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPINFORM message. 
+
+Constructs a DHCPINFORM message used to request configuration parameters without obtaining an IP address. The client must already have a valid IP address configured. Refer to RFC2131 table 5 for the expected values and which DHCP options are included.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to server replies (xid). Generate randomly for each DHCPINFORM exchange. \\
+\hline
+{\em client\+\_\+ip} & IP address already configured on the client (ciaddr). Must be a valid, fully configured address. DHCPINFORM is only valid when the client already has an IP. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct client use. Incremented by relay agents before forwarding. \\
+\hline
+{\em seconds\+\_\+elapsed} & Seconds elapsed since the client began its configuration request (secs). Leave unset to default to 0. Set when retrying after an initial attempt. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Set the broadcast bit (0x8000) if the client requires broadcast responses. Leave unset to prefer unicast to client\+\_\+ip. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Required when constructing this message for relay forwarding. Leave unset for direct client-\/to-\/server messages. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the client\textquotesingle{}s vendor and hardware configuration to the server. Leave unset if not required. \\
+\hline
+{\em param\+\_\+request\+\_\+list} & Parameter request list (option 55). List of DHCP option codes the client would like the server to return in its reply. Leave unset to request no specific options. \\
+\hline
+{\em max\+\_\+message\+\_\+size} & Maximum DHCP message size the client can accept in bytes (option 57). Leave unset to apply no constraint. Must be at least 576 if set. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_aef59aa38fe7da06a7996a86bc4dbb971}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Nak@{Nak}}
+\index{Nak@{Nak}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Nak()}{Nak()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_aef59aa38fe7da06a7996a86bc4dbb971} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Nak (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{bootp\+\_\+flags}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{message}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPNAK message. 
+
+Constructs a DHCPNAK message used to reject a client\textquotesingle{}s address request or notify the client that its existing lease is no longer valid Sent by the server when the requested address is incorrect, expired, or belongs to a different client. Upon receipt the client must abandon its current address and restart the DORA process from DHCPDISCOVER. DHCPNAK is always broadcast regardless of the broadcast flag.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to the client\textquotesingle{}s request (xid). Must match the transaction ID from the rejected DHCPREQUEST. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). Must be copied directly from the client\textquotesingle{}s request. For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em server\+\_\+id} & IP address of this server (option 54). Used by the client to identify the server that issued the rejection. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct server-\/to-\/client responses. Incremented by relay agents before forwarding. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Leave unset in most cases, as DHCPNAK is always broadcast regardless of this value. Set only to preserve the client\textquotesingle{}s original flags for relay agent compatibility. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Must be copied directly from the client\textquotesingle{}s request when the message was relayed, as the server unicasts the DHCPNAK to the relay agent which then broadcasts it to the client. Leave unset if the message was not relayed. \\
+\hline
+{\em message} & Human-\/readable message describing the reason for the rejection (option 56). Useful for diagnosing configuration issues. Leave unset if no additional context is needed. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the server\textquotesingle{}s vendor and configuration to the client. Leave unset if not required. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_adaf14bbb3a39679f353311bb6215d024}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Offer@{Offer}}
+\index{Offer@{Offer}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Offer()}{Offer()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_adaf14bbb3a39679f353311bb6215d024} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Offer (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{pcpp::\+\+IPv4\+Address}]{your\+\_\+ip}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+ip}{, }\item[{std::\+uint16\+\_\+t}]{bootp\+\_\+flags}{, }\item[{pcpp::\+\+IPv4\+Address}]{gateway\+\_\+ip}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{std::\+uint32\+\_\+t}]{lease\+\_\+time}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 64 $>$ $>$ \&}]{server\+\_\+name}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+array$<$ std::\+uint8\+\_\+t, 128 $>$ $>$ \&}]{boot\+\_\+file\+\_\+name}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{message}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPOFFER message. 
+
+Constructs a DHCPOFFER message used to respond to a DHCPDISCOVER with an offer of a leased IP address. Sent by the server to indicate an available address and its associated configuration parameters. The client may receive offers from multiple servers and will select one via a subsequent DHCPREQUEST.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to the client\textquotesingle{}s DHCPDISCOVER (xid). Must match the transaction ID from the discovery message. \\
+\hline
+{\em your\+\_\+ip} & IP address being offered to the client (yiaddr). Must be a valid, available address within the server\textquotesingle{}s managed pool. \\
+\hline
+{\em server\+\_\+ip} & IP address of the next server to use in the bootstrap process (siaddr). Set when a boot server is required for network booting. Leave set to 0.\+0.\+0.\+0 if not applicable. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Must be copied directly from the client\textquotesingle{}s DHCPDISCOVER to preserve the client\textquotesingle{}s broadcast preference. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Must be copied directly from the client\textquotesingle{}s DHCPDISCOVER. Set to 0.\+0.\+0.\+0 if the message was not relayed. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). Must be copied directly from the client\textquotesingle{}s DHCPDISCOVER. For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em lease\+\_\+time} & Duration of the offered lease in seconds (option 51). Determines how long the client may use the offered address before renewal is required. \\
+\hline
+{\em server\+\_\+id} & IP address of this server (option 54). Used by the client to identify which server\textquotesingle{}s offer it is accepting in a subsequent DHCPREQUEST. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct server-\/to-\/client responses. Incremented by relay agents before forwarding. \\
+\hline
+{\em server\+\_\+name} & Optional null-\/terminated host name of the server (sname). Used in network boot scenarios to identify the boot server. Leave unset if not applicable. \\
+\hline
+{\em boot\+\_\+file\+\_\+name} & Optional null-\/terminated boot file name (file). Used in network boot scenarios to specify the boot image path on the boot server. Leave unset if not applicable. \\
+\hline
+{\em message} & Human-\/readable message from the server to the client (option 56). Leave unset if no additional context is needed. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the server\textquotesingle{}s vendor and configuration to the client. Leave unset if not required. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a57f33ac627141ca8b479cb371438c934}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Release@{Release}}
+\index{Release@{Release}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Release()}{Release()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a57f33ac627141ca8b479cb371438c934} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Release (\begin{DoxyParamCaption}\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{pcpp::\+\+IPv4\+Address}]{client\+\_\+ip}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{message}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPRELEASE message. 
+
+Constructs a DHCPRELEASE message used to notify the server that the client is relinquishing its leased IP address. The server should return the address to its available pool upon receipt. Sending this message is optional, as the server will reclaim the address naturally upon lease expiry.
+
+
+\begin{DoxyParams}{Parameters}
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to the prior exchange (xid). Reuse the value from the exchange that originally assigned the lease. \\
+\hline
+{\em client\+\_\+ip} & IP address being released (ciaddr). Must be the address currently leased by the client and assigned by the server identified in server\+\_\+id. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em server\+\_\+id} & IP address of the server that issued the lease being released (option 54). Must match the server identifier from the DHCPACK that assigned client\+\_\+ip. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct client use. Incremented by relay agents before forwarding. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Required when constructing this message for relay forwarding. Leave unset for direct client-\/to-\/server messages. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em message} & Human-\/readable message describing the reason for the release (option 56). Typically left unset. Set to provide additional context to the server or administrator when the reason for release is non-\/routine. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_aa2a7f9e0d0ea8647734dd69bfce7c2bd}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!Request@{Request}}
+\index{Request@{Request}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{Request()}{Request()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_aa2a7f9e0d0ea8647734dd69bfce7c2bd} 
+\doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}} serratia::\+protocols::\+\+DHCPMessage::\+\+Request (\begin{DoxyParamCaption}\item[{DHCPState}]{state}{, }\item[{\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}}]{common\+\_\+config}{, }\item[{std::\+uint32\+\_\+t}]{transaction\+\_\+id}{, }\item[{std::\+array$<$ std::\+uint8\+\_\+t, 16 $>$}]{client\+\_\+hardware\+\_\+address}{, }\item[{std::\+optional$<$ std::\+uint8\+\_\+t $>$}]{hops}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{seconds\+\_\+elapsed}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{bootp\+\_\+flags}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{client\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{gateway\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{requested\+\_\+ip}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint32\+\_\+t $>$}]{lease\+\_\+time}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{client\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{vendor\+\_\+class\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ pcpp::\+\+IPv4\+Address $>$}]{server\+\_\+id}{ = {\ttfamily std:\+:\+nullopt}, }\item[{const std::\+optional$<$ std::\+vector$<$ std::\+uint8\+\_\+t $>$ $>$ \&}]{param\+\_\+request\+\_\+list}{ = {\ttfamily std:\+:\+nullopt}, }\item[{std::\+optional$<$ std::\+uint16\+\_\+t $>$}]{max\+\_\+message\+\_\+size}{ = {\ttfamily std:\+:\+nullopt}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [static]}}
+
+
+
+Overloaded constructor for creating a DHCPREQUEST message. 
+
+Constructs a DHCPREQUEST message used to request, renew, or confirm a leased IP address. Behavior varies based on the client state. In SELECTING, the client confirms an offered address. In INIT-\/\+REBOOT, the client reconfirms a previously held address after rebooting. In RENEWING or REBINDING, the client extends an active lease.
+
+
+\begin{DoxyParams}{Parameters}
+{\em state} & Client state governing how this message is constructed and interpreted by the server. Must be one of SELECTING, INIT\+\_\+\+REBOOT, RENEWING, or REBINDING. \\
+\hline
+{\em common\+\_\+config} & Wrapped non-\/\+DHCP layers. \\
+\hline
+{\em transaction\+\_\+id} & Random 32-\/bit value used to match this message to server replies (xid). Reuse the value from the DHCPDISCOVER exchange when in SELECTING state. Generate a new value for INIT-\/\+REBOOT, RENEWING, and REBINDING. \\
+\hline
+{\em client\+\_\+hardware\+\_\+address} & Hardware address of the client (chaddr). For Ethernet, this is the client\textquotesingle{}s MAC address zero-\/padded to 16 bytes. \\
+\hline
+{\em hops} & Relay agent hop count (default 0). Leave unset for direct client use. Incremented by relay agents before forwarding. \\
+\hline
+{\em seconds\+\_\+elapsed} & Seconds elapsed since the client began the address acquisition or renewal process (secs). Leave unset to default to 0. Set when retrying after an initial attempt. \\
+\hline
+{\em bootp\+\_\+flags} & BOOTP flags field. Set the broadcast bit (0x8000) if the client cannot accept unicast responses before an IP is configured. Leave unset in RENEWING state, as the client already has a configured address. \\
+\hline
+{\em client\+\_\+ip} & Currently configured IP address (ciaddr). Set in RENEWING and REBINDING states where the client has an active lease. Must be left unset in SELECTING and INIT-\/\+REBOOT states. \\
+\hline
+{\em gateway\+\_\+ip} & Address of the relay agent (giaddr). Required when constructing this message for relay forwarding. Leave unset for direct client-\/to-\/server messages. \\
+\hline
+{\em requested\+\_\+ip} & IP address being requested (option 50). Required in SELECTING state to confirm the address offered by the server, and in INIT-\/\+REBOOT state to reconfirm a previously held address. Must be left unset in RENEWING and REBINDING states. \\
+\hline
+{\em lease\+\_\+time} & Requested lease duration in seconds (option 51). Leave unset to accept the server\textquotesingle{}s default. Set to hint at a preferred lease length. \\
+\hline
+{\em client\+\_\+id} & Client identifier (option 61). Uniquely identifies the client to the server as a type-\/prefixed byte sequence. Leave unset to fall back to chaddr-\/based identification. \\
+\hline
+{\em vendor\+\_\+class\+\_\+id} & Vendor class identifier (option 60). Identifies the client\textquotesingle{}s vendor and hardware configuration to the server. Leave unset if not required. \\
+\hline
+{\em server\+\_\+id} & IP address of the server being accepted (option 54). Required in SELECTING state to indicate which server\textquotesingle{}s offer is being accepted. Must be left unset in INIT-\/\+REBOOT, RENEWING, and REBINDING states. \\
+\hline
+{\em param\+\_\+request\+\_\+list} & Parameter request list (option 55). List of DHCP option codes the client would like the server to return in its reply. Leave unset to request no specific options. \\
+\hline
+{\em max\+\_\+message\+\_\+size} & Maximum DHCP message size the client can accept in bytes (option 57). Leave unset to apply no constraint. Must be at least 576 if set. \\
+\hline
+\end{DoxyParams}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_acd64462b88ca44e844d192974745d320}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!set\_client\_ip@{set\_client\_ip}}
+\index{set\_client\_ip@{set\_client\_ip}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{set\_client\_ip()}{set\_client\_ip()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_acd64462b88ca44e844d192974745d320} 
+bool serratia::\+protocols::\+\+DHCPMessage::\+set\+\_\+client\+\_\+ip (\begin{DoxyParamCaption}\item[{pcpp::\+\+IPv4\+Address}]{client\+\_\+ip}{, }\item[{DHCPState}]{state}{ = {\ttfamily STATELESS}}\end{DoxyParamCaption})}
+
+
+
+Sets the client\textquotesingle{}s currently configured IP address (ciaddr). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em client\+\_\+ip} & IP address currently configured on the client. Should be a valid, fully configured address. \\
+\hline
+{\em state} & Client state used to validate whether ciaddr is permitted in this context. If the message is a DHCPREQUEST, the state must be BOUND, RENEWING, REBINDING, or STATELESS, as ciaddr must remain zero in other states per RFC 2131. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the field was set successfully, false if setting the field was not allowed. 
+\end{DoxyReturn}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a98b733bb6ce4aaec0e7b3953e88cb204}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!set\_lease\_time@{set\_lease\_time}}
+\index{set\_lease\_time@{set\_lease\_time}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{set\_lease\_time()}{set\_lease\_time()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a98b733bb6ce4aaec0e7b3953e88cb204} 
+bool serratia::\+protocols::\+\+DHCPMessage::\+set\+\_\+lease\+\_\+time (\begin{DoxyParamCaption}\item[{std::\+uint32\+\_\+t}]{lease\+\_\+time}{, }\item[{pcpp::\+\+Dhcp\+Message\+Type}]{query}{ = {\ttfamily pcpp:\+:\+DhcpMessageType:\+:\+DHCP\+\_\+UNKNOWN\+\_\+MSG\+\_\+TYPE}}\end{DoxyParamCaption})}
+
+
+
+Sets the client\textquotesingle{}s offered IP address (yiaddr). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em lease\+\_\+time} & Lease time requested by the client or offered by the server. \\
+\hline
+{\em query} & Type of message from the client being responsed to. This option must not be set in responses to DHCPINFORM. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the field was set successfully, false if setting the option was not allowed. 
+\end{DoxyReturn}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a1d2c020d6edb4ce896505be03ef8c276}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!set\_requested\_ip@{set\_requested\_ip}}
+\index{set\_requested\_ip@{set\_requested\_ip}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{set\_requested\_ip()}{set\_requested\_ip()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a1d2c020d6edb4ce896505be03ef8c276} 
+bool serratia::\+protocols::\+\+DHCPMessage::\+set\+\_\+requested\+\_\+ip (\begin{DoxyParamCaption}\item[{pcpp::\+\+IPv4\+Address}]{requested\+\_\+ip}{, }\item[{DHCPState}]{state}{ = {\ttfamily STATELESS}}\end{DoxyParamCaption})}
+
+
+
+Sets the client\textquotesingle{}s offered IP address (yiaddr). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em requested\+\_\+ip} & IP address requested by client to the server. \\
+\hline
+{\em state} & State that the client is in. This option must not be set in the BOUND or RENEWING states. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the field was set successfully, false if setting the option was not allowed. 
+\end{DoxyReturn}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_a52219ef689fa393ef94883c172774ad8}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!set\_server\_id@{set\_server\_id}}
+\index{set\_server\_id@{set\_server\_id}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{set\_server\_id()}{set\_server\_id()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_a52219ef689fa393ef94883c172774ad8} 
+bool serratia::\+protocols::\+\+DHCPMessage::\+set\+\_\+server\+\_\+id (\begin{DoxyParamCaption}\item[{pcpp::\+\+IPv4\+Address}]{server\+\_\+id}{, }\item[{DHCPState}]{state}{ = {\ttfamily STATELESS}}\end{DoxyParamCaption})}
+
+
+
+Sets the client\textquotesingle{}s offered IP address (yiaddr). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em server\+\_\+id} & IP address identifiying a DHCP server. \\
+\hline
+{\em state} & State that the client is in. This option must not be set in the INIT-\/\+REBOOT, BOUND, RENEWING, or REBINDING states. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the field was set successfully, false if setting the option was not allowed. 
+\end{DoxyReturn}
+\Hypertarget{classserratia_1_1protocols_1_1DHCPMessage_aa528585cfdc98557ce2170d2292f5e87}\index{serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}!set\_your\_ip@{set\_your\_ip}}
+\index{set\_your\_ip@{set\_your\_ip}!serratia::protocols::DHCPMessage@{serratia::protocols::DHCPMessage}}
+\doxysubsubsection{\texorpdfstring{set\_your\_ip()}{set\_your\_ip()}}
+{\footnotesize\ttfamily \label{classserratia_1_1protocols_1_1DHCPMessage_aa528585cfdc98557ce2170d2292f5e87} 
+bool serratia::\+protocols::\+\+DHCPMessage::\+set\+\_\+your\+\_\+ip (\begin{DoxyParamCaption}\item[{pcpp::\+\+IPv4\+Address}]{your\+\_\+ip}{, }\item[{pcpp::\+\+Dhcp\+Message\+Type}]{query}{ = {\ttfamily pcpp:\+:\+DHCP\+\_\+UNKNOWN\+\_\+MSG\+\_\+TYPE}}\end{DoxyParamCaption})}
+
+
+
+Sets the client\textquotesingle{}s offered IP address (yiaddr). 
+
+
+\begin{DoxyParams}{Parameters}
+{\em your\+\_\+ip} & IP address offered to the client by the server. \\
+\hline
+{\em query} & Type of message from the client being responsed to. The yiaddr field must remain zero in responses to DHCPINFORM. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+True if the field was set successfully, false if setting the field was not allowed. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files:\+\begin{DoxyCompactItemize}
+\item 
+protocols/\+\doxymbox{\hyperlink{DHCP_8h}{DHCP.\+h}}\item 
+protocols/\+DHCP.\+cpp\end{DoxyCompactItemize}

@@ -1,0 +1,52 @@
+\doxysection{protocols/\+\+DHCP.h File Reference}
+\hypertarget{DHCP_8h}{}\label{DHCP_8h}\index{protocols/DHCP.h@{protocols/DHCP.h}}
+
+
+Implementation of the DHCP protocol.  
+
+
+{\ttfamily \+\#include $<$pcapplusplus/\+\+Dhcp\+Layer.\+h$>$}\newline
+{\ttfamily \+\#include $<$pcapplusplus/\+\+Eth\+Layer.\+h$>$}\newline
+{\ttfamily \+\#include $<$pcapplusplus/\+\+IPv4\+Layer.\+h$>$}\newline
+{\ttfamily \+\#include $<$pcapplusplus/\+\+Ip\+Address.\+h$>$}\newline
+{\ttfamily \+\#include $<$pcapplusplus/\+\+Packet.\+h$>$}\newline
+{\ttfamily \+\#include $<$pcapplusplus/\+\+Udp\+Layer.\+h$>$}\newline
+{\ttfamily \+\#include $<$optional$>$}\newline
+{\ttfamily \+\#include $<$unordered\+\_\+map$>$}\newline
+{\ttfamily \+\#include $<$utility$>$}\newline
+\doxysubsubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+struct \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{serratia::\+protocols::\+\+DHCPCommon}}
+\begin{DoxyCompactList}\small\item\em Wraps non-\/\+DHCP layers for convenience. \end{DoxyCompactList}\item 
+class \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::\+protocols::\+\+DHCPMessage}}
+\begin{DoxyCompactList}\small\item\em Presents unified structure for creating DHCP messages. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsubsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{DHCP_8h_a3a243beb2b056f2224987f8ba565d629}\label{DHCP_8h_a3a243beb2b056f2224987f8ba565d629} 
+enum {\bfseries DHCPState} \{ \newline
+{\bfseries INIT}
+, {\bfseries SELECTING}
+, {\bfseries REQUESTING}
+, {\bfseries INIT\+\_\+\+REBOOT}
+, \newline
+{\bfseries REBOOTING}
+, {\bfseries BOUND}
+, {\bfseries RENEWING}
+, {\bfseries REBINDING}
+, \newline
+{\bfseries STATELESS}
+ \}
+\end{DoxyCompactItemize}
+\doxysubsubsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{DHCP_8h_a12b0f068cd52db6c71a87ffa2cc9716b}\label{DHCP_8h_a12b0f068cd52db6c71a87ffa2cc9716b} 
+constexpr std::\+uint16\+\_\+t {\bfseries serratia::\+protocols::\+\+ETHERNET\+\_\+\+FRAME\+\_\+\+SIZE} = 1500
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+Implementation of the DHCP protocol. 
+

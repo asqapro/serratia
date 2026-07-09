@@ -1,0 +1,32 @@
+\doxysection{PCPPUtils.\+h}
+\hypertarget{PCPPUtils_8h_source}{}\label{PCPPUtils_8h_source}\index{utilities/PCPPUtils.h@{utilities/PCPPUtils.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <pcapplusplus/PcapLiveDevice.h>}}
+\DoxyCodeLine{00004\ }
+\DoxyCodeLine{00005\ \textcolor{keyword}{namespace\ }serratia::utils\ \{}
+\DoxyCodeLine{00006\ \textcolor{keyword}{class\ }\doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{IPcapLiveDevice}}\ \{}
+\DoxyCodeLine{00007\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00008\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ send(\textcolor{keyword}{const}\ pcpp::Packet\&\ packet)\ =\ 0;}
+\DoxyCodeLine{00009\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{bool}\ startCapture(pcpp::OnPacketArrivesCallback\ onPacketArrives,\ \textcolor{keywordtype}{void}*\ onPacketArrivesUserCookie)\ =\ 0;}
+\DoxyCodeLine{00010\ \ \ \textcolor{keyword}{virtual}\ \textcolor{keywordtype}{void}\ stopCapture()\ =\ 0;}
+\DoxyCodeLine{00011\ \ \ \textcolor{keyword}{virtual}\ pcpp::MacAddress\ getMacAddress(\textcolor{keyword}{const}\ pcpp::IPv4Address\&\ target\_ip,\ \textcolor{keywordtype}{int}\ timeout)\ =\ 0;}
+\DoxyCodeLine{00012\ \ \ \textcolor{keyword}{virtual}\ \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{\string~IPcapLiveDevice}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00013\ \};}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{class\ }RealPcapLiveDevice\ final\ :\ \textcolor{keyword}{public}\ \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{IPcapLiveDevice}}\ \{}
+\DoxyCodeLine{00016\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00017\ \ \ \textcolor{keyword}{explicit}\ RealPcapLiveDevice(pcpp::PcapLiveDevice*\ device)\ :\ device\_(device)\ \{\}}
+\DoxyCodeLine{00018\ \ \ \textcolor{keywordtype}{bool}\ send(\textcolor{keyword}{const}\ pcpp::Packet\&\ packet)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00019\ \ \ \textcolor{keywordtype}{bool}\ startCapture(pcpp::OnPacketArrivesCallback\ onPacketArrives,\ \textcolor{keywordtype}{void}*\ onPacketArrivesUserCookie)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00020\ \ \ \textcolor{keywordtype}{void}\ stopCapture()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00021\ \ \ pcpp::MacAddress\ getMacAddress(\textcolor{keyword}{const}\ pcpp::IPv4Address\&\ target\_ip,\ \textcolor{keywordtype}{int}\ timeout)\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00024\ \ \ pcpp::PcapLiveDevice*\ device\_;}
+\DoxyCodeLine{00025\ \};}
+\DoxyCodeLine{00026\ \}\ \ \textcolor{comment}{//\ namespace\ serratia::utils}}
+
+\end{DoxyCode}

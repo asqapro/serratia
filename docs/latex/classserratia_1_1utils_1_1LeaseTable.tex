@@ -1,0 +1,34 @@
+\doxysection{serratia::\+utils::\+Lease\+Table\texorpdfstring{$<$}{<} Client\+ID, IP, Lease \texorpdfstring{$>$}{>} Class Template Reference}
+\hypertarget{classserratia_1_1utils_1_1LeaseTable}{}\label{classserratia_1_1utils_1_1LeaseTable}\index{serratia::utils::LeaseTable$<$ ClientID, IP, Lease $>$@{serratia::utils::LeaseTable$<$ ClientID, IP, Lease $>$}}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_a61c79f593cad50313ca9e0f74b2e2b6d}\label{classserratia_1_1utils_1_1LeaseTable_a61c79f593cad50313ca9e0f74b2e2b6d} 
+bool {\bfseries assign} (const \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{Client\+ID}} \&client, const \doxymbox{\hyperlink{structserratia_1_1utils_1_1Lease}{Lease}} \&lease)
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_ac306a9b2597236fdcd5bba19631a2f52}\label{classserratia_1_1utils_1_1LeaseTable_ac306a9b2597236fdcd5bba19631a2f52} 
+bool {\bfseries remove\+By\+Client} (const \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{Client\+ID}} \&client)
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_aa2fe32d9acdd7e7608c0412fcc8709b0}\label{classserratia_1_1utils_1_1LeaseTable_aa2fe32d9acdd7e7608c0412fcc8709b0} 
+bool {\bfseries remove\+By\+IP} (const IP \&ip)
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_a9f77d7216cf5328c545649ec5f699069}\label{classserratia_1_1utils_1_1LeaseTable_a9f77d7216cf5328c545649ec5f699069} 
+std::\+optional$<$ \doxymbox{\hyperlink{structserratia_1_1utils_1_1Lease}{Lease}} $>$ {\bfseries get\+Lease} (const \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{Client\+ID}} \&client) const
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_a38b861d99a5806817c3ec69453daf17b}\label{classserratia_1_1utils_1_1LeaseTable_a38b861d99a5806817c3ec69453daf17b} 
+std::\+optional$<$ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{Client\+ID}} $>$ {\bfseries get\+Client} (const IP \&ip) const
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_aa160f05a0505f86fd0ce842b752a6666}\label{classserratia_1_1utils_1_1LeaseTable_aa160f05a0505f86fd0ce842b752a6666} 
+void {\bfseries finalize\+\_\+lease} (const \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{Client\+ID}} \&client, const std::\+chrono::\+seconds lease\+\_\+time)
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_a155ca36d40dbd9dc760ee0ddef1b9cb2}\label{classserratia_1_1utils_1_1LeaseTable_a155ca36d40dbd9dc760ee0ddef1b9cb2} 
+void {\bfseries cleanup\+\_\+leases} ()
+\item 
+\Hypertarget{classserratia_1_1utils_1_1LeaseTable_a643c0a3562d9df30440e02923e5c7da4}\label{classserratia_1_1utils_1_1LeaseTable_a643c0a3562d9df30440e02923e5c7da4} 
+std::\+size\+\_\+t {\bfseries size} () const noexcept
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file:\+\begin{DoxyCompactItemize}
+\item 
+utilities/\+DHCPServer.\+h\end{DoxyCompactItemize}

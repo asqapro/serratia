@@ -1,0 +1,28 @@
+\doxysection{DHCPExhaustion.\+h}
+\hypertarget{DHCPExhaustion_8h_source}{}\label{DHCPExhaustion_8h_source}\index{attacks/DHCPExhaustion.h@{attacks/DHCPExhaustion.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}PCPPUtils.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}IAttack.h"{}}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <memory>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{keyword}{namespace\ }serratia::attacks\ \{}
+\DoxyCodeLine{00010\ \textcolor{keyword}{class\ }DHCPExhaustion\ final\ :\ \textcolor{keyword}{public}\ \doxymbox{\hyperlink{classserratia_1_1attacks_1_1IAttack}{IAttack}}\ \{}
+\DoxyCodeLine{00011\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00012\ \ \ \textcolor{keyword}{explicit}\ DHCPExhaustion(std::shared\_ptr<serratia::utils::IPcapLiveDevice>\ send\_dev)\ :\ send\_dev\_(std::move(send\_dev))\ \{\}}
+\DoxyCodeLine{00013\ \ \ \textcolor{keywordtype}{void}\ run()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00014\ \ \ \textcolor{keywordtype}{void}\ stop()\ \textcolor{keyword}{override};}
+\DoxyCodeLine{00015\ \ \ std::uint32\_t\ get\_reservation\_count()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00018\ \ \ std::shared\_ptr<serratia::utils::IPcapLiveDevice>\ send\_dev\_;}
+\DoxyCodeLine{00019\ \ \ std::atomic<bool>\ running\_\{\textcolor{keyword}{false}\};}
+\DoxyCodeLine{00020\ \ \ std::uint32\_t\ reservation\_count\_\ =\ 0;}
+\DoxyCodeLine{00021\ \};}
+\DoxyCodeLine{00022\ \}\ \ \textcolor{comment}{//\ namespace\ serratia::attacks}}
+
+\end{DoxyCode}

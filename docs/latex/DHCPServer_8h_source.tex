@@ -1,0 +1,192 @@
+\doxysection{DHCPServer.\+h}
+\hypertarget{DHCPServer_8h_source}{}\label{DHCPServer_8h_source}\index{utilities/DHCPServer.h@{utilities/DHCPServer.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ }
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ "{}PCPPUtils.h"{}}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}\doxymbox{\hyperlink{DHCP_8h}{../protocols/DHCP.h}}"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}spdlog/spdlog.h"{}}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <pcapplusplus/IpAddress.h>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <pcapplusplus/MacAddress.h>}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{namespace\ }serratia::utils\ \{}
+\DoxyCodeLine{00013\ \textcolor{keyword}{struct\ }\doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\ \{}
+\DoxyCodeLine{00014\ \ \ std::vector<std::uint8\_t>\ data;}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \textcolor{keywordtype}{void}\ assign(\textcolor{keyword}{const}\ std::uint8\_t*\ buf,\ \textcolor{keyword}{const}\ std::size\_t\ len)\ \{}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordflow}{if}\ (len\ >\ 255)\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::length\_error(\textcolor{stringliteral}{"{}ClientID\ exceeds\ 255\ bytes"{}});}
+\DoxyCodeLine{00019\ \ \ \ \ \}}
+\DoxyCodeLine{00020\ \ \ \ \ data.assign(buf,\ buf\ +\ len);}
+\DoxyCodeLine{00021\ \ \ \}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \ \ \textcolor{keywordtype}{void}\ assign(\textcolor{keyword}{const}\ pcpp::MacAddress\ mac)\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ data.resize(7);}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{constexpr}\ std::uint8\_t\ HTYPE\_ETHER\ =\ 1;}
+\DoxyCodeLine{00026\ \ \ \ \ data[0]\ =\ HTYPE\_ETHER;}
+\DoxyCodeLine{00027\ \ \ \ \ mac.copyTo(data.data()\ +\ 1,\ 6);}
+\DoxyCodeLine{00028\ \ \ \}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \textcolor{keywordtype}{bool}\ operator<(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ other)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordflow}{return}\ std::ranges::lexicographical\_compare(data,\ other.data);}
+\DoxyCodeLine{00032\ \ \ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ other)\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{\ \textcolor{keywordflow}{return}\ data\ ==\ other.data;\ \}}
+\DoxyCodeLine{00035\ \};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{enum\ class}\ LeaseState\ \{\ Pending,\ Finalized\ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{struct\ }Lease\ \{}
+\DoxyCodeLine{00040\ \ \ Lease(\textcolor{keyword}{const}\ pcpp::IPv4Address\ assigned\_ip,\ \textcolor{keyword}{const}\ std::chrono::steady\_clock::time\_point\ expiry\_time,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LeaseState\ state)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ :\ assigned\_ip\_(assigned\_ip),\ expiry\_time\_(expiry\_time),\ state\_(state)\ \{\}}
+\DoxyCodeLine{00043\ \ \ Lease()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ pcpp::IPv4Address\ assigned\_ip\_;}
+\DoxyCodeLine{00046\ \ \ std::chrono::steady\_clock::time\_point\ expiry\_time\_;}
+\DoxyCodeLine{00047\ \ \ LeaseState\ state\_\{LeaseState::Pending\};}
+\DoxyCodeLine{00048\ \};}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ClientID,\ \textcolor{keyword}{typename}\ IP,\ \textcolor{keyword}{typename}\ Lease>}
+\DoxyCodeLine{00051\ \textcolor{keyword}{class\ }\doxymbox{\hyperlink{classserratia_1_1utils_1_1LeaseTable}{LeaseTable}}\ \{}
+\DoxyCodeLine{00052\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00053\ \ \ \textcolor{comment}{//\ Assigns\ a\ lease\ to\ a\ client}}
+\DoxyCodeLine{00054\ \ \ \textcolor{keywordtype}{bool}\ assign(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ client,\ \textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1Lease}{Lease}}\&\ lease)\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\&\ ip\ =\ lease.assigned\_ip\_;}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ client\_to\_lease.insert\_or\_assign(client,\ lease);}
+\DoxyCodeLine{00058\ \ \ \ \ ip\_to\_client.insert\_or\_assign(ip,\ client);}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00060\ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \textcolor{comment}{//\ Remove\ a\ client's\ lease\ (e.g.,\ on\ expiry)}}
+\DoxyCodeLine{00063\ \ \ \textcolor{keywordtype}{bool}\ removeByClient(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ client)\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ client\_to\_lease.find(client);}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordflow}{if}\ (client\_to\_lease.end()\ ==\ it)\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ \ \ \ \ ip\_to\_client.erase(it-\/>second.assigned\_ip\_);}
+\DoxyCodeLine{00069\ \ \ \ \ client\_to\_lease.erase(it);}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00071\ \ \ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \ \ \textcolor{comment}{//\ Remove\ by\ IP}}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordtype}{bool}\ removeByIP(\textcolor{keyword}{const}\ IP\&\ ip)\ \{}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ ip\_to\_client.find(ip);}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{if}\ (ip\_to\_client.end()\ ==\ it)\ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00078\ \ \ \ \ \}}
+\DoxyCodeLine{00079\ \ \ \ \ client\_to\_lease.erase(it-\/>second);}
+\DoxyCodeLine{00080\ \ \ \ \ ip\_to\_client.erase(it);}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00082\ \ \ \}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \textcolor{comment}{//\ Lookup\ by\ client}}
+\DoxyCodeLine{00085\ \ \ [[nodiscard]]\ std::optional<Lease>\ getLease(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ client)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ client\_to\_lease.find(client);}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordflow}{if}\ (client\_to\_lease.end()\ ==\ it)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::nullopt;}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00091\ \ \ \}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \textcolor{comment}{//\ Lookup\ by\ IP}}
+\DoxyCodeLine{00094\ \ \ [[nodiscard]]\ std::optional<ClientID>\ getClient(\textcolor{keyword}{const}\ IP\&\ ip)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ ip\_to\_client.find(ip);}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ ip\_to\_client.end())\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::nullopt;}
+\DoxyCodeLine{00098\ \ \ \ \ \}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{return}\ it-\/>second;}
+\DoxyCodeLine{00100\ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordtype}{void}\ finalize\_lease(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ client,\ \textcolor{keyword}{const}\ std::chrono::seconds\ lease\_time)\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ client\_to\_lease.find(client);}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{if}\ (client\_to\_lease.end()\ ==\ it)\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}Cannot\ extend\ lease\ -\/\ client\ not\ found"{}});}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ it-\/>second.state\_\ =\ LeaseState::Finalized;}
+\DoxyCodeLine{00108\ \ \ \ \ it-\/>second.expiry\_time\_\ =\ std::chrono::steady\_clock::now()\ +\ lease\_time;}
+\DoxyCodeLine{00109\ \ \ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \ \ \textcolor{keywordtype}{void}\ cleanup\_leases()\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ it\ =\ client\_to\_lease.begin();\ it\ !=\ client\_to\_lease.end();)\ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (LeaseState::Pending\ ==\ it-\/>second.finalized)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ ip\_to\_client.erase(it-\/>second.assigned\_ip\_);}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ it\ =\ client\_to\_lease.erase(it);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ ++it;}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ [[nodiscard]]\ std::size\_t\ size()\ \textcolor{keyword}{const}\ \textcolor{keyword}{noexcept}\ \{\ \textcolor{keywordflow}{return}\ client\_to\_lease.size();\ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00125\ \ \ std::map<ClientID,\ Lease>\ client\_to\_lease;}
+\DoxyCodeLine{00126\ \ \ std::map<IP,\ ClientID>\ ip\_to\_client;}
+\DoxyCodeLine{00127\ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{struct\ }DHCPServerConfig\ \{}
+\DoxyCodeLine{00130\ \ \ DHCPServerConfig(\textcolor{keyword}{const}\ pcpp::MacAddress\ server\_mac,\ \textcolor{keyword}{const}\ pcpp::IPv4Address\&\ server\_ip,}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::uint16\_t\ server\_port,\ \textcolor{keyword}{const}\ std::uint16\_t\ client\_port,}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::array<std::uint8\_t,\ 64>\&\ server\_name,\ \textcolor{keyword}{const}\ pcpp::IPv4Address\&\ lease\_pool\_start,}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ pcpp::IPv4Address\&\ server\_netmask,\ \textcolor{keyword}{const}\ std::chrono::seconds\ offer\_time,}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::chrono::seconds\ lease\_time,\ \textcolor{keyword}{const}\ std::array<std::uint8\_t,\ 128>\&\ boot\_file\_name\ =\ \{\})}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ :\ server\_mac(server\_mac),}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ server\_ip(server\_ip),}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ server\_port(server\_port),}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ client\_port(client\_port),}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ server\_name(server\_name),}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ boot\_file\_name(boot\_file\_name),}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ lease\_pool\_start(lease\_pool\_start),}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ server\_netmask(server\_netmask),}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ offer\_time(offer\_time),}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ lease\_time(lease\_time),}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ server\_id(server\_ip)\ \{\}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ pcpp::MacAddress\ server\_mac;}
+\DoxyCodeLine{00148\ \ \ pcpp::IPv4Address\ server\_ip;}
+\DoxyCodeLine{00149\ \ \ std::uint16\_t\ server\_port;}
+\DoxyCodeLine{00150\ \ \ std::uint16\_t\ client\_port;}
+\DoxyCodeLine{00151\ \ \ std::array<std::uint8\_t,\ 64>\ server\_name;}
+\DoxyCodeLine{00152\ \ \ std::array<std::uint8\_t,\ 128>\ boot\_file\_name;}
+\DoxyCodeLine{00153\ \ \ pcpp::IPv4Address\ lease\_pool\_start;}
+\DoxyCodeLine{00154\ \ \ pcpp::IPv4Address\ server\_netmask;}
+\DoxyCodeLine{00155\ \ \ std::chrono::seconds\ offer\_time;}
+\DoxyCodeLine{00156\ \ \ std::chrono::seconds\ lease\_time;}
+\DoxyCodeLine{00157\ \ \ pcpp::IPv4Address\ server\_id;}
+\DoxyCodeLine{00158\ \};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keyword}{class\ }DHCPServer\ \{}
+\DoxyCodeLine{00161\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00162\ \ \ DHCPServer(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1DHCPServerConfig}{DHCPServerConfig}}\&\ config,\ std::shared\_ptr<IPcapLiveDevice>\ device);}
+\DoxyCodeLine{00163\ \ \ \textcolor{keywordtype}{void}\ run();}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordtype}{void}\ stop();}
+\DoxyCodeLine{00165\ \ \ [[nodiscard]]\ \textcolor{keywordtype}{bool}\ is\_running()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00166\ \ \ [[nodiscard]]\ std::set<pcpp::IPv4Address>\ get\_lease\_pool()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00167\ \ \ [[nodiscard]]\ \doxymbox{\hyperlink{classserratia_1_1utils_1_1LeaseTable}{LeaseTable<ClientID,\ pcpp::IPv4Address,\ Lease>}}\ get\_lease\_table()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordtype}{void}\ handleDiscover(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet);}
+\DoxyCodeLine{00171\ \ \ \textcolor{keywordtype}{void}\ handleRequest(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet);}
+\DoxyCodeLine{00172\ \ \ \textcolor{keywordtype}{void}\ handleRelease(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet);}
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordtype}{void}\ handleInform(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ [[nodiscard]]\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::protocols::DHCPMessage}}\ generateAck(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet,}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<Lease>\&\ lease\ =\ std::nullopt)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00177\ \ \ [[nodiscard]]\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage}{serratia::protocols::DHCPMessage}}\ generateNak(\textcolor{keyword}{const}\ pcpp::Packet\&\ dhcp\_packet)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00178\ \ \ pcpp::IPv4Address\ allocateIP(\textcolor{keyword}{const}\ \doxymbox{\hyperlink{structserratia_1_1utils_1_1ClientID}{ClientID}}\&\ \textcolor{keywordtype}{id},\ pcpp::IPv4Address\ requested\_ip);}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \textcolor{keywordtype}{bool}\ server\_running\_;}
+\DoxyCodeLine{00181\ \ \ \doxymbox{\hyperlink{structserratia_1_1utils_1_1DHCPServerConfig}{DHCPServerConfig}}\ config\_;}
+\DoxyCodeLine{00182\ \ \ std::shared\_ptr<IPcapLiveDevice>\ device\_;}
+\DoxyCodeLine{00183\ \ \ std::set<pcpp::IPv4Address>\ lease\_pool\_;}
+\DoxyCodeLine{00184\ \ \ \doxymbox{\hyperlink{classserratia_1_1utils_1_1LeaseTable}{LeaseTable<ClientID,\ pcpp::IPv4Address,\ Lease>}}\ lease\_table\_;}
+\DoxyCodeLine{00185\ \};}
+\DoxyCodeLine{00186\ \}\ \ \textcolor{comment}{//\ namespace\ serratia::utils}}
+
+\end{DoxyCode}

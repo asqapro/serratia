@@ -1,0 +1,198 @@
+\doxysection{DHCP.\+h}
+\hypertarget{DHCP_8h_source}{}\label{DHCP_8h_source}\index{protocols/DHCP.h@{protocols/DHCP.h}}
+\doxymbox{\hyperlink{DHCP_8h}{Go to the documentation of this file.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <pcapplusplus/DhcpLayer.h>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <pcapplusplus/EthLayer.h>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <pcapplusplus/IPv4Layer.h>}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#include\ <pcapplusplus/IpAddress.h>}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#include\ <pcapplusplus/Packet.h>}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#include\ <pcapplusplus/UdpLayer.h>}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <utility>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }serratia::protocols\ \{}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{constexpr}\ std::uint16\_t\ ETHERNET\_FRAME\_SIZE\ =\ 1500;}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{enum}\ DHCPState\ \{\ INIT,\ SELECTING,\ REQUESTING,\ INIT\_REBOOT,\ REBOOTING,\ BOUND,\ RENEWING,\ REBINDING,\ STATELESS\ \};}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{struct\ }DHCPCommon\ \{}
+\DoxyCodeLine{00031\ \ \ DHCPCommon(std::shared\_ptr<pcpp::EthLayer>\ eth\_layer,\ std::shared\_ptr<pcpp::IPv4Layer>\ ip\_layer,}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ \ \ \ \ \ std::shared\_ptr<pcpp::UdpLayer>\ udp\_layer)}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ :\ eth\_layer(std::move(eth\_layer)),\ ip\_layer(std::move(ip\_layer)),\ udp\_layer(std::move(udp\_layer))\ \{\}}
+\DoxyCodeLine{00034\ \ \ DHCPCommon()\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00037\ \ \ [[nodiscard]]\ pcpp::Packet\ \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon_a7ed8d15925a51bb03214efaa66dde11f}{build}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ std::shared\_ptr<pcpp::EthLayer>\ eth\_layer;}
+\DoxyCodeLine{00040\ \ \ std::shared\_ptr<pcpp::IPv4Layer>\ ip\_layer;}
+\DoxyCodeLine{00041\ \ \ std::shared\_ptr<pcpp::UdpLayer>\ udp\_layer;}
+\DoxyCodeLine{00042\ \};}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{class\ }DHCPMessage\ \{}
+\DoxyCodeLine{00050\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00087\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_ab100d6aa813e47bfbfb9b2b0a101aab1}{Discover}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ seconds\_elapsed\ =\ std::nullopt,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ bootp\_flags\ =\ std::nullopt,}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ requested\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint32\_t>\ lease\_time\ =\ std::nullopt,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ param\_request\_list\ =\ std::nullopt,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ max\_message\_size\ =\ std::nullopt);}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa9aa62d84ca24c70fa685e9b368d61de}{Inform}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,\ pcpp::IPv4Address\ client\_ip,}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ seconds\_elapsed\ =\ std::nullopt,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ bootp\_flags\ =\ std::nullopt,}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ param\_request\_list\ =\ std::nullopt,}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ max\_message\_size\ =\ std::nullopt);}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00198\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa2a7f9e0d0ea8647734dd69bfce7c2bd}{Request}}(DHCPState\ state,\ \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ seconds\_elapsed\ =\ std::nullopt,}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ bootp\_flags\ =\ std::nullopt,}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ client\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ requested\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint32\_t>\ lease\_time\ =\ std::nullopt,}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ server\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ param\_request\_list\ =\ std::nullopt,}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ max\_message\_size\ =\ std::nullopt);}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00242\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a98cc7506c20f63a4ca0885fae16324a2}{Decline}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ pcpp::IPv4Address\ requested\_ip,}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pcpp::IPv4Address\ server\_id,\ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt);}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a57f33ac627141ca8b479cb371438c934}{Release}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,\ pcpp::IPv4Address\ client\_ip,}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ pcpp::IPv4Address\ server\_id,}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt);}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00323\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_adaf14bbb3a39679f353311bb6215d024}{Offer}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,\ pcpp::IPv4Address\ your\_ip,}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pcpp::IPv4Address\ server\_ip,\ std::uint16\_t\ bootp\_flags,\ pcpp::IPv4Address\ gateway\_ip,}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ std::uint32\_t\ lease\_time,}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pcpp::IPv4Address\ server\_id,\ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 64>>\&\ server\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 128>>\&\ boot\_file\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt,}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt);}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00376\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a2a940fbeb694e884f2c6c49f62ca753e}{Ack}}(pcpp::DhcpMessageType\ query,\ \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::uint16\_t\ bootp\_flags,\ pcpp::IPv4Address\ gateway\_ip,}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ pcpp::IPv4Address\ server\_id,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ your\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ server\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 64>>\&\ server\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 128>>\&\ boot\_file\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint32\_t>\ lease\_time\ =\ std::nullopt,}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt,}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt);}
+\DoxyCodeLine{00387\ }
+\DoxyCodeLine{00424\ \ \ \textcolor{keyword}{static}\ DHCPMessage\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aef59aa38fe7da06a7996a86bc4dbb971}{Nak}}(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ pcpp::IPv4Address\ server\_id,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ bootp\_flags\ =\ std::nullopt,}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt,}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt);}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ DHCPMessage()\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00440\ \ \ pcpp::Packet\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a6284955e53e333a230e41a05a3268eb4}{build}}(std::uint16\_t\ max\_message\_size\ =\ ETHERNET\_FRAME\_SIZE);}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ \textcolor{keywordtype}{bool}\ set\_common\_config(\doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config);}
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordtype}{bool}\ set\_hops(std::uint8\_t\ hops);}
+\DoxyCodeLine{00444\ \ \ \textcolor{keywordtype}{bool}\ set\_transaction\_id(std::uint16\_t\ transaction\_id);}
+\DoxyCodeLine{00445\ \ \ \textcolor{keywordtype}{void}\ set\_broadcast\_flag();}
+\DoxyCodeLine{00446\ \ \ \textcolor{keywordtype}{void}\ clear\_broadcast\_flag();}
+\DoxyCodeLine{00456\ \ \ \textcolor{keywordtype}{bool}\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_acd64462b88ca44e844d192974745d320}{set\_client\_ip}}(pcpp::IPv4Address\ client\_ip,\ DHCPState\ state\ =\ STATELESS);}
+\DoxyCodeLine{00465\ \ \ \textcolor{keywordtype}{bool}\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_aa528585cfdc98557ce2170d2292f5e87}{set\_your\_ip}}(pcpp::IPv4Address\ your\_ip,\ pcpp::DhcpMessageType\ query\ =\ pcpp::DHCP\_UNKNOWN\_MSG\_TYPE);}
+\DoxyCodeLine{00466\ \ \ \textcolor{keywordtype}{bool}\ set\_server\_ip(pcpp::IPv4Address\ server\_ip);}
+\DoxyCodeLine{00467\ \ \ \textcolor{keywordtype}{bool}\ set\_gateway\_ip(pcpp::IPv4Address\ gateway\_ip);}
+\DoxyCodeLine{00468\ \ \ \textcolor{keywordtype}{bool}\ set\_server\_name(\textcolor{keyword}{const}\ std::array<std::uint8\_t,\ 64>\&\ server\_name);}
+\DoxyCodeLine{00469\ \ \ \textcolor{keywordtype}{bool}\ set\_boot\_file\_name(\textcolor{keyword}{const}\ std::array<std::uint8\_t,\ 128>\&\ boot\_file\_name);}
+\DoxyCodeLine{00470\ \ \ \textcolor{keywordtype}{bool}\ set\_client\_hardware\_address(\textcolor{keyword}{const}\ std::array<std::uint8\_t,\ 16>\&\ client\_hardware\_address);}
+\DoxyCodeLine{00478\ \ \ \textcolor{keywordtype}{bool}\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a1d2c020d6edb4ce896505be03ef8c276}{set\_requested\_ip}}(pcpp::IPv4Address\ requested\_ip,\ DHCPState\ state\ =\ STATELESS);}
+\DoxyCodeLine{00487\ \ \ \textcolor{keywordtype}{bool}\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a98b733bb6ce4aaec0e7b3953e88cb204}{set\_lease\_time}}(std::uint32\_t\ lease\_time,}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pcpp::DhcpMessageType\ query\ =\ pcpp::DhcpMessageType::DHCP\_UNKNOWN\_MSG\_TYPE);}
+\DoxyCodeLine{00489\ \ \ \textcolor{keywordtype}{bool}\ set\_client\_id(\textcolor{keyword}{const}\ std::vector<std::uint8\_t>\&\ client\_id);}
+\DoxyCodeLine{00490\ \ \ \textcolor{keywordtype}{bool}\ set\_vendor\_class\_id(\textcolor{keyword}{const}\ std::vector<std::uint8\_t>\&\ vendor\_class\_id);}
+\DoxyCodeLine{00499\ \ \ \textcolor{keywordtype}{bool}\ \doxymbox{\hyperlink{classserratia_1_1protocols_1_1DHCPMessage_a52219ef689fa393ef94883c172774ad8}{set\_server\_id}}(pcpp::IPv4Address\ server\_id,\ DHCPState\ state\ =\ STATELESS);}
+\DoxyCodeLine{00500\ \ \ \textcolor{keywordtype}{bool}\ set\_param\_request\_list(\textcolor{keyword}{const}\ std::vector<std::uint8\_t>\&\ param\_request\_list);}
+\DoxyCodeLine{00501\ \ \ \textcolor{keywordtype}{bool}\ set\_max\_message\_size(std::uint16\_t\ max\_message\_size);}
+\DoxyCodeLine{00502\ \ \ \textcolor{keywordtype}{bool}\ set\_message(\textcolor{keyword}{const}\ std::vector<std::uint8\_t>\&\ message);}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00505\ \ \ DHCPMessage(pcpp::DhcpMessageType\ message\_type,\ \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config,\ std::uint32\_t\ transaction\_id,}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address,\ std::optional<std::uint8\_t>\ hops\ =\ std::nullopt,}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ seconds\_elapsed\ =\ std::nullopt,}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ bootp\_flags\ =\ std::nullopt,}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ client\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ your\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ server\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ gateway\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 64>>\&\ server\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::array<std::uint8\_t,\ 128>>\&\ boot\_file\_name\ =\ std::nullopt,}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ requested\_ip\ =\ std::nullopt,}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint32\_t>\ lease\_time\ =\ std::nullopt,}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ client\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ vendor\_class\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<pcpp::IPv4Address>\ server\_id\ =\ std::nullopt,}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ param\_request\_list\ =\ std::nullopt,}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::optional<std::uint16\_t>\ max\_message\_size\ =\ std::nullopt,}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::optional<std::vector<std::uint8\_t>>\&\ message\ =\ std::nullopt,}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pcpp::DhcpMessageType\ query\ =\ pcpp::DhcpMessageType::DHCP\_UNKNOWN\_MSG\_TYPE,\ DHCPState\ state\ =\ STATELESS);}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ pcpp::DhcpMessageType\ message\_type\_;}
+\DoxyCodeLine{00526\ \ \ std::shared\_ptr<pcpp::DhcpLayer>\ dhcp\_layer\_;}
+\DoxyCodeLine{00527\ \ \ \doxymbox{\hyperlink{structserratia_1_1protocols_1_1DHCPCommon}{DHCPCommon}}\ common\_config\_;}
+\DoxyCodeLine{00528\ \ \ std::uint8\_t\ hops\_;}
+\DoxyCodeLine{00529\ \ \ std::uint32\_t\ transaction\_id\_;}
+\DoxyCodeLine{00530\ \ \ std::uint16\_t\ seconds\_elapsed\_;}
+\DoxyCodeLine{00531\ \ \ std::uint16\_t\ bootp\_flags\_;}
+\DoxyCodeLine{00532\ \ \ pcpp::IPv4Address\ client\_ip\_;}
+\DoxyCodeLine{00533\ \ \ pcpp::IPv4Address\ your\_ip\_;}
+\DoxyCodeLine{00534\ \ \ pcpp::IPv4Address\ server\_ip\_;}
+\DoxyCodeLine{00535\ \ \ pcpp::IPv4Address\ gateway\_ip\_;}
+\DoxyCodeLine{00536\ \ \ std::array<std::uint8\_t,\ 64>\ server\_name\_;}
+\DoxyCodeLine{00537\ \ \ std::array<std::uint8\_t,\ 128>\ boot\_file\_name\_;}
+\DoxyCodeLine{00538\ \ \ std::array<std::uint8\_t,\ 16>\ client\_hardware\_address\_;}
+\DoxyCodeLine{00539\ \ \ std::unordered\_map<pcpp::DhcpOptionTypes,\ pcpp::DhcpOptionBuilder>\ options\_;}
+\DoxyCodeLine{00540\ \ \ std::vector<pcpp::DhcpOptionBuilder>\ extra\_options\_;}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \ \ \textcolor{keywordtype}{bool}\ server\_name\_set\_;}
+\DoxyCodeLine{00543\ \ \ \textcolor{keywordtype}{bool}\ boot\_file\_name\_set\_;}
+\DoxyCodeLine{00544\ \ \ std::uint8\_t\ overloading\_\ =\ 0;}
+\DoxyCodeLine{00545\ \ \ \textcolor{keywordtype}{size\_t}\ server\_name\_offset\_\ =\ 0;}
+\DoxyCodeLine{00546\ \ \ \textcolor{keywordtype}{size\_t}\ boot\_file\_offset\_\ =\ 0;}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \ \ \textcolor{keywordtype}{void}\ addOption(\textcolor{keyword}{const}\ pcpp::DhcpOptionBuilder\&\ option\_builder,\ std::uint16\_t\&\ remaining\_message\_size);}
+\DoxyCodeLine{00549\ \};}
+\DoxyCodeLine{00550\ \};\ \ \textcolor{comment}{//\ namespace\ serratia::protocols}}
+
+\end{DoxyCode}

@@ -1,0 +1,28 @@
+\doxysection{serratia::\+utils::\+IPcap\+Live\+Device Class Reference}
+\hypertarget{classserratia_1_1utils_1_1IPcapLiveDevice}{}\label{classserratia_1_1utils_1_1IPcapLiveDevice}\index{serratia::utils::IPcapLiveDevice@{serratia::utils::IPcapLiveDevice}}
+Inheritance diagram for serratia::\+utils::\+IPcap\+Live\+Device:\+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classserratia_1_1utils_1_1IPcapLiveDevice}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classserratia_1_1utils_1_1IPcapLiveDevice_a1303251681a6a472f7700dd7b8e3a26d}\label{classserratia_1_1utils_1_1IPcapLiveDevice_a1303251681a6a472f7700dd7b8e3a26d} 
+virtual bool {\bfseries send} (const pcpp::\+\+Packet \&packet)=0
+\item 
+\Hypertarget{classserratia_1_1utils_1_1IPcapLiveDevice_ad9a27684a7b32dfa66311d4a6d0fb592}\label{classserratia_1_1utils_1_1IPcapLiveDevice_ad9a27684a7b32dfa66311d4a6d0fb592} 
+virtual bool {\bfseries start\+Capture} (pcpp::\+\+On\+Packet\+Arrives\+Callback on\+Packet\+Arrives, void \texorpdfstring{$\ast$}{*}on\+Packet\+Arrives\+User\+Cookie)=0
+\item 
+\Hypertarget{classserratia_1_1utils_1_1IPcapLiveDevice_ac10dbb2dc768095acbfdcaaf62940944}\label{classserratia_1_1utils_1_1IPcapLiveDevice_ac10dbb2dc768095acbfdcaaf62940944} 
+virtual void {\bfseries stop\+Capture} ()=0
+\item 
+\Hypertarget{classserratia_1_1utils_1_1IPcapLiveDevice_a8c6480130d718ef048198a8b006aec80}\label{classserratia_1_1utils_1_1IPcapLiveDevice_a8c6480130d718ef048198a8b006aec80} 
+virtual pcpp::\+\+Mac\+Address {\bfseries get\+Mac\+Address} (const pcpp::\+\+IPv4\+Address \&target\+\_\+ip, int timeout)=0
+\end{DoxyCompactItemize}
+
+
+The documentation for this class was generated from the following file:\+\begin{DoxyCompactItemize}
+\item 
+utilities/\+PCPPUtils.\+h\end{DoxyCompactItemize}

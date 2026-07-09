@@ -1,0 +1,73 @@
+\doxysection{serratia::\+utils::\+Real\+Pcap\+Live\+Device Class Reference}
+\hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice}{}\label{classserratia_1_1utils_1_1RealPcapLiveDevice}\index{serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}}
+Inheritance diagram for serratia::\+utils::\+Real\+Pcap\+Live\+Device:\+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{classserratia_1_1utils_1_1RealPcapLiveDevice}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_ad9138d8c41245aa7855376f6f9a69ffe}\label{classserratia_1_1utils_1_1RealPcapLiveDevice_ad9138d8c41245aa7855376f6f9a69ffe} 
+{\bfseries Real\+Pcap\+Live\+Device} (pcpp::\+\+Pcap\+Live\+Device \texorpdfstring{$\ast$}{*}device)
+\item 
+bool \doxymbox{\hyperlink{classserratia_1_1utils_1_1RealPcapLiveDevice_ad5768c1f1dd0c17c32d2ae3b6ba33246}{send}} (const pcpp::\+\+Packet \&packet) override
+\item 
+bool \doxymbox{\hyperlink{classserratia_1_1utils_1_1RealPcapLiveDevice_ab5e0020c0f9da93afacf1dd9a9e26521}{start\+Capture}} (pcpp::\+\+On\+Packet\+Arrives\+Callback on\+Packet\+Arrives, void \texorpdfstring{$\ast$}{*}on\+Packet\+Arrives\+User\+Cookie) override
+\item 
+void \doxymbox{\hyperlink{classserratia_1_1utils_1_1RealPcapLiveDevice_aabc05c7e099faa684aeadaa80c21a194}{stop\+Capture}} () override
+\item 
+pcpp::\+\+Mac\+Address \doxymbox{\hyperlink{classserratia_1_1utils_1_1RealPcapLiveDevice_aa60df6cbf1d78f492b97eb391e22235a}{get\+Mac\+Address}} (const pcpp::\+\+IPv4\+Address \&target\+\_\+ip, int timeout) override
+\end{DoxyCompactItemize}
+
+
+\label{doc-func-members}
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_doc-func-members}
+\doxysubsection{Member Function Documentation}
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_aa60df6cbf1d78f492b97eb391e22235a}\index{serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}!getMacAddress@{getMacAddress}}
+\index{getMacAddress@{getMacAddress}!serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}}
+\doxysubsubsection{\texorpdfstring{getMacAddress()}{getMacAddress()}}
+{\footnotesize\ttfamily \label{classserratia_1_1utils_1_1RealPcapLiveDevice_aa60df6cbf1d78f492b97eb391e22235a} 
+pcpp::\+\+Mac\+Address serratia::\+utils::\+\+Real\+Pcap\+Live\+Device::\+get\+Mac\+Address (\begin{DoxyParamCaption}\item[{const pcpp::\+\+IPv4\+Address \&}]{target\+\_\+ip}{, }\item[{int}]{timeout}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Implements \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{serratia::\+utils::\+\+IPcap\+Live\+Device}}.
+
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_ad5768c1f1dd0c17c32d2ae3b6ba33246}\index{serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}!send@{send}}
+\index{send@{send}!serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}}
+\doxysubsubsection{\texorpdfstring{send()}{send()}}
+{\footnotesize\ttfamily \label{classserratia_1_1utils_1_1RealPcapLiveDevice_ad5768c1f1dd0c17c32d2ae3b6ba33246} 
+bool serratia::\+utils::\+\+Real\+Pcap\+Live\+Device::\+send (\begin{DoxyParamCaption}\item[{const pcpp::\+\+Packet \&}]{packet}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Implements \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{serratia::\+utils::\+\+IPcap\+Live\+Device}}.
+
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_ab5e0020c0f9da93afacf1dd9a9e26521}\index{serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}!startCapture@{startCapture}}
+\index{startCapture@{startCapture}!serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}}
+\doxysubsubsection{\texorpdfstring{startCapture()}{startCapture()}}
+{\footnotesize\ttfamily \label{classserratia_1_1utils_1_1RealPcapLiveDevice_ab5e0020c0f9da93afacf1dd9a9e26521} 
+bool serratia::\+utils::\+\+Real\+Pcap\+Live\+Device::\+start\+Capture (\begin{DoxyParamCaption}\item[{pcpp::\+\+On\+Packet\+Arrives\+Callback}]{on\+Packet\+Arrives}{, }\item[{void \texorpdfstring{$\ast$}{*}}]{on\+Packet\+Arrives\+User\+Cookie}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Implements \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{serratia::\+utils::\+\+IPcap\+Live\+Device}}.
+
+\Hypertarget{classserratia_1_1utils_1_1RealPcapLiveDevice_aabc05c7e099faa684aeadaa80c21a194}\index{serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}!stopCapture@{stopCapture}}
+\index{stopCapture@{stopCapture}!serratia::utils::RealPcapLiveDevice@{serratia::utils::RealPcapLiveDevice}}
+\doxysubsubsection{\texorpdfstring{stopCapture()}{stopCapture()}}
+{\footnotesize\ttfamily \label{classserratia_1_1utils_1_1RealPcapLiveDevice_aabc05c7e099faa684aeadaa80c21a194} 
+void serratia::\+utils::\+\+Real\+Pcap\+Live\+Device::\+stop\+Capture (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Implements \doxymbox{\hyperlink{classserratia_1_1utils_1_1IPcapLiveDevice}{serratia::\+utils::\+\+IPcap\+Live\+Device}}.
+
+
+
+The documentation for this class was generated from the following files:\+\begin{DoxyCompactItemize}
+\item 
+utilities/\+PCPPUtils.\+h\item 
+utilities/\+DHCPServer.\+cpp\end{DoxyCompactItemize}

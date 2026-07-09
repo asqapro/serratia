@@ -51,7 +51,7 @@ serratia::protocols::DHCPMessage::DHCPMessage(
   set_client_ip(client_ip.value_or(pcpp::IPv4Address("0.0.0.0")));
   set_your_ip(your_ip.value_or(pcpp::IPv4Address("0.0.0.0")), query);
   set_server_ip(server_ip.value_or(pcpp::IPv4Address("0.0.0.0")));
-  set_gateway_ip(gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")), query);
+  set_gateway_ip(gateway_ip.value_or(pcpp::IPv4Address("0.0.0.0")));
   set_server_name(server_name.value_or(std::array<std::uint8_t, 64>{}));
   set_boot_file_name(boot_file_name.value_or(std::array<std::uint8_t, 128>{}));
   set_client_hardware_address(client_hardware_address);
@@ -78,7 +78,9 @@ serratia::protocols::DHCPMessage::DHCPMessage(
     set_param_request_list(param_request_list.value());
   }
   if (max_message_size.has_value()) {
-    set_max_message_size(max_message_size.value());
+    if (false == set_max_message_size(max_message_size.value())) {
+      throw std::runtime_error("Failed to set maximum message size option.");
+    }
   }
   if (message.has_value()) {
     set_message(message.value());
@@ -127,24 +129,24 @@ void serratia::protocols::DHCPMessage::addOption(const pcpp::DhcpOptionBuilder& 
   throw std::runtime_error("Failed to fit option in packet");
 }
 
-pcpp::Packet serratia::protocols::DHCPMessage::build(std::uint16_t remaining_message_size) {
-  if (remaining_message_size < 576) {
+pcpp::Packet serratia::protocols::DHCPMessage::build(std::uint16_t max_message_size) {
+  if (max_message_size < 576) {
     throw std::runtime_error("Minimum packet size is 576 bytes");
   }
 
-  remaining_message_size = common_config_.ip_layer->getDataLen();
-  remaining_message_size -= common_config_.udp_layer->getDataLen();
-  remaining_message_size -= sizeof(pcpp::dhcp_header);
+  max_message_size = common_config_.ip_layer->getDataLen();
+  max_message_size -= common_config_.udp_layer->getDataLen();
+  max_message_size -= sizeof(pcpp::dhcp_header);
 
   dhcp_layer_->setMessageType(message_type_);
-  remaining_message_size -= sizeof(dhcp_layer_->getMessageType()) + 2;
+  max_message_size -= sizeof(dhcp_layer_->getMessageType()) + 2;
 
   for (const auto& option : options_ | std::views::values) {
-    addOption(option, remaining_message_size);
+    addOption(option, max_message_size);
   }
 
   for (const auto& opt : extra_options_) {
-    addOption(opt, remaining_message_size);
+    addOption(opt, max_message_size);
   }
 
   if (0 != overloading_) {
@@ -286,41 +288,9 @@ bool serratia::protocols::DHCPMessage::set_server_ip(const pcpp::IPv4Address ser
   return false;
 }
 
-bool serratia::protocols::DHCPMessage::set_gateway_ip(const pcpp::IPv4Address gateway_ip,
-                                                      const pcpp::DhcpMessageType query) {
-  switch (message_type_) {
-    case pcpp::DhcpMessageType::DHCP_DISCOVER:
-    case pcpp::DhcpMessageType::DHCP_INFORM:
-    case pcpp::DhcpMessageType::DHCP_REQUEST:
-    case pcpp::DhcpMessageType::DHCP_DECLINE:
-    case pcpp::DhcpMessageType::DHCP_RELEASE:
-      gateway_ip_ = gateway_ip;
-      return true;
-    case pcpp::DhcpMessageType::DHCP_OFFER:
-      switch (query) {
-        case pcpp::DHCP_DISCOVER:
-        case pcpp::DHCP_UNKNOWN_MSG_TYPE:
-          gateway_ip_ = gateway_ip;
-          return true;
-        default:
-          return false;
-      }
-    case pcpp::DhcpMessageType::DHCP_ACK:
-    case pcpp::DhcpMessageType::DHCP_NAK:
-      switch (query) {
-        case pcpp::DHCP_REQUEST:
-        case pcpp::DHCP_INFORM:
-        case pcpp::DHCP_UNKNOWN_MSG_TYPE:
-          gateway_ip_ = gateway_ip;
-          return true;
-        default:
-          return false;
-      }
-    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
-      gateway_ip_ = gateway_ip;
-      return true;
-  }
-  return false;
+bool serratia::protocols::DHCPMessage::set_gateway_ip(const pcpp::IPv4Address gateway_ip) {
+  gateway_ip_ = gateway_ip;
+  return true;
 }
 
 bool serratia::protocols::DHCPMessage::set_server_name(const std::array<std::uint8_t, 64>& server_name) {
@@ -360,37 +330,9 @@ bool serratia::protocols::DHCPMessage::set_boot_file_name(const std::array<std::
 }
 
 bool serratia::protocols::DHCPMessage::set_client_hardware_address(
-    const std::array<std::uint8_t, 16>& client_hardware_address, const pcpp::DhcpMessageType query) {
-  switch (message_type_) {
-    case pcpp::DhcpMessageType::DHCP_DISCOVER:
-    case pcpp::DhcpMessageType::DHCP_INFORM:
-    case pcpp::DhcpMessageType::DHCP_REQUEST:
-    case pcpp::DhcpMessageType::DHCP_DECLINE:
-    case pcpp::DhcpMessageType::DHCP_RELEASE:
-    case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
-      client_hardware_address_ = client_hardware_address;
-      return true;
-    case pcpp::DhcpMessageType::DHCP_OFFER:
-      switch (query) {
-        case pcpp::DhcpMessageType::DHCP_DISCOVER:
-        case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
-          client_hardware_address_ = client_hardware_address;
-          return true;
-        default:
-          return false;
-      }
-    case pcpp::DhcpMessageType::DHCP_ACK:
-    case pcpp::DhcpMessageType::DHCP_NAK:
-      switch (query) {
-        case pcpp::DhcpMessageType::DHCP_REQUEST:
-        case pcpp::DhcpMessageType::DHCP_UNKNOWN_MSG_TYPE:
-          client_hardware_address_ = client_hardware_address;
-          return true;
-        default:
-          return false;
-      }
-  }
-  return false;
+    const std::array<std::uint8_t, 16>& client_hardware_address) {
+  client_hardware_address_ = client_hardware_address;
+  return true;
 }
 
 bool serratia::protocols::DHCPMessage::set_requested_ip(const pcpp::IPv4Address requested_ip, const DHCPState state) {
@@ -545,6 +487,9 @@ bool serratia::protocols::DHCPMessage::set_param_request_list(const std::vector<
 }
 
 bool serratia::protocols::DHCPMessage::set_max_message_size(const std::uint16_t max_message_size) {
+  if (max_message_size < 576) {
+    return false;
+  }
   constexpr auto option_type = pcpp::DhcpOptionTypes::DHCPOPT_DHCP_MAX_MESSAGE_SIZE;
   switch (message_type_) {
     case pcpp::DhcpMessageType::DHCP_DISCOVER:
