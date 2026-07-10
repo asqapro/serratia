@@ -1,11 +1,12 @@
 #include "DHCPServer.h"
-#include "../protocols/DHCP.h"
-
-#include <pcapplusplus/NetworkUtils.h>
-#include <pcapplusplus/DhcpLayer.h>
 
 #include <netinet/in.h>
+#include <pcapplusplus/DhcpLayer.h>
+#include <pcapplusplus/NetworkUtils.h>
+
 #include <ranges>
+
+#include "../protocols/DHCP.h"
 
 bool serratia::utils::RealPcapLiveDevice::send(const pcpp::Packet& packet) {
   return device_->sendPacket(*(packet.getRawPacketReadOnly()));

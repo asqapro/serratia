@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../utilities/PCPPUtils.h"
-
 #include <pcapplusplus/Packet.h>
 
 #include <vector>
+
+#include "../utilities/PCPPUtils.h"
 
 constexpr std::uint8_t HTYPE_ETHER = 1;
 

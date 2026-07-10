@@ -1,13 +1,13 @@
 #pragma once
 
-#include "PCPPUtils.h"
-#include "../protocols/DHCP.h"
-#include "spdlog/spdlog.h"
-
 #include <pcapplusplus/IpAddress.h>
 #include <pcapplusplus/MacAddress.h>
 
 #include <set>
+
+#include "../protocols/DHCP.h"
+#include "PCPPUtils.h"
+#include "spdlog/spdlog.h"
 
 namespace serratia::utils {
 struct ClientID {

@@ -1,15 +1,13 @@
+#include <catch2/catch_test_macros.hpp>
+#include <future>
+#include <ranges>
+
 #include "../attacks/DHCPExhaustion.h"
 #include "Common.h"
 #include "DHCPCommon.h"
 #include "DHCPServer.h"
 
-#include <catch2/catch_test_macros.hpp>
-#include <ranges>
-#include <future>
-
-void start_attack(serratia::attacks::DHCPExhaustion& attacker) {
-  attacker.run();
-}
+void start_attack(serratia::attacks::DHCPExhaustion& attacker) { attacker.run(); }
 
 TEST_CASE("Perform attacks") {
   SECTION("DHCP Exhaustion") {

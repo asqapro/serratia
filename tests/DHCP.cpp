@@ -1,12 +1,13 @@
-#include "Common.h"
-#include "DHCPCommon.h"
 #include "../protocols/DHCP.h"
-#include "../utilities/DHCPServer.h"
-
-#include <catch2/catch_test_macros.hpp>
 
 #include <arpa/inet.h>
+
+#include <catch2/catch_test_macros.hpp>
 #include <ranges>
+
+#include "../utilities/DHCPServer.h"
+#include "Common.h"
+#include "DHCPCommon.h"
 
 const pcpp::IPv4Address BROADCAST_IP("255.255.255.255");
 const pcpp::MacAddress BROADCAST_MAC("FF:FF:FF:FF:FF:FF");

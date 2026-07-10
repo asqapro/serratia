@@ -480,7 +480,7 @@ class DHCPMessage {
    * @brief Sets the client's offered IP address (yiaddr).
    *
    * @param lease_time     Lease time requested by the client or offered by the server.
-  * @param query           Type of message from the client being responsed to.
+   * @param query           Type of message from the client being responsed to.
    *                       This option must not be set in responses to DHCPINFORM.
    * @return True if the field was set successfully, false if setting the option was not allowed.
    */
